@@ -1,0 +1,6 @@
+userId=x
+password=y
+# apiKey=1234  *** invalid - missing api key
+repository.url=http://foo/bla
+softlayerUserId=amelia
+softlayerPassword=ariana

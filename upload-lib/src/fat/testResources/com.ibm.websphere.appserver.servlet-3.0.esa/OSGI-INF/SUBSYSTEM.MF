@@ -1,0 +1,76 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: servlet-3.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.servlet-3.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.ws.javaee.servlet.3.0; version="[1,1.0.100)"; location:="dev/api/spec/,lib/",
+ com.ibm.websphere.appserver.systemWar-1.0; type="osgi.subsystem.feature",
+ com.ibm.ws.session;  version="[1,1.0.100)",
+ com.ibm.websphere.appserver.classloading-1.0; type="osgi.subsystem.feature",
+ com.ibm.ws.org.apache.commons.fileupload.1.2.1; version="[1,1.0.100)",
+ com.ibm.ws.org.apache.commons.io.1.4; version="[1,1.0.100)",
+ com.ibm.websphere.security;  version="[1,1.0.100)",
+ com.ibm.ws.webcontainer;  version="[1,1.0.100)",
+ com.ibm.websphere.appserver.artifact-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.javaeedd-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.containerServices-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.httptransport-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.appmanager-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.injection-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.anno-1.0; type="osgi.subsystem.feature",
+ com.ibm.ws.managedobject; version="[1.0,1.0.100)",
+ com.ibm.websphere.appserver.spi.servlet; location:="dev/spi/ibm/com.ibm.websphere.appserver.spi.servlet_1.0.2.jar"; type="jar",
+ com.ibm.websphere.appserver.spi.servlet_1.0.2-javadoc.zip; location:="dev/spi/ibm/javadoc/com.ibm.websphere.appserver.spi.servlet_1.0.2-javadoc.zip"; type="file",
+ com.ibm.websphere.appserver.api.servlet; location:="dev/api/ibm/com.ibm.websphere.appserver.api.servlet_1.0.2.jar"; type="jar",
+ com.ibm.websphere.appserver.api.servlet_1.0.2-javadoc.zip; location:="dev/api/ibm/javadoc/com.ibm.websphere.appserver.api.servlet_1.0.2-javadoc.zip"; type="file",
+ ibm-application-bnd_1_0.xsd; location:="dev/api/ibm/schema/ibm-application-bnd_1_0.xsd"; type="file",
+ ibm-application-bnd_1_1.xsd; location:="dev/api/ibm/schema/ibm-application-bnd_1_1.xsd"; type="file",
+ ibm-application-bnd_1_2.xsd; location:="dev/api/ibm/schema/ibm-application-bnd_1_2.xsd"; type="file",
+ ibm-application-ext_1_0.xsd; location:="dev/api/ibm/schema/ibm-application-ext_1_0.xsd"; type="file",
+ ibm-application-ext_1_1.xsd; location:="dev/api/ibm/schema/ibm-application-ext_1_1.xsd"; type="file",
+ ibm-common-bnd_1_0.xsd; location:="dev/api/ibm/schema/ibm-common-bnd_1_0.xsd"; type="file",
+ ibm-common-bnd_1_1.xsd; location:="dev/api/ibm/schema/ibm-common-bnd_1_1.xsd"; type="file",
+ ibm-common-bnd_1_2.xsd; location:="dev/api/ibm/schema/ibm-common-bnd_1_2.xsd"; type="file",
+ ibm-common-ext_1_0.xsd; location:="dev/api/ibm/schema/ibm-common-ext_1_0.xsd"; type="file",
+ ibm-common-ext_1_1.xsd; location:="dev/api/ibm/schema/ibm-common-ext_1_1.xsd"; type="file",
+ ibm-web-bnd_1_0.xsd; location:="dev/api/ibm/schema/ibm-web-bnd_1_0.xsd"; type="file",
+ ibm-web-bnd_1_1.xsd; location:="dev/api/ibm/schema/ibm-web-bnd_1_1.xsd"; type="file",
+ ibm-web-bnd_1_2.xsd; location:="dev/api/ibm/schema/ibm-web-bnd_1_2.xsd"; type="file",
+ ibm-web-ext_1_0.xsd; location:="dev/api/ibm/schema/ibm-web-ext_1_0.xsd"; type="file",
+ ibm-web-ext_1_1.xsd; location:="dev/api/ibm/schema/ibm-web-ext_1_1.xsd"; type="file"
+  
+Subsystem-Type: osgi.subsystem.feature
+IBM-API-Package: javax.servlet.annotation;  type="spec",
+ javax.servlet.descriptor;  type="spec",
+ javax.servlet.resources;  type="spec",
+ javax.servlet.http;  type="spec",
+ javax.servlet;  type="spec",
+ com.ibm.websphere.servlet.session;  type="ibm-api",
+ com.ibm.wsspi.servlet.session;  type="ibm-api",
+ com.ibm.websphere.servlet.error;  type="ibm-api",
+ com.ibm.websphere.servlet.container;  type="ibm-api",
+ com.ibm.websphere.servlet.context;  type="ibm-api",
+ com.ibm.websphere.servlet.event;  type="ibm-api",
+ com.ibm.websphere.webcontainer;  type="ibm-api",
+ com.ibm.wsspi.webcontainer;  type="internal",
+ com.ibm.wsspi.webcontainer.annotation;  type="internal"
+IBM-Feature-Version: 2
+IBM-SPI-Package: com.ibm.wsspi.webcontainer,
+ com.ibm.wsspi.webcontainer.collaborator,
+ com.ibm.wsspi.webcontainer.extension,
+ com.ibm.wsspi.webcontainer.filter,
+ com.ibm.wsspi.webcontainer.metadata,
+ com.ibm.wsspi.webcontainer.osgi.extension,
+ com.ibm.wsspi.webcontainer.servlet,
+ com.ibm.wsspi.webcontainer.webapp,
+ com.ibm.websphere.servlet.filter,
+ com.ibm.websphere.servlet.response,
+ com.ibm.ws.webcontainer.extension
+Subsystem-Name: %name
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.1;
+Subsystem-License: http://www.ibm.com/licenses/termAcceptence
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

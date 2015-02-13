@@ -1,0 +1,24 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: adminCenter-1.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.adminCenter-1.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Type: osgi.subsystem.feature
+Subsystem-Icon: OSGI-INF/admincenter_200x200.png,OSGI-INF/admincenter_200x200.png;size=200
+Subsystem-Content: com.ibm.wsspi.appserver.webBundle-1.0; type="osgi.subsystem.feature",
+  com.ibm.websphere.appserver.restConnector-1.0; type="osgi.subsystem.feature", 
+  com.ibm.websphere.appserver.jaxrs-1.1; ibm.tolerates:="2.0"; type="osgi.subsystem.feature",
+  com.ibm.websphere.appserver.restHandler-1.0; type="osgi.subsystem.feature",
+  com.ibm.websphere.appserver.jsp-2.2; type="osgi.subsystem.feature",
+  com.ibm.websphere.appserver.servlet-3.0; ibm.tolerates:="3.1"; type="osgi.subsystem.feature",
+  com.ibm.ws.ui; version="[1,1.0.100)",
+  com.ibm.ws.esapi; version="[1,1.0.100)"
+IBM-Feature-Version: 2
+Subsystem-Name: %name
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+IBM-ProductID: com.ibm.websphere.appserver
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.5
+Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

@@ -1,0 +1,169 @@
+/*******************************************************************************
+* Copyright (c) 2015 IBM Corp.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
+
+apply plugin: 'eclipse'
+
+boolean haveAnyTestsFailed = false;
+
+// General configuration for all projects
+// Set up support for fatTests which rely on a running test server
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+    
+    sourceSets {
+        fat {
+            compileClasspath += sourceSets.main.output
+            runtimeClasspath += sourceSets.main.output
+        }
+    }
+    
+    configurations {
+        fatCompile.extendsFrom testCompile
+    }
+    
+    check {
+        dependsOn 'testFat'
+    }
+    
+    test {
+        reports.html.enabled = false
+        filter.includeTestsMatching '*Test'
+        
+        ignoreFailures = true
+        afterTest { desc, result ->
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                haveAnyTestsFailed = true
+            }
+        }
+    }
+    
+    task testFat(type: Test) {
+        group 'verification'
+        description 'Start test server and run the fat tests'
+        
+        testClassesDir = sourceSets.fat.output.classesDir
+        classpath = sourceSets.fat.runtimeClasspath
+        
+        dependsOn fatClasses
+        dependsOn 'prepareTestWorkingDir'
+        dependsOn ':server:createTestUsrDir'
+        dependsOn ':server:startTestMongod'
+        finalizedBy ':server:stopTestMongod'
+        dependsOn ':server:startTestServer'
+        finalizedBy ':server:stopTestServer'
+        shouldRunAfter 'test'
+        inputs.files({tasks.prepareTestResources})
+        reports.html.enabled = false;
+        
+        ignoreFailures = true
+        afterTest { desc, result ->
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                haveAnyTestsFailed = true
+            }
+        }
+        
+        workingDir file('build/test-working')
+    }
+    
+    task prepareTestWorkingDir {
+        dependsOn 'prepareTestResources'
+        doLast {
+            mkdir('build/test-working')
+        }
+    }
+    
+    task prepareTestResources (type:Copy) {
+        from 'src/fat/testResources'
+        into 'build/test-working/resources'
+        exclude '**/*.zip'
+        exclude '**/*.jar'
+        exclude '**/*.esa'
+    }
+    
+    File testResourcesDir = file('src/fat/testResources')
+    def subProj = delegate
+    if (testResourcesDir.exists()) {
+        testResourcesDir.eachDirRecurse({ dir ->
+            if (dir.name.endsWith('.esa') || dir.name.endsWith('.jar') || dir.name.endsWith('.zip')) {
+                String relativeTargetPath = dir.parentFile.absolutePath.minus(testResourcesDir.absolutePath)
+                Task task = task "create-${relativeTargetPath}-${dir.name}" (type: Zip) {
+                    archiveName = dir.name
+                    from dir
+                    destinationDir = subProj.file('build/test-working/resources' + relativeTargetPath)
+                }
+                prepareTestResources.dependsOn task
+                prepareTestResources.outputs.files(task)
+            }
+        })
+    }
+    
+    task testReport(type: TestReport) {
+        tasks.withType(Test).each({
+            reportOn it.binResultsDir
+            it.finalizedBy testReport
+        })
+        destinationDir testReportDir
+    }
+    
+    // We have the JDT prefs checked in so disable the tasks which write it
+    eclipseJdt.enabled = false
+    cleanEclipseJdt.enabled = false
+}
+
+task dist(type: Sync) {
+    into 'build/distributions'
+    from subprojects*.getTasksByName('distZip', false)
+}
+
+task globalTestReport(type: TestReport) {
+    description 'Produce a test report for all projects and fail the build if any tests failed'
+    
+    subprojects.each { subproj ->
+        subproj.tasks.withType(Test).each {
+            reportOn it.binResultsDir
+            it.finalizedBy globalTestReport
+            shouldRunAfter it
+        }
+    }
+    destinationDir file('build/reports/test')
+    doLast {
+        if (haveAnyTestsFailed) {
+            URI reportUri = new File(destinationDir, "index.html").toURI();
+            reportUri = new URI(reportUri.scheme, "", reportUri.path, null);
+            throw new Exception("Tests have failed. For more information, see the test report: ${reportUri}")
+        }
+    }
+}
+
+// Make the gradle eclipse tools play nicely with this non-java project
+task afterEclipseImport << {
+    Node node = new XmlParser().parse(file('.project'));
+    
+    node.depthFirst().each {
+        if (it.name() == "nature" && it.value() == ["org.eclipse.jdt.core.javanature"]) {
+            it.parent().remove(it)
+        }
+        if (it.name() == "buildSpec") {
+            it.parent().remove(it)
+        }
+    }
+    
+    XmlNodePrinter printer = new XmlNodePrinter(new PrintWriter(file('.project')))
+    printer.preserveWhitespace = true
+    printer.print(node)
+}

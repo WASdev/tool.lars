@@ -1,0 +1,14 @@
+Subsystem-ManifestVersion: 1
+Subsystem-SymbolicName: com.ibm.websphere.appserver.contextService-1.0; visibility:=private
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.ws.javax.enterprise.concurrent; version="[1,1.0.100)",
+ com.ibm.ws.resource; version="[1,1.0.100)",
+ com.ibm.ws.context; version="[1,1.0.100)",
+ com.ibm.websphere.appserver.appLifecycle-1.0; type="osgi.subsystem.feature"
+Subsystem-Type: osgi.subsystem.feature
+IBM-API-Package: com.ibm.ws.context.service; type="internal",
+ com.ibm.ws.context.service.serializable; type="internal"
+IBM-Feature-Version: 2
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.2; productInstallType=Archive, com.ibm.websphere.appserver1-0; productVersion=8.5.5.2; productInstallType=Archive
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

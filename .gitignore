@@ -1,0 +1,16 @@
+# Gradle stuff
+.gradle
+build
+*/.gradle
+*/build
+
+# Eclipse stuff
+*/.settings/**
+!*/.settings/org.eclipse.*.prefs
+*/.classpath
+*/.project
+*/bin
+*/bin-fat
+*/bin-test
+.project
+.settings

@@ -1,0 +1,79 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: blueprint-1.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.blueprint-1.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.ws.app.manager.esa;  version="[1.0,1.0.100)"; start-phase:=CONTAINER_LATE,
+ com.ibm.ws.eba.app.runtime.services;  version="[1,1.0.100)"; start-phase:=SERVICE,
+ com.ibm.ws.eba.fidelity;  version="[1,1.0.100)"; start-phase:=SERVICE_EARLY,
+ com.ibm.ws.eba.blueprint.extensions.interceptors.1.0; version="[1,1.1.100)",
+ com.ibm.ws.eba.blueprint.transform; version="[1,1.0.100)",
+ com.ibm.ws.eba.bundle.repository;  version="[1,1.0.100)"; start-phase:=CONTAINER_EARLY,
+ com.ibm.ws.eba.proxy.control; version="[1,1.0.100)"; start-phase:=SERVICE,
+ com.ibm.ws.eba.tx.7.0; version="[1.0,1.0.100)",
+ com.ibm.ws.eba.wab.integrator;  version="[1,1.0.100)",
+ com.ibm.ws.org.apache.aries.application.api.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.application.default.local.platform.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.application.modeller.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.application.resolver.obr.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.application.utils.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.blueprint.1.2.0; version="[1.0,1.0.100)"; start-phase:=CONTAINER_EARLY,
+ com.ibm.ws.org.apache.aries.jndi.api.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.jndi.url.1.1.0; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.proxy.1.0.2; version="[1.1,1.1.100)"; start-phase:=CONTAINER_EARLY,
+ com.ibm.ws.org.apache.aries.quiesce.api.1.0.1; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.subsystem.core.1.0.1; version="[1.0,1.1)",
+ com.ibm.ws.org.apache.aries.subsystem.api.1.0.1; version="[1.0,1.1)",
+ com.ibm.ws.org.apache.aries.subsystem.obr.1.0.1; version="[1.0,1.1)",
+ com.ibm.ws.org.apache.felix.bundlerepository.1.6.7; version="[1,1.0.100)"; start-phase:=CONTAINER_EARLY,
+ com.ibm.ws.org.osgi.service.obr.1.0.2; version="[1,1.0.100)",
+ com.ibm.wsspi.thirdparty.blueprint; location:="dev/spi/third-party/com.ibm.wsspi.thirdparty.blueprint_1.0.0.jar"; type="jar",
+ com.ibm.ws.org.osgi.core.4.2.0; version="[1,1.0.100)"; location:="dev/api/spec/"; type="jar",
+ com.ibm.ws.org.osgi.cmpn.4.2.0; version="[1,1.0.100)"; location:="dev/api/spec/"; type="jar",
+ com.ibm.websphere.appserver.appmanager-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.transaction-1.1; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.containerServices-1.0; type="osgi.subsystem.feature"
+Subsystem-Type: osgi.subsystem.feature
+IBM-API-Package: org.apache.aries.transaction.exception; type="third-party",
+ org.apache.aries.proxy; type="internal",
+ org.apache.aries.proxy.weaving; type="internal",
+ org.osgi.framework; type="spec:osgi",
+ org.osgi.framework.hooks.bundle; type="spec:osgi",
+ org.osgi.framework.hooks.resolver; type="spec:osgi",
+ org.osgi.framework.hooks.service; type="spec:osgi",
+ org.osgi.framework.hooks.weaving; type="spec:osgi",
+ org.osgi.framework.launch;type="spec:osgi",
+ org.osgi.framework.namespace; type="spec:osgi",
+ org.osgi.framework.startlevel; type="spec:osgi",
+ org.osgi.framework.wiring; type="spec:osgi",
+ org.osgi.resource; type="spec:osgi",
+ org.osgi.service.blueprint; type="spec:osgi",
+ org.osgi.service.blueprint.container; type="spec:osgi",
+ org.osgi.service.blueprint.reflect; type="spec:osgi",
+ org.osgi.service.cm; type="spec:osgi",
+ org.osgi.service.condpermadmin; type="spec:osgi",
+ org.osgi.service.jndi; type="spec:osgi",
+ org.osgi.service.packageadmin; type="spec:osgi",
+ org.osgi.service.startlevel; type="spec:osgi",
+ org.osgi.service.url; type="spec:osgi",
+ org.osgi.util.tracker; type="spec:osgi"
+IBM-SPI-Package: org.apache.aries.blueprint,
+ org.apache.aries.util,
+ org.osgi.service.subsystem
+IBM-API-Service: org.apache.aries.blueprint.NamespaceHandler; service=service; service.ranking=0; osgi.service.blueprint.namespace="http://www.osgi.org/xmlns/blueprint/v1.0.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/xmlns/transactions/v1.0.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/xmlns/transactions/v1.1.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.1.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.2.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0",
+ org.apache.aries.blueprint.NamespaceHandler;service=service;service.ranking=0;osgi.service.blueprint.namespace="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+IBM-Feature-Version: 2
+Subsystem-Name: %name
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=2014.3.0.0; productInstallType=Archive
+Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1
+IBM-License-Agreement: wlp/lafiles/LA
+
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

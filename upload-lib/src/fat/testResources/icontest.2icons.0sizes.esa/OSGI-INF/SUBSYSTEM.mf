@@ -1,0 +1,17 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: BasicAutoFeatureTool-1.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.basicautofeaturetool-1.0; visibility:=private
+Subsystem-Name: BasicAutoFeatureTool Display Name
+Subsystem-Version: 1.0.0
+Subsystem-Type: osgi.subsystem.feature
+Subsystem-Category: adminui
+Subsystem-Icon: OSGI-INF/icons/toolicon1.png,OSGI-INF/icons/toolicon2.png
+Subsystem-Description: This is the description for BasicAutoFeatureTool. It is used to test that we can install a tool feature into t
+ he liberty runtime.
+Subsystem-Content: com.ibm.ws.appserver.basicAutoFeatureTool; version="[1,1.0.100)",
+ com.ibm.websphere.appserver.adminUI-1.0; type="osgi.subsystem.feature"
+IBM-Provision-Capability: osgi.identity; filter:="(&(type=osgi.subsystem.feature)(osgi.identity=com.ibm.websphere.appserver.adminUI-1.0))"
+IBM-Install-Policy: manual
+Subsystem-Vendor: IBM
+IBM-Feature-Version: 2
+Subsystem-Localization: OSGI-INF/l10n/subsystem

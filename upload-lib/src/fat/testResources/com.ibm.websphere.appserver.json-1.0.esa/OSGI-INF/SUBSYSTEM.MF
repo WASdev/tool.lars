@@ -1,0 +1,20 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: json-1.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.json-1.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.json4j; version="[1,1.0.100)",
+ com.ibm.websphere.appserver.api.json; type=jar; version="[1,1.0.100)"; location:=dev/api/ibm/,
+ com.ibm.websphere.appserver.api.json_1.0.1-javadoc.url; location:="dev/api/ibm/javadoc/com.ibm.websphere.appserver.api.json_1.0.1-javadoc.url"; type="file"
+Subsystem-Type: osgi.subsystem.feature
+IBM-Feature-Version: 2
+IBM-API-Package: com.ibm.json.java; type="ibm-api",
+ com.ibm.json.xml; type="ibm-api"
+Subsystem-Name: %name
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.2; productInstallType=Archive;
+Subsystem-License: http://www.ibm.com/licenses/L-JTHS-95XRL8
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-License-Information: wlp/lafiles/LI
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

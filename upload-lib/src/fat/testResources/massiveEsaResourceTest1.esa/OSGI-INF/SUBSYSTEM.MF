@@ -1,0 +1,18 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: cdi-1.0
+Subsystem-SymbolicName: test.feature-1.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Content: a.missing.bundle.1.0; version="[1,1.0.100)"
+IBM-Feature-Version: 2
+IBM-API-Package: missing.pkg;  type="spec"
+Subsystem-Type: osgi.subsystem.feature
+Subsystem-Name: com.ibm.ws.test.simple
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+IBM-App-ForceRestart: install,uninstall
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=2014.2.0.0; productInstallType=Archive;
+Subsystem-License: http://www.ibm.com/licenses/L-JTHS-9C2M2H
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-License-Information: wlp/lafiles/LI
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

@@ -1,0 +1,26 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: jaxrs-2.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.jaxrs-2.0; visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.websphere.appserver.jaxrsClient-2.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.classloading-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.injection-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.containerServices-1.0; type="osgi.subsystem.feature"
+Subsystem-Type: osgi.subsystem.feature
+IBM-Feature-Version: 2
+IBM-App-ForceRestart: uninstall,install
+IBM-API-Package: javax.ws.rs; type="spec",
+ javax.ws.rs.container; type="spec",
+ com.ibm.websphere.jaxrs.server; type="internal",
+ org.apache.cxf.jaxrs.servlet; type="internal",
+ org.apache.cxf.jaxrs.ext.multipart; type="third-party",
+ org.apache.cxf.jaxrs.utils.multipart; type="third-party"
+Subsystem-Name: %name
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+Provide-Capability: osgi.contract; osgi.contract=JAXRS; version:Version=2.0
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=2014.8.0.0; productInstallType=Archive
+Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

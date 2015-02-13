@@ -1,0 +1,88 @@
+<!-- 
+Copyright (c) 2015 IBM Corp.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ -->
+
+<server description="Lars server">
+
+    <!-- Enable features -->
+    <featureManager>
+        <feature>servlet-3.0</feature>
+        <feature>jaxrs-1.1</feature>
+        <feature>mongodb-2.0</feature>
+        <feature>ejbLite-3.1</feature>
+        <feature>localConnector-1.0</feature>
+        <feature>cdi-1.0</feature>
+        <feature>jndi-1.0</feature>
+        <feature>appSecurity-2.0</feature>
+        <feature>ssl-1.0</feature>
+    </featureManager>
+    <keyStore id="defaultKeyStore" password="{xor}PDc+MTg6Nis="/>
+
+    <!-- You need to specify a user registry so that you can map users to roles in the application
+         As a starting point you could use a simple basic registry like the one below.
+         Use the securityUtility program included in your liberty install to encode the passwords.
+         
+         Alternatively, you could replace this with an LdapRegistry or another sort of user registry 
+         supported by Liberty
+    -->
+    <!--
+    <basicRegistry id="defaultRegistry" realm="default">
+        <user name="admin" password="{xor}Lz4Change.Me="/>
+        <group name="Administrators">
+            <member name="admin"/>
+        </group>
+    </basicRegistry>
+    -->
+    
+    <webAppSecurity singleSignonEnabled="false"/>
+
+    <!-- To access this server from a remote client add a host attribute to the following element, e.g. host="*" -->
+    <httpEndpoint httpPort="9080" httpsPort="9443" id="defaultHttpEndpoint"/>
+
+    <applicationMonitor updateTrigger="mbean"/>
+
+    <!-- This library must be used by the WAR app in order for both the app and the MongoDB feature to see the
+         same MongoDB driver classes.
+      -->
+    <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
+        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.11.1.jar"/>
+    </library>
+
+    <!-- Use slightly safer write concern than the default -->
+    <mongo id="mongo" libraryRef="mongo-lib" writeConcern="JOURNAL_SAFE">
+        <hostNames>localhost</hostNames>
+    </mongo>
+    
+    <jndiEntry id="lars/URLBase" jndiName="lars/URLBase" value="http://localhost:9080" />
+
+    <mongoDB databaseName="larsDB" jndiName="mongo/larsDB" mongoRef="mongo"/>
+
+    <webApplication id="com.ibm.ws.lars.rest" location="larsServer.war" name="com.ibm.ws.lars.rest" contextRoot="/">
+        <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>
+<!--
+        You need to specify the user-role mappings. The following application-bnd element
+        can be customized to meet your requirements:
+        
+        <application-bnd>
+            <security-role name="User">
+                <special-subject type="EVERYONE"/>
+            </security-role>
+            <security-role name="Administrator">
+                <group name="Administrators"/>
+            </security-role>
+        </application-bnd>
+-->
+    </webApplication>
+</server>

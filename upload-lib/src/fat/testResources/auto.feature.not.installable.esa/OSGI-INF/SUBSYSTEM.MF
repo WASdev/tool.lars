@@ -1,0 +1,9 @@
+Subsystem-ManifestVersion: 1
+Subsystem-SymbolicName: com.ibm.ws.test.auto.feature.not.installable;visibility:=public
+Subsystem-Version: 1.0.0
+Subsystem-Type: osgi.subsystem.feature
+IBM-Feature-Version: 2
+
+Subsystem-Vendor: IBM
+IBM-Provision-Capability: osgi.identity; filter:="(&(type=osgi.subsystem.feature)(osgi.identity=com.ibm.ws.test.simple))"
+IBM-Install-Policy: manual

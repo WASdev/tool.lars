@@ -1,0 +1,82 @@
+/*******************************************************************************
+* Copyright (c) 2015 IBM Corp.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'distribution'
+
+archivesBaseName = 'larsClient'
+
+repositories {
+    mavenCentral();
+}
+
+dependencies {
+    compile group:'org.apache.aries', name:'org.apache.aries.util', version:'1.1.+'
+    compile group:'org.osgi', name:'org.osgi.core', version:'5.0.+'
+    compile project(':upload-lib')
+
+    testCompile group:'org.jmockit', name:'jmockit', version:'1.+'
+    testCompile group:'junit', name:'junit', version:'4.+'
+    testCompile group:'org.mongodb', name:'mongo-java-driver', version:'2.11.1'
+    testCompile project(':test-utils')
+}
+
+jar {
+    manifest {
+        attributes("Main-Class": "com.ibm.ws.lars.upload.cli.Main",
+                   "Class-Path": configurations.runtime.files.collect { file -> file.getName()}.join(' '))
+    }
+}
+
+test {
+    File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
+    jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
+}
+
+testFat {
+    dependsOn 'unpackDist'
+    inputs.files({tasks.unpackDist})
+    
+    File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
+    jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
+}
+
+distributions {
+    main {
+        baseName = archivesBaseName
+        contents {
+            into '/'
+            into('bin/tools') {
+                from(configurations.runtime, configurations.runtime.artifacts.files)
+            }
+            into('bin') {
+                from('src/main/scripts')
+                fileMode(0755)
+            }
+        }
+    }
+}
+
+task unpackDist(type: Copy) {
+    dependsOn distZip
+    distZip.outputs.files.each { archive ->
+        from zipTree(archive)
+    }
+    into file('build/test-working/client')
+}
+
+// vim: set si:

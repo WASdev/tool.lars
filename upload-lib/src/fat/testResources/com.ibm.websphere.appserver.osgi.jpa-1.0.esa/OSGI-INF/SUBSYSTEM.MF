@@ -1,0 +1,31 @@
+Subsystem-ManifestVersion: 1
+IBM-ShortName: osgi.jpa-1.0
+Subsystem-SymbolicName: com.ibm.websphere.appserver.osgi.jpa-1.0;visibility:=public; superseded=true; superseded-by="blueprint-1.0,jpa-2.0"
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.ibm.ws.eba.jpa.container.annotations;  version="[1,1.0.100)", 
+ com.ibm.ws.org.apache.aries.jndi.url.1.1.0; version="[1.1,1.1.100)", 
+ com.ibm.ws.org.apache.aries.jpa.api.1.0.1; version="[1.1,1.1.100)", 
+ com.ibm.ws.org.apache.aries.jpa.blueprint.aries.1.0.2; version="[1.1,1.1.100)",
+ com.ibm.ws.org.apache.aries.jpa.container.1.0.1; version="[1.1,1.1.100)"; start-phase:=CONTAINER_EARLY, 
+ com.ibm.ws.org.apache.aries.jpa.container.context.1.0.2; version="[1.1,1.1.100)",  
+ com.ibm.ws.eba.jpa.lookup;  version="[1,1.0.100)",
+ com.ibm.ws.eba.jpa.wab.integration;  version="[1,1.0.100)",
+ com.ibm.websphere.appserver.blueprint-1.0; type="osgi.subsystem.feature", 
+ com.ibm.websphere.appserver.jpa-2.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.jndi-1.0; type="osgi.subsystem.feature",
+ com.ibm.websphere.appserver.jdbc-4.0; type="osgi.subsystem.feature"
+Subsystem-Type: osgi.subsystem.feature
+IBM-API-Service: org.apache.aries.blueprint.NamespaceHandler; service=service; service.ranking=0; osgi.service.blueprint.namespace="http://aries.apache.org/xmlns/jpa/v1.0.0",
+ org.apache.aries.blueprint.NamespaceHandler; service=service; service.ranking=0; osgi.service.blueprint.namespace="http://aries.apache.org/xmlns/jpa/v1.1.0"
+IBM-Feature-Version: 2
+Subsystem-Name: %name
+Subsystem-Description: %description
+Subsystem-Localization: OSGI-INF/l10n/subsystem
+IBM-Provision-Capability: osgi.identity; filter:="(&(type=osgi.subsystem.feature)(osgi.identity=com.ibm.websphere.appserver.blueprint-1.0))",
+ osgi.identity; filter:="(&(type=osgi.subsystem.feature)(osgi.identity=com.ibm.websphere.appserver.jpa-2.0))"
+IBM-Install-Policy: when-satisfied
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=2014.9.0.0
+Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

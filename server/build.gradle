@@ -1,0 +1,298 @@
+/*******************************************************************************
+* Copyright (c) 2015 IBM Corp.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
+
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'distribution'
+
+import org.apache.tools.ant.filters.*
+import org.apache.tools.ant.taskdefs.condition.Os
+
+import static org.apache.tools.ant.taskdefs.condition.Os.*
+import static java.lang.ProcessBuilder.Redirect.INHERIT
+
+archivesBaseName = 'larsServer'
+
+ext {
+    serverName = archivesBaseName
+    testServerName = 'testServer'
+}
+
+repositories {
+    mavenCentral();
+}
+
+configurations {
+    sharedLibs
+    providedCompile.extendsFrom sharedLibs
+    antTasks
+}
+
+dependencies {
+    compile group:'com.fasterxml.jackson.core', name:'jackson-core', version:'2.2.+'
+    compile group:'com.fasterxml.jackson.core', name:'jackson-databind', version:'2.2.+'
+    compile group:'com.fasterxml.jackson.core', name:'jackson-annotations', version:'2.2.+'
+    
+    sharedLibs group:'org.mongodb', name:'mongo-java-driver', version:'2.11.1'
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api", include: '**/*.jar')
+
+    testCompile group:'junit', name:'junit', version:'4.+'
+    testCompile group:'org.apache.httpcomponents', name:'httpclient', version:'4.3.+'
+    testCompile group:'org.apache.httpcomponents', name:'httpmime', version:'4.3.+'
+    
+    antTasks group:'net.wasdev.wlp.ant', name:'wlp-anttasks', version:'1.0'
+}
+
+clean {
+    dependsOn 'initAnt'
+    
+    doFirst {
+        // Clean will delete the server configuration
+        // so make sure we stop it first
+        [serverName,testServerName].each{ theServerName ->
+            if (isServerRunning(theServerName)) {
+                println("Stopping liberty server " + theServerName);
+                ant.server(operation: 'stop',
+                           installDir: libertyRoot,
+                           userDir: 'build/usr',
+                           serverName: theServerName)
+            }
+        }
+        
+        // Also stop mongod
+        if (isMongodRunning()) {
+            println("Stopping mongod")
+            stopMongod()
+        }
+    }
+}
+
+test {
+    dependsOn 'startTestMongod'
+    finalizedBy 'stopTestMongod'
+}
+
+task initAnt << {
+    // Load the Liberty ant tasks
+    ant.taskdef(resource: "net/wasdev/wlp/ant/antlib.xml",
+                classpath: configurations.antTasks.asPath)
+}
+
+// Collects all the files that go into the /usr directory in the right structure
+CopySpec usrDirSpec(String serverName) {
+    return copySpec {
+        from(configurations.sharedLibs) {
+            into 'shared/resources/libs'
+        }
+        
+        into("servers/${serverName}") {
+            from(war) {
+                into 'apps'
+            }
+            from 'config/server.xml'
+        }
+    }
+}
+
+distributions {
+    main {
+        baseName = archivesBaseName
+        contents {
+            into '/usr'
+            with usrDirSpec(serverName)
+        }
+    }
+}
+
+task createTestUsrDir (type: Copy) {
+    description 'Create the /usr directory for a test server'
+    // This is the same as the /usr directory for a production server but uses the testConfig.xml
+    
+    into 'build/usr'
+    with usrDirSpec(testServerName)
+    
+    rename 'server\\.xml', 'mainServer.xml'
+    
+    from('config/testServer.xml') {
+        into "servers/${testServerName}"
+        rename 'testServer\\.xml', 'server.xml'
+        filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPort,
+                                      'MONGO_PORT':testMongoPort])
+    }
+}
+
+task startTestServer {
+    description 'Start the server with a test config'
+    dependsOn initAnt
+    dependsOn createTestUsrDir
+    
+    onlyIf {!isServerRunning(testServerName)}
+    
+    doLast {
+        ant.server(operation: 'start',
+                   installDir: libertyRoot,
+                   userDir: 'build/usr',
+                   serverName: testServerName)
+    }
+}
+
+task stopTestServer {
+    description 'Shutdown the test server'
+    dependsOn initAnt
+    mustRunAfter startTestServer
+    
+    onlyIf { !startTestServer.state.skipped && isServerRunning(testServerName) }
+
+    doLast {
+        ant.server(operation: 'stop',
+                   installDir: libertyRoot,
+                   userDir: 'build/usr',
+                   serverName: testServerName)
+    }
+}
+
+boolean isServerRunning(String theServerName) {
+    if (file("build/usr/servers/${theServerName}").exists()) {
+        ant.server(operation: 'status',
+                   installDir: libertyRoot,
+                   userDir: 'build/usr',
+                   serverName: theServerName,
+                   resultProperty: 'serverStatus')
+        // Server status returns zero if server is running
+        return ant.properties.serverStatus == '0'
+    } else {
+        // Server directory does not exist, we cannot query
+        // the server state and it should not be running
+        return false;
+    }
+}
+
+task startTestMongod {
+
+    onlyIf { !isMongodRunning() }
+    
+    doLast {
+        delete("build/mongo");
+        mkdir("build/mongo/data");
+        
+        startMongod()
+    }
+}
+
+task stopTestMongod {
+
+    mustRunAfter startTestMongod
+
+    onlyIf { !startTestMongod.state.skipped && isMongodRunning() }
+    
+    doLast {
+        stopMongod()
+    }
+}
+
+File getMongodExecutable() {
+    File mongod = new File(property('mongodExecutable'))
+    if (!mongod.exists()) {
+        throw new Exception("Cannot find mongod executable")
+    }
+    return mongod
+}
+
+void startMongod() {
+    ProcessBuilder builder = new ProcessBuilder(
+        getMongodExecutable().getPath(),
+        '--port', testMongoPort,
+        '--pidfilepath', file('build/mongo/mongo.pid').getAbsolutePath(),
+        '--logpath', file('build/mongo/mongo.log').getAbsolutePath(),
+        '--dbpath', file('build/mongo/data').getAbsolutePath(),
+        '--bind_ip', 'localhost',
+        '--smallfiles'
+    )
+    builder.inheritIO()
+    Process p = builder.start()
+    
+    println("Waiting for mongo to start accepting connections")
+    Long startTime = System.currentTimeMillis();
+    while (!isMongodRunning() && System.currentTimeMillis() - startTime < 30000) {
+        sleep 1000
+    }
+    if (!isMongodRunning()) {
+        throw new Exception("Mongod still not accepting connections after 30s")
+    }
+}
+
+void stopMongod() {
+    stopProcess(file('build/mongo/mongo.pid').text)
+}
+
+void stopProcess(String pid) {
+    pid = pid.trim()
+    if (Os.isFamily(FAMILY_WINDOWS)) {
+        exec {
+            commandLine("taskkill", "/F", "/PID", pid)
+        }
+    } else {
+        exec {
+            commandLine("kill", pid);
+        }
+        println("Waiting for mongod to exit")
+        Long startTime = System.currentTimeMillis();
+        while (isMongodRunning() && System.currentTimeMillis() - startTime < 30000) {
+            sleep 1000
+        }
+        if (isMongodRunning()) {
+            println("Mongod still running, sending kill signal")
+            exec {
+                commandLine("kill", "-9", pid)
+            }
+        }
+    }
+}
+
+boolean isMongodRunning() {
+    // Checking if the mongo process is running is a bit difficult to do in a cross platform way
+    // so we'll just poke the port
+    try {
+        // Open and then immediately close a socket to the mongo port
+        new Socket("localhost", testMongoPort.toInteger()).close()
+    } catch (IOException e) {
+        // We should get an exception if the port is closed
+        return false
+    }
+    // If we get this far then there is at least something listening on the mongo port
+    return true
+}
+
+eclipse {
+    wtp {
+        component {
+            contextPath = '/'
+        }
+    }
+
+    classpath {
+        file {
+            whenMerged { classpath ->
+                classpath.entries.findAll{ e -> e.kind == 'src' && !e.path.startsWith('src/main/') }.each {
+                    e -> e.output = 'bin-' + (e.path =~ 'src/(.*)/')[0][1]
+                }
+            }
+        }
+    }
+}
+
+
+// vim: set si:

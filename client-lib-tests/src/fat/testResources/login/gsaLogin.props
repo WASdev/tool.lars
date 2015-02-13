@@ -1,0 +1,8 @@
+repository.url=https://blah.ibm.com/ma/v1
+softlayerUserId=<SoftlayerUserId>
+softlayerPassword=<SoftlayerPassword>
+attachmentBasicAuthUserId=<gsaUserId>
+attachmentBasicAuthPassword=<gsaPassword>
+userId=<user>
+password=<pwd>
+apiKey=1234
