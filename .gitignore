@@ -12,5 +12,5 @@ build
 */bin
 */bin-fat
 */bin-test
-.project
-.settings
+/.project
+/.settings
