@@ -351,18 +351,20 @@ public class RepositoryRESTResource {
     }
 
     /**
-     * Returns an empty installation manager repository.config file
+     * Returns a dummy installation manager repository.config file
      * <p>
      * This is needed so that a liberty repository can be added to installation manager through the
      * repository config panel.
      *
-     * @return an empty IM repository.config file
+     * @return a dummy IM repository.config file
      */
     @GET
     @Path("/repository.config")
     @Produces(MediaType.TEXT_PLAIN)
     public String getFakeImConfig() {
-        return "# repository.type=liberty\n";
+        return "LayoutPolicy=Composite\n"
+               + "LayoutPolicyVersion=0.0.0.1\n"
+               + "# repository.type=liberty.lars\n";
     }
 
     /**
