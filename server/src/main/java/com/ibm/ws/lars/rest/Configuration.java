@@ -17,6 +17,7 @@
 package com.ibm.ws.lars.rest;
 
 import javax.annotation.Resource;
+import javax.ws.rs.core.UriInfo;
 
 /**
  *
@@ -25,17 +26,12 @@ public class Configuration {
 
     @Resource(lookup = "lars/URLBase")
     private String urlBase;
-    // TODO this is a terrible default and we really want to be doing it based
-    // on the HTTP request. See Technical Debt 151580.
-    // Although, doing it by the HTTP request probably isn't going to work in
-    // all cases either.
-    private static final String DEFAULT_URL_BASE = "http://localhost:9080";
 
-    public String getURLBase() {
+    public String getURLBase(UriInfo uriInfo) {
         if (urlBase != null) {
             return urlBase;
         } else {
-            return DEFAULT_URL_BASE;
+            return uriInfo.getBaseUri().toString();
         }
     }
 }

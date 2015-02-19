@@ -50,7 +50,6 @@ limitations under the License.
     </library>
 
     <httpEndpoint httpPort="@HTTP_PORT@" id="defaultHttpEndpoint"/>
-    <jndiEntry id="lars/URLBase" jndiName="lars/URLBase" value="http://localhost:@HTTP_PORT@" />
 
     <!-- Use slightly safer write concern than the default -->
     <mongo id="mongo" libraryRef="mongo-lib" writeConcern="JOURNAL_SAFE">

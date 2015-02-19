@@ -30,12 +30,24 @@ public class Attachment extends RepositoryObject {
         super();
     }
 
+    /**
+     * Wrap an existing map of properties in an attachment object.
+     * <p>
+     * Changes to the attachment will be reflected in the original map.
+     *
+     * @param state the map of properties
+     */
     public Attachment(Map<String, Object> state) {
         super(state);
     }
 
-    public Attachment(Attachment clone) {
-        super(clone);
+    /**
+     * Copy another attachment, creating a new copy of the internal set of properties.
+     *
+     * @param toCopy the attachment to clone
+     */
+    public Attachment(Attachment toCopy) {
+        super(toCopy);
     }
 
     public enum LinkType {
