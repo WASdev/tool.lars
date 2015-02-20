@@ -16,7 +16,7 @@
 package com.ibm.ws.lars.rest;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
@@ -39,9 +39,10 @@ public class ImCompatibilityTest {
 
         Properties props = new Properties();
         props.load(new ByteArrayInputStream(response));
-        assertEquals("repository.config file was not an empty properties file", 0, props.size());
+        assertThat(props, hasEntry((Object) "LayoutPolicy", (Object) "Composite"));
+        assertThat(props, hasEntry((Object) "LayoutPolicyVersion", (Object) "0.0.0.1"));
 
         String responseString = new String(response, "UTF-8");
-        assertThat("repository.config did not contain liberty repository marker", responseString, containsString("repository.type=liberty"));
+        assertThat("repository.config did not contain liberty repository marker", responseString, containsString("repository.type=liberty.lars"));
     }
 }
