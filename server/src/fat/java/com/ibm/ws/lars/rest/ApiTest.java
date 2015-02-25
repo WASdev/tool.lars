@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.entity.ContentType;
 import org.junit.After;
@@ -42,6 +43,13 @@ import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentList;
+import com.ibm.ws.lars.testutils.FatUtils;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 
 /**
  * Tests for the LARS REST API, which is designed to be compatible with the legacy Massive server.
@@ -668,5 +676,50 @@ public class ApiTest {
             littleAsset.setProperty(values[i], values[i + 1]);
         }
         return repository.addAssetNoAttachments(littleAsset);
+    }
+
+    /**
+     * This test is for the handling of internal server errors. It provokes the error by directly
+     * inserting bad data into the mongo database, and then sending a rest query to attempt (and
+     * fail) to retrieve it.
+     *
+     * @throws IOException
+     * @throws ParseException
+     * @throws InvalidJsonAssetException
+     */
+    @Test
+    public void test500Mapping() throws InvalidJsonAssetException, ParseException, IOException {
+
+        // First, make a direct connection to the database, and insert a dodgy asset
+
+        String ID = "_id";
+        MongoClient mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
+        mongoClient.setWriteConcern(WriteConcern.JOURNAL_SAFE);
+        DB db = mongoClient.getDB(FatUtils.TEST_DB_NAME);
+        DBCollection assetCollection = db.getCollection("assets");
+        DBObject obj = new BasicDBObject();
+        obj.put("foo", "bar");
+        assetCollection.insert(obj);
+
+        // Check that the 'asset' can be retrieved from the database.
+        Object id = obj.get(ID);
+        BasicDBObject query = new BasicDBObject(ID, id);
+        DBObject resultObj = assetCollection.findOne(query);
+        if (resultObj == null) {
+            fail("The inserted 'asset' couldn't be found in the database using " + id);
+        }
+
+        // Check that the 'asset' can be retrieved via the REST interface
+        AssetList assets = repository.doGetAllAssets();
+        assertEquals("Unexpected number of assets retrieved", 1, assets.size());
+        Asset retrievedAsset = assets.get(0);
+
+        // Attempt to update the state of the 'asset'. This should fail and cause
+        // a 500 error
+        String message = repository.updateAssetState(retrievedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), 500);
+        assertEquals("Message was wrong", "Internal server error, please contact the server administrator", repository.parseErrorObject(message));
+
+        db.dropDatabase();
+        mongoClient.close();
     }
 }
