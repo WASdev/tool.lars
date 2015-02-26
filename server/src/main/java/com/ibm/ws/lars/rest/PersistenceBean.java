@@ -18,6 +18,7 @@ package com.ibm.ws.lars.rest;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,6 +40,7 @@ import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
 import com.ibm.ws.lars.rest.model.AttachmentList;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -67,6 +69,9 @@ public class PersistenceBean implements Persistor {
     private static final String ASSETS_COLLECTION = "assets";
 
     private static final String ATTACHMENTS_COLLECTION = "attachments";
+
+    private static final List<String> searchIndexFields =
+            Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
 
     /** The _id field of a MongoDB object */
     private static String ID = "_id";
@@ -124,7 +129,9 @@ public class PersistenceBean implements Persistor {
                 convertObjectIdToHexString(obj);
                 // BSON spec says that all keys have to be strings
                 // so this should be safe.
-                mapList.add(obj.toMap());
+                @SuppressWarnings("unchecked")
+                Map<String, Object> assetMap = obj.toMap();
+                mapList.add(assetMap);
             }
         }
 
@@ -133,9 +140,9 @@ public class PersistenceBean implements Persistor {
 
     /** {@inheritDoc} */
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters) {
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
 
-        if (filters.size() == 0) {
+        if (filters.size() == 0 && searchTerm == null) {
             return retrieveAllAssets();
         }
 
@@ -157,7 +164,28 @@ public class PersistenceBean implements Persistor {
             }
         }
 
-        return query(filterObject);
+        DBObject sortObject = null;
+
+        if (searchTerm != null) {
+            BasicDBObject value = new BasicDBObject("$search", searchTerm);
+            BasicDBObject searchObject = new BasicDBObject("$text", value);
+            filterList.add(searchObject);
+            sortObject = new BasicDBObject("score", new BasicDBObject("$meta", "textScore"));
+        }
+
+        List<DBObject> results = query(filterObject, sortObject);
+        List<Map<String, Object>> assets = new ArrayList<Map<String, Object>>();
+        for (DBObject result : results) {
+            // BSON spec says that all keys have to be strings
+            // so this should be safe.
+            @SuppressWarnings("unchecked")
+            Map<String, Object> resultMap = result.toMap();
+            if (sortObject != null) {
+                resultMap.remove("score");
+            }
+            assets.add(resultMap);
+        }
+        return AssetList.createAssetListFromMaps(assets);
     }
 
     private BasicDBObject createFilterObject(String field, Condition condition) {
@@ -174,26 +202,29 @@ public class PersistenceBean implements Persistor {
         return new BasicDBObject(field, value);
     }
 
-    private AssetList query(DBObject filterObject) {
+    private List<DBObject> query(DBObject filterObject, DBObject sortObject) {
+
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("query: Querying database with query object " + filterObject);
+            logger.fine("query: sort object " + sortObject);
         }
 
-        List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        try (DBCursor cursor = getAssetCollection().find(filterObject)) {
+        List<DBObject> results = new ArrayList<DBObject>();
+        try (DBCursor cursor = getAssetCollection().find(filterObject, sortObject)) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("query: found " + cursor.count() + " assets.");
             }
+
+            if (sortObject != null) {
+                cursor.sort(sortObject);
+            }
+
             for (DBObject obj : cursor) {
                 convertObjectIdToHexString(obj);
-                // BSON spec says that all keys have to be strings
-                // so this should be safe.
-                results.add(obj.toMap());
+                results.add(obj);
             }
         }
-
-        return AssetList.createAssetListFromMaps(results);
-
+        return results;
     }
 
     @Override
@@ -216,7 +247,9 @@ public class PersistenceBean implements Persistor {
         convertObjectIdToHexString(resultObj);
         // All entries in a Mongo document have string keys, this is part of
         // the BSON spec, so this should be safe. Not very nice though.
-        return Asset.createAssetFromMap(resultObj.toMap());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> asset = resultObj.toMap();
+        return Asset.createAssetFromMap(asset);
     }
 
     @Override
@@ -398,5 +431,23 @@ public class PersistenceBean implements Persistor {
     @Override
     public String allocateNewId() {
         return new ObjectId().toStringMongod();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initialize() {
+        // Make sure the fields we want to query are indexed
+        DBCollection assets = db.getCollection(ASSETS_COLLECTION);
+        DBCollection attachments = db.getCollection(ATTACHMENTS_COLLECTION);
+
+        // Add text index
+        BasicDBObjectBuilder textIndex = BasicDBObjectBuilder.start();
+        for (String indexField : searchIndexFields) {
+            textIndex.add(indexField, "text");
+        }
+        assets.ensureIndex(textIndex.get());
+
+        // Add Attachment(assetId) index
+        attachments.ensureIndex(new BasicDBObject("assetId", 1));
     }
 }

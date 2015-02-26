@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -579,19 +580,17 @@ public class ApiTest {
         AssetList assets2 = repository.getAllAssets("ben=bill");
         assertEquals("Shouldn't have retrieved any assets", 0, assets2.size());
 
-        // This is to test that various values are ignored as filters.
-        // This is because Massive uses these for other purposes, but unhelpfully,
+        // This is to test that various parameters are ignored as filters by the server.
+        // This is because Massive uses them for other purposes, but unhelpfully,
         // they are not clearly distinguished from filter parameters.
-        // LARS doesn't currently support these operations
+        // LARS doesn't currently support the operations defined by these parameters,
+        // with the exception of 'q', which is used for searching
         AssetList assets3 = repository.getAllAssets("limit=nolimit");
 
         assertEquals("limit should not be treated as a filter, so all assets should be retrieved", 9, assets3.size());
 
         AssetList assets4 = repository.getAllAssets("offset=bigoffset");
         assertEquals("offset should not be treated as a filter, so all assets should be retrieved", 9, assets4.size());
-
-        AssetList assets7 = repository.getAllAssets("q=searchquery");
-        assertEquals("q should not be treated as a filter, so all assets should be retrieved", 9, assets7.size());
 
         AssetList assets8 = repository.getAllAssets("fields=fields_to_search_on");
         assertEquals("fields should not be treated as a filter, so all assets should be retrieved", 9, assets8.size());
@@ -603,6 +602,54 @@ public class ApiTest {
         AssetList assets6 = repository.getAllAssets("foo=randomvalue&foo=bar&foo=barry");
         assertEquals("Unexpected number of assets retrieved", 1, assets6.size());
         assertEquals("The wrong asset was retrieved.", testAsset3.get_id(), assets6.get(0).get_id());
+
+    }
+
+    @Test
+    public void testGetAllAssetsWithSearch() throws IOException, InvalidJsonAssetException {
+
+        addLittleAsset("foo", "bar");
+        addLittleAsset("foo", "bar");
+        addLittleAsset("foo", "barry");
+        addLittleAsset("foo", "baz");
+        addLittleAsset("fooser", "bar");
+        addLittleAsset("limit", "nolimit");
+        addLittleAsset("offset", "bigoffset");
+
+        Asset testAsset8 = addLittleAsset(new String[] { "foo", "baz", "bill", "ben", "jack", "jill", "name", "searchable" });
+        addLittleAsset(new String[] { "foo", "baz", "bill", "ben", "john", "janet" });
+
+        AssetList assets7 = repository.getAllAssets("q=searchable");
+        assertEquals("Wrong number of assets retrieved", 1, assets7.size());
+        assertEquals("The wrong asset was retrieved.", testAsset8.get_id(), assets7.get(0).get_id());
+
+        AssetList assets1 = repository.getAllAssets("q=searchable&foo=baz");
+        assertEquals("Wrong number of assets retrieved", 1, assets1.size());
+        assertEquals("The wrong asset was retrieved.", testAsset8.get_id(), assets1.get(0).get_id());
+
+        // An empty search is treated is 'get everything' by massive.
+        AssetList assets2 = repository.getAllAssets("q=");
+        assertEquals("Wrong number of assets retrieved", 9, assets2.size());
+
+        // Testing phrases
+        Asset testAsset9 = addLittleAsset(new String[] { "bill", "ben", "jack", "jill", "name", "a long name which can be searched" });
+        Asset testAsset10 = addLittleAsset(new String[]
+        { "bill", "ben", "jack", "jill", "name", "long", "description", "name", "tags", "which can" });
+
+        // This should get just 9, as it is searching for a phrase
+        String searchQuery = URLEncoder.encode("\"long name which\"", StandardCharsets.UTF_8.name());
+        AssetList assets9 = repository.getAllAssets("q=" + searchQuery);
+        assertEquals("Wrong number of assets retrieved", 1, assets9.size());
+        assertEquals("The wrong asset was retrieved.", testAsset9.get_id(), assets9.get(0).get_id());
+
+        // This should get both 9 and 10 as it should be searching on separate words
+        String searchQuery2 = URLEncoder.encode("name long can", StandardCharsets.UTF_8.name());
+        AssetList assets10 = repository.getAllAssets("q=" + searchQuery2);
+        assertEquals("Wrong number of assets retrieved", 2, assets10.size());
+        String id_one = assets10.get(0).get_id();
+        String id_two = assets10.get(1).get_id();
+        assertTrue("The wrong asset was retrieved", id_one.equals(testAsset9.get_id()) || id_one.equals(testAsset10.get_id()));
+        assertTrue("The wrong asset was retrieved", id_two.equals(testAsset9.get_id()) || id_two.equals(testAsset10.get_id()));
 
     }
 
@@ -719,7 +766,9 @@ public class ApiTest {
         String message = repository.updateAssetState(retrievedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), 500);
         assertEquals("Message was wrong", "Internal server error, please contact the server administrator", repository.parseErrorObject(message));
 
-        db.dropDatabase();
+        // Remove dodgy data from the database for the next test. Don't drop anything
+        // as it will remove the database indexing.
+        assetCollection.remove(new BasicDBObject());
         mongoClient.close();
     }
 }

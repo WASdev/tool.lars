@@ -43,9 +43,13 @@ public interface Persistor {
      * This method will return each asset where <b>all</b> of the the fields indicated by a key is a
      * match for <b>any</b> of the conditions in the corresponding list.
      *
-     * If the filter map is empty, all entries in the store will be returned.
+     * The search string may be null if not required.
+     *
+     * If the filter map is empty, and the searchTerm is null, all entries in the store will be
+     * returned.
+     *
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters);
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm);
 
     /**
      * Retrieve a single asset by its id.
@@ -126,4 +130,9 @@ public interface Persistor {
      * before creating it in the persistence store.
      */
     public String allocateNewId();
+
+    /**
+     * Do any work that should be done to initialize any data stores
+     */
+    public void initialize();
 }
