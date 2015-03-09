@@ -2,6 +2,8 @@
 
 The Liberty Asset Repository Service implements a repository for Liberty features that you can deploy locally. You can host features you have developed and features retrieved from the Websphere Liberty Repository and then use the new assetManager command to install them into your Liberty servers.
 
+LARS is currently pre-release. Although it has been tested as a repository for a Liberty server, we recommend it is currently used for evaluation only. 
+
 # Building
 
 Make sure you have the following prerequisites installed: (older or newer versions may work but this is what we've tested with)
