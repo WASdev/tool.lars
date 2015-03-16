@@ -30,6 +30,8 @@ Unzip larsServer.zip into the install directory of your liberty server. (The one
 
 Open `usr/servers/larsServer/server.xml` and follow the directions in the comments to create users and assign them to User and Administrator roles in the larsServer application
 
+Find the JNDI entry named `lars/URLBase` and edit the value to point to the external URL of the server.
+
 If your mongodb server is not running on the same machine as your liberty server or uses authentication, you must also edit the mongodb configuration in the server.xml
 
 Start mongodb
