@@ -10,7 +10,7 @@ Make sure you have the following prerequisites installed: (older or newer versio
 
 * [gradle v2.0](http://gradle.org/downloads) 
 * [mongoDB v2.6](https://www.mongodb.org/downloads)
-* [WAS Liberty Profile 8.5.5.4](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-8.5.5-wlp-developers-runtime)
+* [WAS Liberty Profile 8.5.5.5](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-8.5.5-wlp-runtime)
 * [MongoDB Integration 2.0 Feature](https://developer.ibm.com/assets/wasdev/#asset/features-com.ibm.websphere.appserver.mongodb-2.0)
 * A Java 7 JDK
 
