@@ -37,6 +37,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
+import com.ibm.ws.lars.testutils.FatUtils;
 
 /**
  * Test that security permissions work correctly.
@@ -53,14 +54,14 @@ public class PermissionTest {
     /**
      * URL for the test instance where read operations are restricted to users with the User role.
      */
-    private static final String RESTRICTED_URL = "http://localhost:9085/ma/v1";
+    private static final String RESTRICTED_URL = RepositoryContext.DEFAULT_URL;
 
     /**
      * URL for the test instance where read operations are unrestricted.
      * <p>
      * Write operations are still restricted to users with the Admin role.
      */
-    private static final String UNRESTRICTED_URL = "http://localhost:9085/unrestricted/ma/v1";
+    private static final String UNRESTRICTED_URL = "http://localhost:" + FatUtils.LIBERTY_PORT + "/unrestricted" + FatUtils.LARS_APPLICATION_ROOT;
 
     /**
      * The available roles that we expect test users to be mapped to by the test server

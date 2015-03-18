@@ -41,6 +41,7 @@ import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
+import com.ibm.ws.lars.testutils.FatUtils;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
@@ -65,7 +66,7 @@ public class PersistenceBeanTest {
         //
         // Also we currently don't bother with Mongo security but clearly we
         // might like to think about that at some point
-        mongoClient = new MongoClient("localhost:27020");
+        mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
         mongoClient.setWriteConcern(WRITE_CONCERN);
 
         db = mongoClient.getDB(DB_NAME);

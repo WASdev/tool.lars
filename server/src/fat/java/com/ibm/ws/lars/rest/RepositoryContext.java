@@ -65,6 +65,7 @@ import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentList;
+import com.ibm.ws.lars.testutils.FatUtils;
 
 /**
  * Context used by testcases to perform HTTP operations against one LARS server. Tests should use
@@ -92,7 +93,7 @@ public class RepositoryContext extends ExternalResource {
     private HttpHost targetHost;
     private HttpClientContext context;
 
-    private static final String DEFAULT_URL = "http://localhost:9085/ma/v1";
+    public static final String DEFAULT_URL = "http://localhost:" + FatUtils.LIBERTY_PORT + FatUtils.LARS_APPLICATION_ROOT;
 
     /**
      * Special constant that can be passed as an expected response code to indicate that either a
