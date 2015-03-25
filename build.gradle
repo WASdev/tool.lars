@@ -18,6 +18,9 @@ apply plugin: 'eclipse'
 
 boolean haveAnyTestsFailed = false;
 
+loadProperties("${rootProject.rootDir}/test-utils/src/main/resources/config.properties");
+
+
 // General configuration for all projects
 // Set up support for fatTests which rely on a running test server
 subprojects {
@@ -166,4 +169,21 @@ task afterEclipseImport << {
     XmlNodePrinter printer = new XmlNodePrinter(new PrintWriter(file('.project')))
     printer.preserveWhitespace = true
     printer.print(node)
+}
+
+// Function to load configuration properties from a normal
+// java properties file. This seems to be necessary to allow
+// properties that are visible to both gradle script and java
+// testcases
+void loadProperties(String fileName) {
+    Properties properties = new Properties();
+    File propertiesFile = new File(fileName);
+    propertiesFile.withInputStream {
+        properties.load(it);
+    }
+        
+    properties.propertyNames().each {
+        project.ext.set(it, properties.get(it));
+    }
+    
 }

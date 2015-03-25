@@ -16,9 +16,18 @@
 
 package com.ibm.ws.lars.testutils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 public class FatUtils {
 
     public static final String SCRIPT;
+
+    public static final String DB_PORT;
+    public static final String LIBERTY_PORT;
+    public static final String TEST_DB_NAME;
+    public static final String LARS_APPLICATION_ROOT;
 
     static {
         if (System.getProperty("os.name").startsWith("Windows")) {
@@ -26,13 +35,26 @@ public class FatUtils {
         } else {
             SCRIPT = "client/bin/larsClient";
         }
+
+        Properties defaultConfig = new Properties();
+        InputStream propsStream = FatUtils.class.getClassLoader().getResourceAsStream("config.properties");
+        try {
+            defaultConfig.load(propsStream);
+        } catch (IOException e) {
+            // Can't recover from this
+            throw new RuntimeException("Unable to find config.properties file for database/server configuration");
+        }
+
+        DB_PORT = defaultConfig.getProperty("testMongoPort");
+        LIBERTY_PORT = defaultConfig.getProperty("testLibertyPort");
+        TEST_DB_NAME = defaultConfig.getProperty("testDbName");
+        LARS_APPLICATION_ROOT = defaultConfig.getProperty("larsApplicationRoot");
+
     }
 
-    public static final String SERVER_URL = "http://localhost:9085/ma/v1";
+    public static final String SERVER_URL = "http://localhost:" + LIBERTY_PORT + LARS_APPLICATION_ROOT;
 
-    public static final String DEFAULT_DB_NAME = "larsDB";
-
-    public static final String DEFAULT_HOST_AND_PORT = "localhost:27020";
+    public static final String DEFAULT_HOST_AND_PORT = "localhost:" + DB_PORT;
 
     private static final String ADMIN_USERNAME = "admin";
 
@@ -44,7 +66,7 @@ public class FatUtils {
 
     public static final RepositoryFixture FAT_REPO = new RepositoryFixture(SERVER_URL,
             DEFAULT_HOST_AND_PORT,
-            DEFAULT_DB_NAME,
+            TEST_DB_NAME,
             ADMIN_USERNAME,
             ADMIN_PASSWORD,
             USER_ROLE_USERNAME,

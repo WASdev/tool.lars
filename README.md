@@ -18,6 +18,9 @@ Either clone the repository or download and extract a snapshot
 
 Edit `server/gradle.properties` to point to your mongodb and liberty installation directories.
 
+Have a look at `test-utils/src/main/resources/config.properties` and check that you are happy with the
+specified test ports
+
 Launch gradle to build the code, run the tests and produce the distribution archives.
 
     gradle build dist
