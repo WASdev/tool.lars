@@ -58,7 +58,7 @@ limitations under the License.
         <ports>@MONGO_PORT@</ports>
     </mongo>
     
-    <mongoDB databaseName="larsDB" jndiName="mongo/larsDB" mongoRef="mongo"/>
+    <mongoDB databaseName="@TEST_DB_NAME@" jndiName="mongo/larsDB" mongoRef="mongo"/>
 
     <webApplication id="com.ibm.ws.lars.rest" location="larsServer.war" name="com.ibm.ws.lars.rest" contextRoot="/">
          <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>

@@ -53,6 +53,7 @@ dependencies {
     testCompile group:'org.hamcrest', name:'hamcrest-library', version:'1.+'
     testCompile group:'org.apache.httpcomponents', name:'httpclient', version:'4.3.+'
     testCompile group:'org.apache.httpcomponents', name:'httpmime', version:'4.3.+'
+    testCompile project(':test-utils')
     
     antTasks group:'net.wasdev.wlp.ant', name:'wlp-anttasks', version:'1.0'
 }
@@ -131,6 +132,7 @@ task createTestUsrDir (type: Copy) {
         into "servers/${testServerName}"
         rename 'testServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPort,
+                                      'TEST_DB_NAME':testDbName,
                                       'MONGO_PORT':testMongoPort])
     }
 }
