@@ -17,13 +17,11 @@
 package com.ibm.ws.lars.rest;
 
 /**
- *
+ * An exception representing a non-recoverable error in the repository. This would typically
+ * translate to a 500 error
  */
 public class RepositoryException extends RuntimeException {
 
-    /**
-     * @param string
-     */
     public RepositoryException(String message) {
         super(message);
     }
@@ -32,15 +30,6 @@ public class RepositoryException extends RuntimeException {
         super(message, cause);
     }
 
-    /**
-     * @param string
-     * @param e
-     */
-    public RepositoryException(String message, InvalidJsonAssetException e) {
-        super(message, e);
-    }
-
-    /**  */
     private static final long serialVersionUID = 1L;
 
 }

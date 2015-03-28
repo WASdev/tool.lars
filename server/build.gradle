@@ -53,7 +53,12 @@ dependencies {
     testCompile group:'org.hamcrest', name:'hamcrest-library', version:'1.+'
     testCompile group:'org.apache.httpcomponents', name:'httpclient', version:'4.3.+'
     testCompile group:'org.apache.httpcomponents', name:'httpmime', version:'4.3.+'
+    testCompile group:'org.jmockit', name:'jmockit', version:'1.15'
     testCompile project(':test-utils')
+    
+    // The unit tests need some Liberty classes at runtime, but they should
+    // not be compiling against these.
+    testRuntime fileTree(dir: "${libertyRoot}/lib", include: '*slf4*.jar')
     
     antTasks group:'net.wasdev.wlp.ant', name:'wlp-anttasks', version:'1.0'
 }
@@ -85,6 +90,8 @@ clean {
 test {
     dependsOn 'startTestMongod'
     finalizedBy 'stopTestMongod'
+    File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
+    jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
 }
 
 task initAnt << {
@@ -286,15 +293,17 @@ eclipse {
         }
     }
 
+    
     classpath {
         file {
             whenMerged { classpath ->
-                classpath.entries.findAll{ e -> e.kind == 'src' && !e.path.startsWith('src/main/') }.each {
+                classpath.entries.findAll{ e -> e.kind == 'src' && e.path.startsWith('src/') && !e.path.startsWith('src/main/') }.each {
                     e -> e.output = 'bin-' + (e.path =~ 'src/(.*)/')[0][1]
                 }
             }
         }
     }
+    
 }
 
 

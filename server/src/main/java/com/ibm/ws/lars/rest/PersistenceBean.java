@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -59,6 +61,8 @@ import com.mongodb.gridfs.GridFSInputFile;
  */
 @Singleton
 public class PersistenceBean implements Persistor {
+
+    private static final Logger logger = Logger.getLogger(PersistenceBean.class.getCanonicalName());
 
     private static final String ASSETS_COLLECTION = "assets";
 
@@ -113,6 +117,9 @@ public class PersistenceBean implements Persistor {
         List<Map<String, Object>> mapList = new ArrayList<>();
 
         try (DBCursor cursor = getAssetCollection().find()) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("retrieveAllAssets: found " + cursor.count() + " assets.");
+            }
             for (DBObject obj : cursor) {
                 convertObjectIdToHexString(obj);
                 // BSON spec says that all keys have to be strings
@@ -168,8 +175,15 @@ public class PersistenceBean implements Persistor {
     }
 
     private AssetList query(DBObject filterObject) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("query: Querying database with query object " + filterObject);
+        }
+
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         try (DBCursor cursor = getAssetCollection().find(filterObject)) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("query: found " + cursor.count() + " assets.");
+            }
             for (DBObject obj : cursor) {
                 convertObjectIdToHexString(obj);
                 // BSON spec says that all keys have to be strings
@@ -213,6 +227,10 @@ public class PersistenceBean implements Persistor {
 
         DBCollection coll = getAssetCollection();
 
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("createAsset: inserting object into the database: " + obj);
+        }
+
         coll.insert(obj);
 
         Asset createdAsset = null;
@@ -239,6 +257,12 @@ public class PersistenceBean implements Persistor {
 
         DBObject obj = new BasicDBObject(asset.getProperties());
         convertHexIdToObjectId(obj);
+
+        if (logger.isLoggable(Level.FINE)) {
+            String msg = "updateAsset: query object: " + query + "\nupdated asset:" + obj;
+            logger.fine(msg);
+        }
+
         coll.update(query, obj);
 
         return retrieveAsset(objId);
@@ -284,6 +308,9 @@ public class PersistenceBean implements Persistor {
         convertHexIdToObjectId(state);
 
         DBCollection coll = getAttachmentCollection();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("createAttachmentMetadata: inserting new attachment " + state);
+        }
         coll.insert(state);
         Object idObject = state.get(ID);
         String id;
@@ -319,8 +346,7 @@ public class PersistenceBean implements Persistor {
 
     @Override
     public void deleteAttachmentContent(String attachmentId) {
-        GridFS gfs = new GridFS(db);
-        gfs.remove(attachmentId);
+        gridFS.remove(attachmentId);
     }
 
     @Override
@@ -333,12 +359,17 @@ public class PersistenceBean implements Persistor {
     public AttachmentList findAttachmentsForAsset(String assetId) {
         BasicDBObject query = new BasicDBObject("assetId", assetId);
         ArrayList<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        for (DBObject attachment : getAttachmentCollection().find(query)) {
-            convertObjectIdToHexString(attachment);
+        try (DBCursor cursor = getAttachmentCollection().find(query)) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("findAttachmentsForAsset: found " + cursor.count() + " attachments for asset " + assetId);
+            }
 
-            @SuppressWarnings("unchecked")
-            Map<String, Object> oneResult = attachment.toMap();
-            results.add(oneResult);
+            for (DBObject attachment : cursor) {
+                convertObjectIdToHexString(attachment);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> oneResult = attachment.toMap();
+                results.add(oneResult);
+            }
         }
 
         return AttachmentList.createAttachmentListFromMaps(results);

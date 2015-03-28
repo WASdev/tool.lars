@@ -26,6 +26,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -84,6 +86,8 @@ public class RepositoryRESTResource {
     private static final String USER_ROLE = "User";
     private static final String ADMIN_ROLE = "Administrator";
 
+    private static final Logger logger = Logger.getLogger(RepositoryRESTResource.class.getCanonicalName());
+
     @Inject
     private AssetServiceLayer assetService;
 
@@ -111,6 +115,10 @@ public class RepositoryRESTResource {
     public Response getAssets(@Context UriInfo info) throws JsonProcessingException {
 
         MultivaluedMap<String, String> params = info.getQueryParameters();
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getAssets called with query parameters: " + info.getRequestUri().getRawQuery());
+        }
 
         // Massive appears to use any query parameters as filters, apart from a
         // few exceptions. For now, remove the exceptions and ignore them,
@@ -176,6 +184,10 @@ public class RepositoryRESTResource {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(ADMIN_ROLE)
     public Response postAssets(String assetJSON) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("postAssets called with json content:\n" + assetJSON);
+        }
+
         Asset asset = null;
         try {
             asset = assetService.createAsset(Asset.deserializeAssetFromJson(assetJSON));
@@ -192,6 +204,10 @@ public class RepositoryRESTResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAsset(@PathParam("assetId") String assetId) throws InvalidIdException, NonExistentArtefactException {
 
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getAsset called with id of '" + assetId + "'");
+        }
+
         sanitiseId(assetId, ArtefactType.ASSET);
 
         Asset asset = assetService.retrieveAsset(assetId);
@@ -203,6 +219,10 @@ public class RepositoryRESTResource {
     @Path("/assets/{assetId}")
     @RolesAllowed(ADMIN_ROLE)
     public Response deleteAsset(@PathParam("assetId") String assetId) throws InvalidIdException, NonExistentArtefactException {
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("deleteAsset called with id of " + assetId);
+        }
 
         sanitiseId(assetId, ArtefactType.ASSET);
 
@@ -222,6 +242,10 @@ public class RepositoryRESTResource {
                                                 @Context HttpServletRequest request,
                                                 BufferedInMultiPart inMultiPart
             ) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("createAttachmentWithContent called, name: " + name + " assetId: " + assetId);
+        }
 
         sanitiseId(assetId, ArtefactType.ASSET);
 
@@ -258,6 +282,11 @@ public class RepositoryRESTResource {
                                               @Context HttpServletRequest request,
                                               String bodyJSON) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
 
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("createAttachmentNoContent called, name: " + name
+                        + " assetId: " + assetId + " json content:\n" + bodyJSON);
+        }
+
         sanitiseId(assetId, ArtefactType.ASSET);
 
         Attachment attachmentMetadata = Attachment.jsonToAttachment(bodyJSON);
@@ -272,6 +301,9 @@ public class RepositoryRESTResource {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ ADMIN_ROLE, USER_ROLE })
     public Response getAttachments(@PathParam("assetId") String assetId) throws IOException, ServletException, InvalidJsonAssetException, InvalidIdException {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getAttachments called for assetId: " + assetId);
+        }
 
         sanitiseId(assetId, ArtefactType.ASSET);
 
@@ -287,6 +319,10 @@ public class RepositoryRESTResource {
     public Response deleteAttachment(@PathParam("assetId") String assetId,
                                      @PathParam("attachmentId") String attachmentId) throws InvalidIdException {
 
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("deleteAttachment called for assetId: " + assetId + " and attachmentId: " + attachmentId);
+        }
+
         sanitiseId(assetId, ArtefactType.ASSET);
         sanitiseId(attachmentId, ArtefactType.ATTACHMENT);
 
@@ -300,6 +336,12 @@ public class RepositoryRESTResource {
     public Response getAttachmentContent(@PathParam("assetId") String assetId,
                                          @PathParam("attachmentId") String attachmentId,
                                          @PathParam("name") String name) throws InvalidIdException, NonExistentArtefactException {
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getAttachmentContent called for assetId: " + assetId
+                        + " attachmentId: " + attachmentId + " name: " + name);
+        }
+
         sanitiseId(assetId, ArtefactType.ASSET);
         sanitiseId(attachmentId, ArtefactType.ATTACHMENT);
 
@@ -309,8 +351,7 @@ public class RepositoryRESTResource {
             StreamingOutput stream = new StreamingOutput() {
                 @Override
                 public void write(OutputStream os) throws IOException {
-                    // I hate Java for making me do this
-                    // TODO so this could move to a utility function
+                    // TODO This could move to a utility function
                     try {
                         byte[] buffer = new byte[1024];
                         int len;
@@ -338,6 +379,10 @@ public class RepositoryRESTResource {
     @RolesAllowed(ADMIN_ROLE)
     public Response updateAssetState(@PathParam("assetId") String assetId, String actionJSON)
             throws NonExistentArtefactException, RepositoryResourceLifecycleException {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("updateAssetState called for assetId: " + assetId + " action: " + actionJSON);
+        }
+
         Asset.StateAction action = getStateAction(actionJSON);
         if (action == null) {
             String error = "Either the supplied JSON was badly formed, or it did not contain a valid 'action' field: " + actionJSON;
@@ -362,6 +407,10 @@ public class RepositoryRESTResource {
     @Path("/repository.config")
     @Produces(MediaType.TEXT_PLAIN)
     public String getFakeImConfig() {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getFakeImConfig called");
+        }
+
         return "LayoutPolicy=Composite\n"
                + "LayoutPolicyVersion=0.0.0.1\n"
                + "# repository.type=liberty.lars\n";
