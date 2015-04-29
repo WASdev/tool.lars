@@ -140,7 +140,8 @@ task createTestUsrDir (type: Copy) {
         rename 'testServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPort,
                                       'TEST_DB_NAME':testDbName,
-                                      'MONGO_PORT':testMongoPort])
+                                      'MONGO_PORT':testMongoPort,
+                                      'LIBERTY_TRACE_SPEC':libertyTraceSpec])
     }
 }
 

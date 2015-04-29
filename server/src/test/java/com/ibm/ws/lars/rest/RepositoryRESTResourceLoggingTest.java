@@ -69,7 +69,7 @@ public class RepositoryRESTResourceLoggingTest {
 
         new Expectations() {
             {
-                info.getQueryParameters();
+                info.getQueryParameters(false);
 
                 logger.isLoggable(Level.FINE);
                 result = true;

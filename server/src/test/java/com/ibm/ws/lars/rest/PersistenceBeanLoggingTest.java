@@ -75,7 +75,7 @@ public class PersistenceBeanLoggingTest {
                 logger.fine("query: found " + 0 + " assets.");
             }
         };
-        Deencapsulation.invoke(createTestBean(), "query", filter);
+        Deencapsulation.invoke(createTestBean(), "query", filter, new BasicDBObject());
     }
 
     @Test

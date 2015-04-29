@@ -27,10 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import com.ibm.ws.lars.rest.AssetPersistenceException;
-import com.ibm.ws.lars.rest.InvalidJsonAssetException;
-import com.ibm.ws.lars.rest.NonExistentArtefactException;
-import com.ibm.ws.lars.rest.Persistor;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -70,7 +66,7 @@ public class MemoryPersistor implements Persistor {
     }
 
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters) {
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 
@@ -172,7 +168,8 @@ public class MemoryPersistor implements Persistor {
      * (non-Javadoc)
      *
      * @see
-     * com.ibm.ws.lars.rest.Persistor#createAttachmentMetadata(com.ibm.ws.lars.rest.model.Attachment)
+     * com.ibm.ws.lars.rest.Persistor#createAttachmentMetadata(com.ibm.ws.lars.rest.model.Attachment
+     * )
      */
     @Override
     public Attachment createAttachmentMetadata(Attachment attachment) {
@@ -242,6 +239,12 @@ public class MemoryPersistor implements Persistor {
     @Override
     public String allocateNewId() {
         return getNextId();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initialize() {
+        // Nothing to be done
     }
 
 }

@@ -19,6 +19,9 @@ package com.ibm.ws.lars.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -114,24 +117,36 @@ public class RepositoryRESTResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAssets(@Context UriInfo info) throws JsonProcessingException {
 
-        MultivaluedMap<String, String> params = info.getQueryParameters();
-
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssets called with query parameters: " + info.getRequestUri().getRawQuery());
         }
+
+        // Specifiying 'true' results in decoded % sequences, but not '+' for spaces
+        // which is a bit odd. Hence the step below to decode manually
+        MultivaluedMap<String, String> params = info.getQueryParameters(false);
+        decodeParams(params);
 
         // Massive appears to use any query parameters as filters, apart from a
         // few exceptions. For now, remove the exceptions and ignore them,
         // so the relevant features can be introduced in the future if required.
         // 'limit' and 'offset' - used for pagination
-        // 'q' and 'fields' - used for search
         // 'apiKey' - used to allow different market places on the same server
         // TODO: Removing these should probably cause a log warning message
         params.remove("limit");
         params.remove("offset");
-        params.remove("q");
         params.remove("fields");
         params.remove("apiKey");
+
+        // A parameter of 'q' is a search term
+        String searchTerm = null;
+        List<String> searches = params.remove("q");
+        if (searches != null && searches.size() != 0) {
+            searchTerm = searches.get(searches.size() - 1);
+            if (searchTerm.isEmpty()) {
+                // massive seems to treat this is as no search at all
+                searchTerm = null;
+            }
+        }
 
         // process any remaining parameters as filters
         // Filters have the following syntax
@@ -174,7 +189,7 @@ public class RepositoryRESTResource {
             filterMap.put(entry.getKey(), conditions);
         }
 
-        AssetList assets = assetService.retrieveAllAssets(filterMap);
+        AssetList assets = assetService.retrieveAllAssets(filterMap, searchTerm);
         String json = assets.toJson();
         return Response.ok(json).build();
     }
@@ -478,4 +493,30 @@ public class RepositoryRESTResource {
         String actionString = inputMap.get("action");
         return Asset.StateAction.forValue(actionString);
     }
+
+    /**
+     * Remove URL encoding from both the keys and values of the supplied map. This will deal with
+     * both % encoding and + for spaces. Uses URLDecoder ( {@link URLDecoder#decode(String, String)}
+     * )
+     * 
+     * @param params
+     */
+    private static void decodeParams(MultivaluedMap<String, String> params) {
+        Map<String, List<String>> copy = new HashMap<String, List<String>>();
+        copy.putAll(params);
+        params.clear();
+        try {
+            for (String key : copy.keySet()) {
+                List<String> values = copy.get(key);
+                List<String> decodedValues = new ArrayList<String>();
+                for (String value : values) {
+                    decodedValues.add(URLDecoder.decode(value, StandardCharsets.UTF_8.name()));
+                }
+                params.put(URLDecoder.decode(key, StandardCharsets.UTF_8.name()), decodedValues);
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new RepositoryException("UTF-8 is unexpectedly missing.", e);
+        }
+    }
+
 }

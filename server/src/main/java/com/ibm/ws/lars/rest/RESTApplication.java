@@ -16,10 +16,16 @@
 
 package com.ibm.ws.lars.rest;
 
+import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
 @ApplicationPath("/")
 public class RESTApplication extends Application {
+
+    @Inject
+    RESTApplication(Persistor persistor) {
+        persistor.initialize();
+    }
 
 }

@@ -64,10 +64,10 @@ public class AssetServiceLayer {
     }
 
     /**
-     * @see Persistor#retrieveAllAssets(Map)
+     * @see Persistor#retrieveAllAssets(Map,String)
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters) {
-        return persistenceBean.retrieveAllAssets(filters);
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+        return persistenceBean.retrieveAllAssets(filters, searchTerm);
     }
 
     public void setConfiguration(Configuration configuration) {
