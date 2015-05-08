@@ -489,20 +489,10 @@ public abstract class MassiveUploader extends AbstractMassive {
                         "New licenseTerms require LA and no LI. "
                                 + archive.getCanonicalPath());
             }
-        } else {
-            if ((LAHeader == null && LIHeader != null)
-                || (LAHeader != null && LIHeader == null)) {
-                System.err.println("LA/LI Problem with archive"
-                                   + archive.getCanonicalPath());
-                System.err.println("LAHeader = " + LAHeader);
-                System.err.println("LIHeader = " + LIHeader);
-                System.err
-                        .println("Both must be specified if either are present. Processing aborted.");
-                throw new RepositoryException(
-                        "Problem in processLAandLI uploading "
-                                + archive.getCanonicalPath());
-            }
         }
+
+        // Note: we allow the user to upload a feature whose manifest has
+        // an LA header but no LI header.
 
         File explodedEsa = unpackToTempDir(archive);
         String root = explodedEsa.getCanonicalPath();
