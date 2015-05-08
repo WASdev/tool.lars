@@ -1,0 +1,16 @@
+Subsystem-ManifestVersion: 1
+Subsystem-SymbolicName: no-symbolic-name-attributes; 
+Subsystem-Version: 1.0.0
+Subsystem-Content: com.example.no.symbolic.name.attributes; version="[1,1.0.100)"
+Subsystem-Type: osgi.subsystem.feature
+IBM-Feature-Version: 2
+IBM-Provision-Capability: osgi.identity; filter:="(&(type=osgi.subsystem.feature)(osgi.identity=com.example.no.symbolic.name.attributes))",
+ osgi.identity; filter:="(&(type=osgi.subsystem.feature)(osgi.identity=com.example.no.symbolic.name.attributes))"
+IBM-Install-Policy: when-satisfied
+IBM-App-ForceRestart: install,uninstall
+IBM-ProductID: com.ibm.websphere.appserver
+IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.6
+Subsystem-License: http://www.example.com/the-license
+IBM-License-Agreement: wlp/lafiles/LA
+IBM-InstallTo: core
+Subsystem-Vendor: IBM

@@ -22,7 +22,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -137,6 +139,11 @@ public class EsaManifest {
         NameValuePair nvp = org.apache.aries.util.manifest.ManifestHeaderProcessor.parseBundleSymbolicName(getHeader("Subsystem-SymbolicName"));
         symbolicName = nvp.getName();
         symbolicNameAttrs = nvp.getAttributes();
+        if (symbolicNameAttrs == null) {
+            // Don't leave symbolicNameAttrs as null because it would necessitate
+            // checks in a few other places
+            symbolicNameAttrs = Collections.emptyMap();
+        }
     }
 
     /**
