@@ -1660,4 +1660,16 @@ public class MassiveEsaTest {
         assertEquals("\"jsp-2.2\" matches", 1, esas.size());
     }
 
+    /**
+     * Verifies that it is possible to upload an asset that has an LA header but not an LI header to
+     * LARS.
+     */
+    @Test
+    public void testFeatureWithNoLI() throws Throwable {
+        File featureFile = new File(esaDir, "com.ibm.websphere.appserver.blueprint-1.0.esa");
+
+        EsaResource featureResource = uploadAsset(featureFile);
+        featureResource.approve();
+    }
+
 }
