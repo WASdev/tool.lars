@@ -45,7 +45,7 @@ public class AttachmentList extends RepositoryObjectList<Attachment> implements 
         return new AttachmentIterator(state);
     }
 
-    private class AttachmentIterator implements Iterator<Attachment> {
+    private static class AttachmentIterator implements Iterator<Attachment> {
         private final Iterator<Map<String, Object>> stateIterator;
 
         public AttachmentIterator(List<Map<String, Object>> state) {

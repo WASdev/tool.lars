@@ -36,8 +36,6 @@ import mockit.MockUp;
 import org.junit.After;
 import org.junit.Test;
 
-import com.ibm.ws.lars.upload.cli.ClientException;
-import com.ibm.ws.lars.upload.cli.Main;
 import com.ibm.ws.massive.LoginInfo;
 import com.ibm.ws.massive.RepositoryBackendException;
 import com.ibm.ws.massive.resources.EsaResource;
@@ -51,7 +49,7 @@ public class ListAllTest {
     ByteArrayOutputStream ebaos = new ByteArrayOutputStream();
     PrintStream output = new PrintStream(baos);
     PrintStream errorStream = new PrintStream(ebaos);
-    Main tested = new Main(output, errorStream);
+    Main tested = new Main(output);
 
     @After
     public void tearDown() {

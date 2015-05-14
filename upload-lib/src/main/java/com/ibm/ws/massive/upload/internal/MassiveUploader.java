@@ -72,7 +72,7 @@ public abstract class MassiveUploader extends AbstractMassive {
      * Key for a property stating what type of link this is (only relevant if the downloadUrl is
      * also set), can be one DIRECT, WEB_PAGE or EFD. Defaults to DIRECT.
      */
-    public static String LINK_TYPE_PROPERTY_KEY = "linkType";
+    public final static String LINK_TYPE_PROPERTY_KEY = "linkType";
     /*
      * This header is used with in products (JARs) to record the location of License Agreement files
      * within the archive.
@@ -103,8 +103,6 @@ public abstract class MassiveUploader extends AbstractMassive {
     public final static String PROP_ICONS = "icons";
     public final static String PROP_DOWNLOAD_URL = "downloadURL";
     public final static String PROP_STAGED_URL = "stagedURL";
-
-    protected final String LIVE_KEY = "75621234192";
 
     public MassiveUploader(LoginInfoEntry loginInfo) {
         super(loginInfo);
@@ -149,10 +147,13 @@ public abstract class MassiveUploader extends AbstractMassive {
                 buffer = new byte[1024];
             }
         } finally {
-            if (null != os)
-                os.close();
-            if (null != is)
-                is.close();
+            try {
+                if (null != os)
+                    os.close();
+            } finally {
+                if (null != is)
+                    is.close();
+            }
         }
     }
 
@@ -262,7 +263,6 @@ public abstract class MassiveUploader extends AbstractMassive {
                     jarFile.close();
                 }
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
                 throw new RepositoryArchiveIOException(
                         "Error closing archive ", sourceArchive, e);
@@ -303,7 +303,11 @@ public abstract class MassiveUploader extends AbstractMassive {
                     String fileName = ze.getName();
                     File unzippedFile = new File(tempDir.getCanonicalPath()
                                                  + File.separator + fileName);
-                    new File(unzippedFile.getParent()).mkdirs();
+                    File parent = new File(unzippedFile.getParent());
+                    if (!parent.mkdirs() && !parent.exists()) {
+                        throw new IOException("Couldn't create dir "
+                                              + parent.getAbsolutePath());
+                    }
                     FileOutputStream fos = new FileOutputStream(unzippedFile);
                     try {
                         int numBytes;
@@ -470,7 +474,7 @@ public abstract class MassiveUploader extends AbstractMassive {
     /*
      * LAHeader typical value: "wlp/lafiles/LA" typical files names are of the form
      * "wlp/lafiles/LA_en"
-     * 
+     *
      * Both must be present unless GenerateEsas.specialFeatureTermsApply() which equates to
      * Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1 However by this point it's
      * very difficult to determine whether we're processing a resource that need only contain LA and
@@ -696,7 +700,7 @@ public abstract class MassiveUploader extends AbstractMassive {
         String iconNames = amd.getIcons();
 
         if (iconNames != null) {
-            iconNames.replaceAll("\\s", "");
+            iconNames = iconNames.replaceAll("\\s", "");
 
             StringTokenizer s = new StringTokenizer(iconNames, ",");
             while (s.hasMoreTokens()) {

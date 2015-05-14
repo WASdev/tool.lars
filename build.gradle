@@ -27,12 +27,28 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'eclipse'
+    apply plugin: 'findbugs'
     
     sourceSets {
         fat {
             compileClasspath += sourceSets.main.output
             runtimeClasspath += sourceSets.main.output
         }
+    }
+    
+    findbugs {
+        sourceSets = [sourceSets.main]
+        def excludeFile = file("findbugs.exclude.xml")
+        if (excludeFile.exists()) {
+            excludeFilter = excludeFile
+        }
+    }
+    
+    findbugsMain {
+    	reports {
+	        xml.enabled = false
+	        html.enabled = true
+	    }
     }
     
     configurations {

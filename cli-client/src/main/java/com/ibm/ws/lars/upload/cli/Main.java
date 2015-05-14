@@ -48,7 +48,6 @@ import com.ibm.ws.massive.resources.MassiveResource.State;
 import com.ibm.ws.massive.resources.RepositoryBadDataException;
 import com.ibm.ws.massive.resources.RepositoryResourceDeletionException;
 import com.ibm.ws.massive.resources.UploadStrategy;
-import com.ibm.ws.massive.sa.client.MassiveClient;
 
 public class Main {
 
@@ -67,15 +66,12 @@ public class Main {
     private String invokedName;
 
     private final PrintStream output;
-    private final PrintStream err;
-
-    MassiveClient client;
 
     /**
      * All logic here should be delegated to run, to allow for easier testing
      */
     public static void main(String[] args) {
-        Main main = new Main(System.out, System.err);
+        Main main = new Main(System.out);
 
         try {
             main.run(args);
@@ -86,9 +82,8 @@ public class Main {
         System.exit(0);
     }
 
-    public Main(PrintStream output, PrintStream err) {
+    public Main(PrintStream output) {
         this.output = output;
-        this.err = err;
     }
 
     /**
@@ -367,7 +362,7 @@ public class Main {
     }
 
     void printTabbed(String id, String type, String appliesTo, String name) {
-        output.format("%-30.30s | %-15.15s | %-15.15s | %s\n", id, type, appliesTo, name);
+        output.format("%-30.30s | %-15.15s | %-15.15s | %s%n", id, type, appliesTo, name);
     }
 
     private void doDelete(List<String> remainingArgs) throws ClientException {

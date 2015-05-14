@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -149,7 +150,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see com.ibm.ws.massive.upload.RepositoryUploader#canUploadFile(java.io.File)
      */
     @Override
@@ -159,7 +160,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see com.ibm.ws.massive.upload.RepositoryUploader#uploadFile(java.io.File,
      * com.ibm.ws.massive.resources.UploadStrategy)
      */
@@ -383,7 +384,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         String subsystemIcon = feature.getHeader("Subsystem-Icon");
 
         if (subsystemIcon != null) {
-            subsystemIcon.replaceAll("\\s", "");
+            subsystemIcon = subsystemIcon.replaceAll("\\s", "");
 
             StringTokenizer s = new StringTokenizer(subsystemIcon, ",");
             while (s.hasMoreTokens()) {
@@ -578,7 +579,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see java.lang.Object#hashCode()
          */
         @Override
@@ -593,7 +594,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
@@ -697,8 +698,8 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
                 }
 
                 Map<String, String> dirs = eeVersionMetadata.getDirectives();
-                for (String key : dirs.keySet()) {
-
+                for (Entry<String, String> directive : dirs.entrySet()) {
+                    String key = directive.getKey();
                     if (!key.equals("filter")) {
                         continue;
                     }
@@ -713,7 +714,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
                     }
 
                     // Store the raw filter to add to the resource later.
-                    bundleRequirements.put(bundle.getFileName().toString(), dirs.get(key));
+                    bundleRequirements.put(bundle.getFileName().toString(), directive.getValue());
 
                     VersionRange range = ManifestHeaderProcessor.parseVersionRange(filter.get(VERSION_FILTER_KEY));
                     if (esaRange == null) {
@@ -740,8 +741,8 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         }
 
         ArrayList<String> rawRequirements = new ArrayList<String>();
-        for (String key : bundleRequirements.keySet()) {
-            rawRequirements.add(key + ": " + bundleRequirements.get(key));
+        for (Entry<String, String> bundleRequirement : bundleRequirements.entrySet()) {
+            rawRequirements.add(bundleRequirement.getKey() + ": " + bundleRequirement.getValue());
         }
         if (rawRequirements.size() == 0) {
             rawRequirements = null;

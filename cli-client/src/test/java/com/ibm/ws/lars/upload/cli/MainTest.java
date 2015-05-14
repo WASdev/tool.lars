@@ -37,7 +37,7 @@ public class MainTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ByteArrayOutputStream ebaos = new ByteArrayOutputStream();
         try (PrintStream output = new PrintStream(baos); PrintStream error = new PrintStream(ebaos)) {
-            Main main = new Main(output, error);
+            Main main = new Main(output);
             try {
                 main.run(new String[] {});
             } catch (ClientException e) {

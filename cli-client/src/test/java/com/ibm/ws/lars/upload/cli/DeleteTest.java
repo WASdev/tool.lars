@@ -31,8 +31,6 @@ import mockit.MockUp;
 import org.junit.After;
 import org.junit.Test;
 
-import com.ibm.ws.lars.upload.cli.ClientException;
-import com.ibm.ws.lars.upload.cli.Main;
 import com.ibm.ws.massive.LoginInfoEntry;
 import com.ibm.ws.massive.RepositoryBackendException;
 import com.ibm.ws.massive.RepositoryBackendIOException;
@@ -46,15 +44,12 @@ import com.ibm.ws.massive.sa.client.RequestFailureException;
 public class DeleteTest {
 
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    private final ByteArrayOutputStream ebaos = new ByteArrayOutputStream();
     private final PrintStream output = new PrintStream(baos);
-    private final PrintStream errorStream = new PrintStream(ebaos);
-    private final Main tested = new Main(output, errorStream);
+    private final Main tested = new Main(output);
 
     @After
     public void tearDown() {
         output.close();
-        errorStream.close();
     }
 
     @Test
@@ -68,9 +63,6 @@ public class DeleteTest {
             assertEquals("Unexpected exception message", Main.MISSING_URL, e.getMessage());
             String outputString = baos.toString();
             assertTrue("The expected help output wasn't produced, was:\n" + outputString, TestUtils.checkForHelpMessage(outputString));
-
-            String errorOutput = ebaos.toString();
-            assertEquals("No output was expected to stderr", "", errorOutput);
             return;
         }
         fail("The expected client exception was not thrown");
@@ -85,9 +77,6 @@ public class DeleteTest {
             assertEquals("Unexpected exception message", Main.NO_IDS_FOR_DELETE, e.getMessage());
             String outputString = baos.toString();
             assertTrue("The expected help output wasn't produced, was:\n" + outputString, TestUtils.checkForHelpMessage(outputString));
-
-            String errorOutput = ebaos.toString();
-            assertEquals("No output was expected to stderr", "", errorOutput);
             return;
         }
         fail("The expected ClientException was not thrown");
@@ -113,11 +102,8 @@ public class DeleteTest {
         tested.run(new String[] { "--delete", "--url=http://localhost:9080", "9999" });
 
         String output = baos.toString();
-        String errors = ebaos.toString();
 
         assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Asset 9999 not deleted"));
-        assertEquals("No output was expected to stderr", "", errors);
-
     }
 
     @Test
@@ -140,11 +126,8 @@ public class DeleteTest {
         tested.run(new String[] { "--delete", "--url=http://localhost:9080", "9999" });
 
         String output = baos.toString();
-        String errors = ebaos.toString();
 
         assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Deleted asset 9999"));
-        assertEquals("No output was expected to stderr", "", errors);
-
     }
 
     @Test
@@ -177,12 +160,10 @@ public class DeleteTest {
         tested.run(new String[] { "--delete", "--url=http://localhost:9080", "9999", "1234", "abcdef" });
 
         String output = baos.toString();
-        String errors = ebaos.toString();
 
         assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Deleted asset 9999"));
         assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Asset 1234 not deleted"));
         assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Deleted asset abcdef"));
-        assertEquals("No output was expected to stderr", "", errors);
 
     }
 
@@ -200,12 +181,10 @@ public class DeleteTest {
         } catch (ClientException e) {
 
             String output = baos.toString();
-            String errors = ebaos.toString();
 
             assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Asset 9999 not deleted"));
             assertTrue("Expected message was missing. Output was:\n" + output, output.contains(Main.CONNECTION_PROBLEM));
             assertTrue("Unexpected message in output. Output was:\n" + output, !output.contains("Deleted asset 9999"));
-            assertEquals("No output was expected to stderr", "", errors);
             return;
         }
 
@@ -233,12 +212,10 @@ public class DeleteTest {
         } catch (ClientException e) {
 
             String output = baos.toString();
-            String errors = ebaos.toString();
 
             assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Asset 9999 not deleted"));
             assertTrue("Expected message was missing. Output was:\n" + output, output.contains(Main.SERVER_ERROR));
             assertTrue("Unexpected message in output. Output was:\n" + output, !output.contains("Deleted asset 9999"));
-            assertEquals("No output was expected to stderr", "", errors);
             return;
         }
 
@@ -267,11 +244,9 @@ public class DeleteTest {
         } catch (ClientException e) {
 
             String output = baos.toString();
-            String errors = ebaos.toString();
 
             assertTrue("Expected message was missing. Output was:\n" + output, !output.contains("Deleted asset 9999"));
             assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Asset 9999 not deleted"));
-            assertEquals("No output was expected to stderr", "", errors);
             return;
         }
         fail("The expected ClientException wasn't thrown");
