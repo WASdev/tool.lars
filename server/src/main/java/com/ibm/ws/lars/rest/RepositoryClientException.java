@@ -19,7 +19,7 @@ package com.ibm.ws.lars.rest;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * An exception which represents an error in input data from the client
  */
 public abstract class RepositoryClientException extends Exception {
 

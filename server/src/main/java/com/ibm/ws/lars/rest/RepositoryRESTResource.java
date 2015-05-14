@@ -257,7 +257,7 @@ public class RepositoryRESTResource {
                                                 @Context HttpServletRequest request,
                                                 BufferedInMultiPart inMultiPart,
                                                 @Context UriInfo uriInfo
-            ) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
+            ) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("createAttachmentWithContent called, name: " + name + " assetId: " + assetId);
@@ -297,7 +297,7 @@ public class RepositoryRESTResource {
                                               @PathParam("assetId") String assetId,
                                               @Context HttpServletRequest request,
                                               String bodyJSON,
-                                              @Context UriInfo uriInfo) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
+                                              @Context UriInfo uriInfo) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("createAttachmentNoContent called, name: " + name
