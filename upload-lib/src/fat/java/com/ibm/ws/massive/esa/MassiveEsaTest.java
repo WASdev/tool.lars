@@ -1672,4 +1672,12 @@ public class MassiveEsaTest {
         featureResource.approve();
     }
 
+    @Test
+    public void testFeatureWithNoSymbolicNameAttributes() throws Throwable {
+        File featureFile = new File(esaDir, "no-symbolic-name-attributes.esa");
+
+        EsaResource featureResource = uploadAsset(featureFile);
+        featureResource.approve();
+    }
+
 }
