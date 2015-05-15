@@ -217,7 +217,7 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets/{assetId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAsset(@PathParam("assetId") String assetId) throws InvalidIdException, NonExistentArtefactException {
+    public Response getAsset(@PathParam("assetId") String assetId, @Context UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAsset called with id of '" + assetId + "'");
@@ -225,7 +225,7 @@ public class RepositoryRESTResource {
 
         sanitiseId(assetId, ArtefactType.ASSET);
 
-        Asset asset = assetService.retrieveAsset(assetId);
+        Asset asset = assetService.retrieveAsset(assetId, uriInfo);
 
         return Response.ok(asset.toJson()).build();
     }
@@ -255,7 +255,8 @@ public class RepositoryRESTResource {
     public Response createAttachmentWithContent(@QueryParam("name") String name,
                                                 @PathParam("assetId") String assetId,
                                                 @Context HttpServletRequest request,
-                                                BufferedInMultiPart inMultiPart
+                                                BufferedInMultiPart inMultiPart,
+                                                @Context UriInfo uriInfo
             ) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
 
         if (logger.isLoggable(Level.FINE)) {
@@ -282,7 +283,7 @@ public class RepositoryRESTResource {
             }
         }
 
-        Attachment result = assetService.createAttachmentWithContent(assetId, name, attachmentMetadata, contentType, contentStream);
+        Attachment result = assetService.createAttachmentWithContent(assetId, name, attachmentMetadata, contentType, contentStream, uriInfo);
 
         return Response.ok(result.toJson()).build();
     }
@@ -295,7 +296,8 @@ public class RepositoryRESTResource {
     public Response createAttachmentNoContent(@QueryParam("name") String name,
                                               @PathParam("assetId") String assetId,
                                               @Context HttpServletRequest request,
-                                              String bodyJSON) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
+                                              String bodyJSON,
+                                              @Context UriInfo uriInfo) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("createAttachmentNoContent called, name: " + name
@@ -306,7 +308,7 @@ public class RepositoryRESTResource {
 
         Attachment attachmentMetadata = Attachment.jsonToAttachment(bodyJSON);
 
-        Attachment result = assetService.createAttachmentNoContent(assetId, name, attachmentMetadata);
+        Attachment result = assetService.createAttachmentNoContent(assetId, name, attachmentMetadata, uriInfo);
 
         return Response.ok(result.toJson()).build();
     }
@@ -315,14 +317,15 @@ public class RepositoryRESTResource {
     @Path("/assets/{assetId}/attachments")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ ADMIN_ROLE, USER_ROLE })
-    public Response getAttachments(@PathParam("assetId") String assetId) throws IOException, ServletException, InvalidJsonAssetException, InvalidIdException {
+    public Response getAttachments(@PathParam("assetId") String assetId,
+                                   @Context UriInfo uriInfo) throws IOException, ServletException, InvalidJsonAssetException, InvalidIdException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAttachments called for assetId: " + assetId);
         }
 
         sanitiseId(assetId, ArtefactType.ASSET);
 
-        AttachmentList attachments = assetService.retrieveAttachmentsForAsset(assetId);
+        AttachmentList attachments = assetService.retrieveAttachmentsForAsset(assetId, uriInfo);
 
         return Response.ok(attachments.toJson()).build();
     }
@@ -350,7 +353,8 @@ public class RepositoryRESTResource {
     @Path("/assets/{assetId}/attachments/{attachmentId}/{name}")
     public Response getAttachmentContent(@PathParam("assetId") String assetId,
                                          @PathParam("attachmentId") String attachmentId,
-                                         @PathParam("name") String name) throws InvalidIdException, NonExistentArtefactException {
+                                         @PathParam("name") String name,
+                                         @Context UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAttachmentContent called for assetId: " + assetId
@@ -360,7 +364,7 @@ public class RepositoryRESTResource {
         sanitiseId(assetId, ArtefactType.ASSET);
         sanitiseId(attachmentId, ArtefactType.ATTACHMENT);
 
-        AttachmentContentResponse contentResponse = assetService.retrieveAttachmentContent(assetId, attachmentId, name);
+        AttachmentContentResponse contentResponse = assetService.retrieveAttachmentContent(assetId, attachmentId, name, uriInfo);
         if (contentResponse != null) {
             final InputStream contentInputStream = contentResponse.getContentStream();
             StreamingOutput stream = new StreamingOutput() {
@@ -498,7 +502,7 @@ public class RepositoryRESTResource {
      * Remove URL encoding from both the keys and values of the supplied map. This will deal with
      * both % encoding and + for spaces. Uses URLDecoder ( {@link URLDecoder#decode(String, String)}
      * )
-     * 
+     *
      * @param params
      */
     private static void decodeParams(MultivaluedMap<String, String> params) {

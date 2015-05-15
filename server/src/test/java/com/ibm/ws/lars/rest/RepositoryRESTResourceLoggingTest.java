@@ -29,6 +29,7 @@ import mockit.Expectations;
 import mockit.Mocked;
 
 import org.apache.wink.common.model.multipart.BufferedInMultiPart;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -44,11 +45,18 @@ public class RepositoryRESTResourceLoggingTest {
         return tested;
     }
 
+    private UriInfo dummyUriInfo;
+
     @Mocked
     AssetServiceLayer assetService;
 
     /** ID for an asset which should never exist */
     public static final String NON_EXISTENT_ID = "ffffffffffffffffffffffff";
+
+    @Before
+    public void setUp() throws URISyntaxException {
+        dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/"));
+    }
 
     @Test
     public void testGetAsset(@Mocked final Logger logger) throws InvalidIdException, NonExistentArtefactException {
@@ -61,7 +69,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().getAsset(NON_EXISTENT_ID);
+        getRestResource().getAsset(NON_EXISTENT_ID, dummyUriInfo);
     }
 
     @Test
@@ -128,7 +136,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().createAttachmentWithContent("name", NON_EXISTENT_ID, null, inMultiPart);
+        getRestResource().createAttachmentWithContent("name", NON_EXISTENT_ID, null, inMultiPart, dummyUriInfo);
     }
 
     @Test
@@ -144,7 +152,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().createAttachmentNoContent("name", NON_EXISTENT_ID, null, "{}");
+        getRestResource().createAttachmentNoContent("name", NON_EXISTENT_ID, null, "{}", dummyUriInfo);
     }
 
     @Test
@@ -159,7 +167,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().getAttachments(NON_EXISTENT_ID);
+        getRestResource().getAttachments(NON_EXISTENT_ID, dummyUriInfo);
     }
 
     @Test
@@ -190,7 +198,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().getAttachmentContent(NON_EXISTENT_ID, NON_EXISTENT_ID, "no_name");
+        getRestResource().getAttachmentContent(NON_EXISTENT_ID, NON_EXISTENT_ID, "no_name", dummyUriInfo);
     }
 
     @Test

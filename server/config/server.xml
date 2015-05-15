@@ -65,7 +65,8 @@ limitations under the License.
         <hostNames>localhost</hostNames>
     </mongo>
     
-    <jndiEntry id="lars/URLBase" jndiName="lars/URLBase" value="http://localhost:9080" />
+    <!-- Uncomment this to override the base URL (may be useful if lars is behind a reverse proxy -->
+    <!-- <jndiEntry id="lars/URLBase" jndiName="lars/URLBase" value="http://my.external.domain" /> -->
 
     <mongoDB databaseName="larsDB" jndiName="mongo/larsDB" mongoRef="mongo"/>
 

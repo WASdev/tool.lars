@@ -58,11 +58,17 @@ public abstract class RepositoryObject {
      * broken and we'd rather have control of the process.
      */
     protected RepositoryObject(RepositoryObject clone) {
-        this(clone.getProperties());
+        this(new HashMap<>(clone.getProperties()));
     }
 
+    /**
+     * Wrap an existing map of properties in a repository object. Changes to the object will be
+     * reflected in the original map.
+     *
+     * @param properties the map of properties
+     */
     protected RepositoryObject(Map<String, Object> properties) {
-        this.properties = new HashMap<>(properties);
+        this.properties = properties;
     }
 
     protected static Map<String, Object> readJsonState(String json) throws InvalidJsonAssetException {

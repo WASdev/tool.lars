@@ -46,10 +46,22 @@ public class Asset extends RepositoryObject {
         super();
     }
 
+    /**
+     * Wrap an existing map of properties in an asset object.
+     * <p>
+     * Changes to the asset will be reflected in the original map.
+     *
+     * @param state the map of properties
+     */
     public Asset(Map<String, Object> state) {
         super(state);
     }
 
+    /**
+     * Copy another attachment, creating a new copy of the internal set of properties.
+     *
+     * @param toCopy the attachment to clone
+     */
     public Asset(Asset clone) {
         super(clone);
     }

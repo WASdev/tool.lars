@@ -25,7 +25,10 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.Arrays;
+
+import javax.ws.rs.core.UriInfo;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,6 +53,7 @@ public class AssetServiceLayerTest {
     // private Asset complexObject;
     private Attachment attachmentWithContent;
     private byte[] attachmentContent;
+    private UriInfo dummyUriInfo;
 
     private AssetServiceLayer service;
     Persistor memoryPersistor = new MemoryPersistor();
@@ -65,6 +69,8 @@ public class AssetServiceLayerTest {
 
         service = new AssetServiceLayer();
         service.setConfiguration(new Configuration());
+
+        dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/"));
 
         Field beanField = AssetServiceLayer.class.getDeclaredField("persistenceBean");
         beanField.setAccessible(true);
@@ -82,7 +88,7 @@ public class AssetServiceLayerTest {
         assertNotNull("updated date should not be null", lastUpdated);
 
         String id = asset.get_id();
-        Asset gotAsset = service.retrieveAsset(id);
+        Asset gotAsset = service.retrieveAsset(id, dummyUriInfo);
         assertEquals("The id of the asset has changed", id, gotAsset.get_id());
 
         AssetList assets = service.retrieveAllAssets();
@@ -94,13 +100,13 @@ public class AssetServiceLayerTest {
             // do nothing. Just to make sure the time stamp is different after the update
         }
         service.updateAssetState(Asset.StateAction.PUBLISH, id);
-        Asset updatedAsset = service.retrieveAsset(id);
+        Asset updatedAsset = service.retrieveAsset(id, dummyUriInfo);
         assertEquals("Wrong state", Asset.State.AWAITING_APPROVAL, updatedAsset.getState());
         String newUpdatedDate = updatedAsset.getLastUpdatedOn();
         assertFalse("The last updated date should have been updated", lastUpdated.equals(newUpdatedDate));
 
         Asset simpleAsset = service.createAsset(simpleObject);
-        Asset simpleGotAsset = service.retrieveAsset(simpleAsset.get_id());
+        Asset simpleGotAsset = service.retrieveAsset(simpleAsset.get_id(), dummyUriInfo);
         assertEquals("Wrong state", Asset.State.DRAFT, simpleGotAsset.getState());
 
         AssetList lotsOfAssets = service.retrieveAllAssets();
@@ -126,8 +132,8 @@ public class AssetServiceLayerTest {
         Attachment unalteredAttachment = Attachment.jsonToAttachment(attachmentJSON);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
 
-        Attachment returnedAttachment = service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment);
-        assertEquals("Attachment should have assetId set correctly", asset.get_id(), returnedAttachment.getAssetId());
+        Attachment returnedAttachment = service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
+        assertEquals("Attachment should have assetId set correctly", returnedAsset.get_id(), returnedAttachment.getAssetId());
 
         returnedAttachment.getProperties().remove(Attachment.ASSET_ID);
         assertNull("Attachment with no uploaded content should not have any data stored in gridFS", returnedAttachment.getGridFSId());
@@ -156,7 +162,7 @@ public class AssetServiceLayerTest {
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
         Asset returnedAsset = service.createAsset(asset);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
-        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment);
+        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
     }
 
     /**
@@ -171,7 +177,7 @@ public class AssetServiceLayerTest {
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
         Asset returnedAsset = service.createAsset(asset);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
-        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment);
+        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
     }
 
     /**
@@ -187,7 +193,7 @@ public class AssetServiceLayerTest {
         Asset returnedAsset = service.createAsset(asset);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
         attachment.setLinkType("Foobar");
-        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment);
+        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
     }
 
     /**
@@ -204,9 +210,10 @@ public class AssetServiceLayerTest {
                                                                            "AttachmentWithContent.txt",
                                                                            attachmentToCreate,
                                                                            "text/plain",
-                                                                           new ByteArrayInputStream(attachmentContent));
+                                                                           new ByteArrayInputStream(attachmentContent),
+                                                                           dummyUriInfo);
 
-        Attachment returnedAttachment = service.retrieveAttachmentMetadata(returnedAsset.get_id(), createdAttachment.get_id());
+        Attachment returnedAttachment = service.retrieveAttachmentMetadata(returnedAsset.get_id(), createdAttachment.get_id(), dummyUriInfo);
 
         assertEquals("Attachment with content should have correct URL", "http://localhost:9080/ma/v1/assets/" + returnedAsset.get_id() +
                                                                         "/attachments/" + returnedAttachment.get_id() + "/" +
@@ -237,11 +244,14 @@ public class AssetServiceLayerTest {
 
         assertEquals("Returned attachment should have same contents that were POSTed", attachmentWithContent, returnedAttachment);
 
-        try (InputStream is = service.retrieveAttachmentContent(returnedAsset.get_id(), createdAttachment.get_id(), "AttachmentWithContent.txt")
+        try (InputStream is = service.retrieveAttachmentContent(returnedAsset.get_id(), createdAttachment.get_id(), "AttachmentWithContent.txt", dummyUriInfo)
                 .getContentStream()) {
             byte[] returnedContent = TestUtils.slurp(is);
             assertTrue(Arrays.equals(attachmentContent, returnedContent));
         }
+
+        Asset fetchedAsset = service.retrieveAsset(returnedAsset.get_id(), dummyUriInfo);
+        assertEquals(fetchedAsset.getAttachments().get(0), createdAttachment);
     }
 
     /**
@@ -259,7 +269,7 @@ public class AssetServiceLayerTest {
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
         attachmentToCreate.setUrl("foobar");
         service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
-                                            new ByteArrayInputStream(attachmentContent));
+                                            new ByteArrayInputStream(attachmentContent), dummyUriInfo);
     }
 
     /**
@@ -277,7 +287,7 @@ public class AssetServiceLayerTest {
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
         attachmentToCreate.setLinkType("foobar");
         service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
-                                            new ByteArrayInputStream(attachmentContent));
+                                            new ByteArrayInputStream(attachmentContent), dummyUriInfo);
     }
 
     /**
@@ -286,7 +296,7 @@ public class AssetServiceLayerTest {
      */
     @Test(expected = NonExistentArtefactException.class)
     public void testRetrieveNonExistentAsset() throws NonExistentArtefactException {
-        service.retrieveAsset("0123456789");
+        service.retrieveAsset("0123456789", dummyUriInfo);
     }
 
     /**
@@ -295,11 +305,11 @@ public class AssetServiceLayerTest {
      */
     @Test(expected = NonExistentArtefactException.class)
     public void testRetrieveNonExistentAttachment() throws NonExistentArtefactException, InvalidIdException {
-        service.retrieveAttachmentMetadata("01234", "67864");
+        service.retrieveAttachmentMetadata("01234", "67864", dummyUriInfo);
     }
 
     @Test(expected = NonExistentArtefactException.class)
     public void testRetrieveNonExistentAttachmentContent() throws NonExistentArtefactException, InvalidIdException {
-        service.retrieveAttachmentContent("01234", "67864", "a name that does not exist.");
+        service.retrieveAttachmentContent("01234", "67864", "a name that does not exist.", dummyUriInfo);
     }
 }

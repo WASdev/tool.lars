@@ -29,6 +29,7 @@ import java.util.TimeZone;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.core.UriInfo;
 
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
@@ -81,13 +82,15 @@ public class AssetServiceLayer {
      * @throws AssetNotFoundException
      */
     public Asset createAsset(Asset asset) throws InvalidJsonAssetException {
-        verifyNewAsset(asset);
-        String now = getISODate();
-        asset.setCreatedOn(now);
-        asset.setLastUpdatedOn(now);
-        asset.getProperties().put("state", Asset.State.DRAFT.getValue());
+        Asset newAsset = new Asset(asset);
 
-        return persistenceBean.createAsset(asset);
+        verifyNewAsset(newAsset);
+        String now = getISODate();
+        newAsset.setCreatedOn(now);
+        newAsset.setLastUpdatedOn(now);
+        newAsset.getProperties().put("state", Asset.State.DRAFT.getValue());
+
+        return persistenceBean.createAsset(newAsset);
     }
 
     /**
@@ -95,10 +98,13 @@ public class AssetServiceLayer {
      * @return
      * @throws AssetNotFoundException
      */
-    public Asset retrieveAsset(String assetId) throws NonExistentArtefactException {
+    public Asset retrieveAsset(String assetId, UriInfo uriInfo) throws NonExistentArtefactException {
         Asset asset = persistenceBean.retrieveAsset(assetId);
 
         AttachmentList attachments = persistenceBean.findAttachmentsForAsset(assetId);
+        for (Attachment attachment : attachments) {
+            computeAttachmentURL(attachment, uriInfo);
+        }
 
         asset.setAttachments(attachments);
 
@@ -162,12 +168,18 @@ public class AssetServiceLayer {
         persistenceBean.deleteAsset(assetId);
     }
 
-    public AttachmentList retrieveAttachmentsForAsset(String assetId) {
-        return persistenceBean.findAttachmentsForAsset(assetId);
+    public AttachmentList retrieveAttachmentsForAsset(String assetId, UriInfo uriInfo) {
+        AttachmentList list = persistenceBean.findAttachmentsForAsset(assetId);
+        for (Attachment attachment : list) {
+            computeAttachmentURL(attachment, uriInfo);
+        }
+        return list;
     }
 
-    private Attachment createAttachment(String assetId, String name, Attachment attachmentMetadata, String contentType,
-                                        InputStream attachmentContentStream) throws InvalidJsonAssetException, AssetPersistenceException {
+    private Attachment createAttachment(String assetId, String name, Attachment originalAttachmentMetadata, String contentType,
+                                        InputStream attachmentContentStream, UriInfo uriInfo) throws InvalidJsonAssetException, AssetPersistenceException {
+
+        Attachment attachmentMetadata = new Attachment(originalAttachmentMetadata);
 
         // Add necessary fields to the attachment (JSON) metadata
         if (attachmentMetadata.get_id() == null) {
@@ -189,22 +201,22 @@ public class AssetServiceLayer {
             // TODO seriously, this is one of the places where we reaslise that using a DB that doesn't
             // support transactions means we don't get some of the guarantees that we might be used to.
 
-            attachmentMetadata.setUrl(getAttachmentURL(assetId, attachmentMetadata.get_id(), name));
             attachmentMetadata.setGridFSId(contentMetadata.filename);
             attachmentMetadata.setSize(contentMetadata.length);
         }
 
         Attachment returnedAttachment = persistenceBean.createAttachmentMetadata(attachmentMetadata);
 
+        computeAttachmentURL(returnedAttachment, uriInfo);
+
         return returnedAttachment;
     }
 
     public Attachment createAttachmentWithContent(String assetId, String name, Attachment attachmentMetadata, String contentType,
-                                                  InputStream attachmentContentStream) throws InvalidJsonAssetException, AssetPersistenceException {
+                                                  InputStream attachmentContentStream, UriInfo uriInfo) throws InvalidJsonAssetException, AssetPersistenceException {
 
         // The attachment has content, so the URL must not be set, and the
-        // linkType
-        // must not be set (i.e. it must be null).
+        // linkType must not be set (i.e. it must be null).
 
         String url = attachmentMetadata.getUrl();
         if (url != null) {
@@ -216,7 +228,7 @@ public class AssetServiceLayer {
             throw new InvalidJsonAssetException("The link type must not be set for an attachment with content");
         }
 
-        return createAttachment(assetId, name, attachmentMetadata, contentType, attachmentContentStream);
+        return createAttachment(assetId, name, attachmentMetadata, contentType, attachmentContentStream, uriInfo);
     }
 
     /**
@@ -231,7 +243,7 @@ public class AssetServiceLayer {
      * @throws InvalidJsonAssetException
      * @throws AssetPersistenceException
      */
-    public Attachment createAttachmentNoContent(String assetId, String name, Attachment attachmentMetadata) throws InvalidJsonAssetException,
+    public Attachment createAttachmentNoContent(String assetId, String name, Attachment attachmentMetadata, UriInfo uriInfo) throws InvalidJsonAssetException,
             AssetPersistenceException {
 
         // There is no content, so an external URL must be set, and the link
@@ -251,7 +263,7 @@ public class AssetServiceLayer {
             throw new InvalidJsonAssetException("The link type for the attachment was set to an invalid value: " + stringType);
         }
 
-        return createAttachment(assetId, name, attachmentMetadata, null, null);
+        return createAttachment(assetId, name, attachmentMetadata, null, null, uriInfo);
 
     }
 
@@ -260,17 +272,18 @@ public class AssetServiceLayer {
         persistenceBean.deleteAttachmentContent(attachmentId);
     }
 
-    public Attachment retrieveAttachmentMetadata(String assetId, String attachmentId) throws InvalidIdException, NonExistentArtefactException {
+    public Attachment retrieveAttachmentMetadata(String assetId, String attachmentId, UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
         Attachment attachment = persistenceBean.retrieveAttachmentMetadata(attachmentId);
         if (!Objects.equals(attachment.getAssetId(), assetId)) {
             throw new InvalidIdException("Attachment " + attachmentId + " does not have assetId " + assetId);
         }
+        computeAttachmentURL(attachment, uriInfo);
         return attachment;
     }
 
-    public AttachmentContentResponse retrieveAttachmentContent(String assetId, String attachmentId, String name) throws InvalidIdException,
+    public AttachmentContentResponse retrieveAttachmentContent(String assetId, String attachmentId, String name, UriInfo uriInfo) throws InvalidIdException,
             NonExistentArtefactException {
-        Attachment attachmentMetadata = retrieveAttachmentMetadata(assetId, attachmentId);
+        Attachment attachmentMetadata = retrieveAttachmentMetadata(assetId, attachmentId, uriInfo);
 
         if (!Objects.equals(assetId, attachmentMetadata.getAssetId())) {
             throw new InvalidIdException("Attachment " + attachmentId + " does not have assetId " + assetId);
@@ -306,22 +319,33 @@ public class AssetServiceLayer {
     }
 
     /**
-     * Assigns a URL to an attachment given the specified parameters:
+     * Computes and sets the URL for an attachment if the attachment's content is stored in lars.
+     * <p>
+     * If the attachment is stored externally, the URL is not changed.
+     * <p>
+     * The start of the URL is computed from the base URL of the request, unless it's overridden in
+     * the server.xml.
      *
-     * @param assetId the id of the asset that owns this attachment
-     * @param attachmentId the id of this attachment
-     * @param name the name of this attachment
+     * @param attachment the attachment for which to update and set the URL
+     * @param uriInfo the UriInfo from the current request
      */
-    private String getAttachmentURL(String assetId, String attachmentId, String name) {
+    private void computeAttachmentURL(Attachment attachment, UriInfo uriInfo) {
+        // LinkType != null -> asset is not stored in LARS
+        // Therefore there should be an external URL in the attachment
+        if (attachment.getLinkType() != null) {
+            return;
+        }
 
+        // For assets stored in LARS, we need to compute the URL and store it in the attachment
         String encodedName;
         try {
-            encodedName = URLEncoder.encode(name, "UTF-8");
+            encodedName = URLEncoder.encode(attachment.getName(), "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError("This should never happen.", e);
         }
 
-        return configuration.getURLBase() + "/ma/v1/assets/" + assetId + "/attachments/" + attachmentId + "/" + encodedName;
+        String url = configuration.getURLBase(uriInfo) + "ma/v1/assets/" + attachment.getAssetId() + "/attachments/" + attachment.get_id() + "/" + encodedName;
+        attachment.setUrl(url);
     }
 
 }
