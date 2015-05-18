@@ -367,21 +367,7 @@ public class RepositoryRESTResource {
         AttachmentContentResponse contentResponse = assetService.retrieveAttachmentContent(assetId, attachmentId, name, uriInfo);
         if (contentResponse != null) {
             final InputStream contentInputStream = contentResponse.getContentStream();
-            StreamingOutput stream = new StreamingOutput() {
-                @Override
-                public void write(OutputStream os) throws IOException {
-                    // TODO This could move to a utility function
-                    try {
-                        byte[] buffer = new byte[1024];
-                        int len;
-                        while ((len = contentInputStream.read(buffer)) != -1) {
-                            os.write(buffer, 0, len);
-                        }
-                    } finally {
-                        contentInputStream.close();
-                    }
-                }
-            };
+            StreamingOutput stream = new InputStreamStreamingOutput(contentInputStream);
 
             return Response.ok(stream)
                     .header("Content-Type", contentResponse.getContentType())
@@ -510,16 +496,43 @@ public class RepositoryRESTResource {
         copy.putAll(params);
         params.clear();
         try {
-            for (String key : copy.keySet()) {
-                List<String> values = copy.get(key);
+            for (Map.Entry<String, List<String>> entry : copy.entrySet()) {
                 List<String> decodedValues = new ArrayList<String>();
-                for (String value : values) {
+                for (String value : entry.getValue()) {
                     decodedValues.add(URLDecoder.decode(value, StandardCharsets.UTF_8.name()));
                 }
-                params.put(URLDecoder.decode(key, StandardCharsets.UTF_8.name()), decodedValues);
+                params.put(URLDecoder.decode(entry.getKey(), StandardCharsets.UTF_8.name()), decodedValues);
             }
         } catch (UnsupportedEncodingException e) {
             throw new RepositoryException("UTF-8 is unexpectedly missing.", e);
+        }
+    }
+
+    /**
+     * Implementation of {@link StreamingOutput} to put the input stream onto the output stream.
+     */
+    private static class InputStreamStreamingOutput implements StreamingOutput {
+        /**  */
+        private final InputStream contentInputStream;
+
+        /**
+         * @param contentInputStream
+         */
+        private InputStreamStreamingOutput(InputStream contentInputStream) {
+            this.contentInputStream = contentInputStream;
+        }
+
+        @Override
+        public void write(OutputStream os) throws IOException {
+            try {
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = contentInputStream.read(buffer)) != -1) {
+                    os.write(buffer, 0, len);
+                }
+            } finally {
+                contentInputStream.close();
+            }
         }
     }
 

@@ -127,14 +127,6 @@ public class Attachment extends RepositoryObject {
         return get(GRIDFS_ID);
     }
 
-    private void setLocale(String locale) {
-        put(LOCALE, locale);
-    }
-
-    public String getLocale() {
-        return get(LOCALE);
-    }
-
     public void setName(String name) {
         put(NAME, name);
     }

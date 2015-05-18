@@ -1,0 +1,24 @@
+<FindBugsFilter>
+    <!-- See http://findbugs.sourceforge.net/manual/filter.html for details 
+        of the syntax of this file -->
+
+    <!-- False positive as the streams are closed through a method call -->
+    <Match>
+        <Bug pattern="OBL_UNSATISFIED_OBLIGATION" />
+        <Class name="com.ibm.ws.massive.upload.internal.MassiveUploader" />
+        <Method name="extractFileFromArchive" />
+    </Match>
+
+    <!-- Artifact character encoding is not defined so assume that the default encoding is correct -->
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING" />
+        <Class name="com.ibm.ws.massive.esa.internal.EsaManifest" />
+        <Method name="getLocaleTranslations" />
+    </Match>
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING" />
+        <Class name="com.ibm.ws.massive.upload.internal.MassiveUploader$ArtifactMetadata" />
+        <Method name="&lt;init&gt;" />
+    </Match>
+
+</FindBugsFilter>

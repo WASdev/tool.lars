@@ -114,12 +114,20 @@ public class EsaManifest {
 
         for (ZipEntry entry : entries) {
             if (entry != null) {
+                InputStreamReader inputStreamReader = null;
                 try {
                     Properties props = new Properties();
-                    props.load(new InputStreamReader(
-                            this.esa.getInputStream(entry)));
+                    inputStreamReader = new InputStreamReader(this.esa.getInputStream(entry));
+                    props.load(inputStreamReader);
                     return props;
                 } catch (IOException e) {
+                } finally {
+                    if (inputStreamReader != null) {
+                        try {
+                            inputStreamReader.close();
+                        } catch (IOException e) {
+                        }
+                    }
                 }
             }
         }

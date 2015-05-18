@@ -27,5 +27,9 @@ dependencies {
     compile project(':client-lib')
 }
 
+findbugsMain {
+    enabled = false
+}
+
 
 // vim: set si:

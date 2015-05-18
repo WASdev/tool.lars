@@ -114,9 +114,8 @@ public class UploadTest {
         new MockUploader();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "--url=http://example.org/" });
             fail("ClientException not thrown");
@@ -133,9 +132,8 @@ public class UploadTest {
         new MockDirectory();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa" });
             fail("ClientException not thrown");
@@ -151,9 +149,8 @@ public class UploadTest {
         new MockUploader();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "TestFile.esa" });
             fail("ClientException not thrown");
@@ -170,9 +167,8 @@ public class UploadTest {
         new MockFile();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa", "InvalidFile.esa" });
             fail("ClientException not thrown");
@@ -189,9 +185,8 @@ public class UploadTest {
         MockUploader uploader = new MockUploader();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa"), uploader.getFilesUploaded());
@@ -204,9 +199,8 @@ public class UploadTest {
         MockUploader uploader = new MockUploader();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa", "TestFile2.esa", "TestFile3.esa" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa", "TestFile2.esa", "TestFile3.esa"), uploader.getFilesUploaded());
@@ -221,9 +215,8 @@ public class UploadTest {
         MockUploader uploader = new MockUploader();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password=foobar", "TestFile.esa" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa"), uploader.getFilesUploaded());
@@ -265,10 +258,9 @@ public class UploadTest {
         };
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
 
         // test with a password prompt
-        Main main = new Main(new PrintStream(out), new PrintStream(err));
+        Main main = new Main(new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password", "TestFile.esa" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa"), uploader.getFilesUploaded());

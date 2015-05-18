@@ -52,7 +52,7 @@ public class AssetList extends RepositoryObjectList<Asset> implements Iterable<A
         return new AssetIterator(state);
     }
 
-    private class AssetIterator implements Iterator<Asset> {
+    private static class AssetIterator implements Iterator<Asset> {
         private final Iterator<Map<String, Object>> stateIterator;
 
         public AssetIterator(List<Map<String, Object>> state) {
