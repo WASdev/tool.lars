@@ -155,7 +155,7 @@ public class AssetServiceLayerTest {
      * content and no url.
      */
     @Test
-    public void testAddAttachmentNoContentNoUrl() throws InvalidJsonAssetException, AssetPersistenceException {
+    public void testAddAttachmentNoContentNoUrl() throws InvalidJsonAssetException, AssetPersistenceException, NonExistentArtefactException {
         thrown.expect(InvalidJsonAssetException.class);
         thrown.expectMessage("The URL of the supplied attachment was null");
         String attachmentJSON = "{\"foo\":\"bar\"}";
@@ -170,7 +170,7 @@ public class AssetServiceLayerTest {
      * content and no linkType.
      */
     @Test
-    public void testAddAttachmentNoContentNoLinkType() throws InvalidJsonAssetException, AssetPersistenceException {
+    public void testAddAttachmentNoContentNoLinkType() throws InvalidJsonAssetException, AssetPersistenceException, NonExistentArtefactException {
         thrown.expect(InvalidJsonAssetException.class);
         thrown.expectMessage("The link type for the attachment was not set.");
         String attachmentJSON = "{\"url\":\"http://example.com\"}";
@@ -185,7 +185,7 @@ public class AssetServiceLayerTest {
      * and a linkType that is not valid.
      */
     @Test
-    public void testAddAttachmentNoContentBadLinkType() throws InvalidJsonAssetException, AssetPersistenceException {
+    public void testAddAttachmentNoContentBadLinkType() throws InvalidJsonAssetException, AssetPersistenceException, NonExistentArtefactException {
         thrown.expect(InvalidJsonAssetException.class);
         thrown.expectMessage("The link type for the attachment was set to an invalid value: Foobar");
         String attachmentJSON = "{\"url\":\"http://example.com\"}";
@@ -288,6 +288,23 @@ public class AssetServiceLayerTest {
         attachmentToCreate.setLinkType("foobar");
         service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
                                             new ByteArrayInputStream(attachmentContent), dummyUriInfo);
+    }
+
+    /**
+     * Tests that an exception is thrown if an attachment is created with an invalid parent asset
+     * id.
+     *
+     * @throws InvalidJsonAssetException
+     * @throws NonExistentArtefactException
+     * @throws AssetPersistenceException
+     */
+    @Test
+    public void testAddAttachmentInvalidAssetId() throws InvalidJsonAssetException, NonExistentArtefactException, AssetPersistenceException {
+        thrown.expect(NonExistentArtefactException.class);
+        thrown.expectMessage("The parent asset for this attachment (id=FFFFFFFFFFFFFFFF) does not exist in the repository.");
+        String attachmentJSON = "{\"url\":\"http://example.com\", \"linkType\":\"direct\"}";
+        Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
+        service.createAttachmentNoContent("FFFFFFFFFFFFFFFF", "Mr Attachment", attachment, dummyUriInfo);
     }
 
     /**

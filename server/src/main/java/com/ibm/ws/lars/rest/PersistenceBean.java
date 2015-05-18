@@ -235,8 +235,8 @@ public class PersistenceBean implements Persistor {
     /**
      * Retrieve a single asset by its id.
      *
-     * @return A json string, or null if the asset doesn't exist
-     * @throws AssetNotFoundException
+     * @return The requested asset
+     * @throws AssetNotFoundException if the asset doesn't exist
      */
     private Asset retrieveAsset(ObjectId assetId) throws NonExistentArtefactException {
         BasicDBObject query = new BasicDBObject(ID, assetId);

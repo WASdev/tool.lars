@@ -35,6 +35,10 @@ public class NonExistentArtefactException extends RepositoryClientException {
         super(type + " not found for id: " + id);
     }
 
+    public NonExistentArtefactException(String message) {
+        super(message);
+    }
+
     /** {@inheritDoc} */
     @Override
     public Status getResponseStatus() {

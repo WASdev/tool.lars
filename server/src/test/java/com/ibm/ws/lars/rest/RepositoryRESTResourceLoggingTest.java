@@ -125,7 +125,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testCreateAttachmentWithContent(@Mocked final Logger logger, @Mocked final BufferedInMultiPart inMultiPart) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
+    public void testCreateAttachmentWithContent(@Mocked final Logger logger, @Mocked final BufferedInMultiPart inMultiPart) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException, NonExistentArtefactException {
 
         new Expectations() {
             {
@@ -140,7 +140,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testCreateAttachmentNoContent(@Mocked final Logger logger) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException {
+    public void testCreateAttachmentNoContent(@Mocked final Logger logger) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException, NonExistentArtefactException {
 
         new Expectations() {
             {
