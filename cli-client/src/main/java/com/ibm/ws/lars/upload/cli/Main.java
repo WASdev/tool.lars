@@ -18,6 +18,7 @@ package com.ibm.ws.lars.upload.cli;
 
 import java.io.Console;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +26,7 @@ import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +49,6 @@ import com.ibm.ws.massive.resources.MassiveResource;
 import com.ibm.ws.massive.resources.MassiveResource.State;
 import com.ibm.ws.massive.resources.RepositoryBadDataException;
 import com.ibm.ws.massive.resources.RepositoryResourceDeletionException;
-import com.ibm.ws.massive.resources.UploadStrategy;
 
 public class Main {
 
@@ -66,6 +67,20 @@ public class Main {
     private String invokedName;
 
     private final PrintStream output;
+
+    /** Filter that only accepts .esa files */
+    private static final FileFilter ESA_FILTER = new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+            if (file == null)
+                return false;
+
+            String name = file.getName();
+            return !file.isDirectory() &&
+                   name != null &&
+                   name.endsWith(".esa");
+        }
+    };
 
     /**
      * All logic here should be delegated to run, to allow for easier testing
@@ -260,8 +275,6 @@ public class Main {
                                    + "users.");
     }
 
-    private static final UploadStrategy UPLOAD_STRATEGY = new AddThenDeleteStrategy(State.PUBLISHED, State.PUBLISHED, true);
-
     /**
      * Uploads a list of ESAs.
      * <p>
@@ -273,7 +286,17 @@ public class Main {
         LoginInfoEntry loginInfoEntry = createLoginInfoEntry();
         List<File> files = new ArrayList<File>();
         for (String arg : remainingArgs) {
-            files.add(new File(arg));
+
+            File argFile = new File(arg);
+            // If we encounter a directory then add its contents
+            if (argFile.isDirectory()) {
+                File[] directoryContents = argFile.listFiles(ESA_FILTER);
+                if (directoryContents != null) {
+                    files.addAll(Arrays.asList(directoryContents));
+                }
+            } else {
+                files.add(argFile);
+            }
         }
 
         if (files.isEmpty()) {
@@ -286,6 +309,8 @@ public class Main {
                 throw new ClientException("File " + file.toString() + " can't be read", 1, HelpDisplay.NO_HELP);
             }
             if (file.isDirectory()) {
+                // We don't expect we'd ever hit this case but, if we do (due to a logic error eg in ESA_FILTER)
+                // then bomb out
                 throw new ClientException("File " + file.toString() + " is a directory", 1, HelpDisplay.NO_HELP);
             }
         }
@@ -299,11 +324,30 @@ public class Main {
                     1, HelpDisplay.NO_HELP, ex);
         }
 
-        for (File file : files) {
+        int size = files.size();
+        for (int i = 0; i < size; i++) {
+            File file = files.get(i);
             try {
-                output.print("Uploading " + file.toString() + " ... ");
-                uploader.addEsasToMassive(Collections.singleton(file), UPLOAD_STRATEGY);
-                output.println("done");
+                output.print((i + 1) + " of " + size + ": Uploading " + file.toString() + " ... ");
+                AddThenDeleteStrategy uploadStrategy = new AddThenDeleteStrategy(State.PUBLISHED, State.PUBLISHED, true);
+                uploader.addEsasToMassive(Collections.singleton(file), uploadStrategy);
+
+                // Did this upload operation cause us to delete one or more existing assets?
+                List<MassiveResource> deletedResources = uploadStrategy.getDeletedResources();
+                if (deletedResources.size() > 1) {
+                    // This is an unusual case: we replaced more than one existing (duplicate) assets
+                    output.println("done, replacing multiple duplicate assets:");
+                    for (MassiveResource deletedResource : deletedResources) {
+                        output.println(resourceToString(deletedResource));
+                    }
+                } else if (deletedResources.size() == 1) {
+                    // More common case: we replaced one asset. Effectively, we are updating that asset.
+                    output.println("done, replacing existing asset " + resourceToString(deletedResources.get(0)));
+                } else {
+                    // Most common case... we didn't replace anything and just
+                    // uploaded this new asset
+                    output.println("done");
+                }
             } catch (RepositoryException ex) {
                 throw new ClientException("An error occurred while uploading " + file.toString() + ": " + ex.getMessage(),
                         1, HelpDisplay.NO_HELP, ex);
@@ -507,4 +551,26 @@ public class Main {
         return console;
     }
 
+    /**
+     * Converts this resource into a string that can be dispalyed to the user and
+     * which should be useful when presented in the context of "this resource
+     * replaced that one when uploaded."
+     */
+    private String resourceToString(MassiveResource resource) {
+
+        // At present, we only support features. This code will need to be
+        // revisited in order to upload other types of resources
+        if (!(resource instanceof EsaResource)) {
+            throw new IllegalArgumentException("This method only supports resources of type ESAResource. Type was: " + resource.getClass().getName() + " was supplied.");
+        }
+
+        EsaResource esaResource = (EsaResource) resource;
+
+        return String.format("%s type=%s, appliesTo=%s, version=%s, provideFeature=%s",
+                             esaResource.getName(),
+                             esaResource.getType(),
+                             esaResource.getAppliesTo(),
+                             esaResource.getVersion(),
+                             esaResource.getProvideFeature());
+    }
 }

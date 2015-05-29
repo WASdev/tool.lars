@@ -160,4 +160,24 @@ public class UploadFatTest {
 
         tp.assertOutputContains("done");
     }
+
+    @Test
+    public void shouldUploadDirectory() throws Exception {
+        LoginInfo loginInfo = repoServer.getLoginInfo();
+
+        // Note: at the time of writing, dirWith3ESAs has a subdirectory that contains
+        // ESAs. We do *not* expect the contents of the subdirectory to be uploaded
+        // (and the test will fail if they *are* uploaded).
+        TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
+                                                       "upload",
+                                                       "--url=" + FatUtils.SERVER_URL,
+                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
+                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "resources/dirWith3ESAs"));
+        tp.run();
+
+        tp.assertReturnCode(0);
+        assertEquals("Incorrect resource count", 3, MassiveResource.getAllResources(loginInfo).size());
+        assertEquals("Incorrect feature count", 3, EsaResource.getAllFeatures(loginInfo).size());
+    }
 }
