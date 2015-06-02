@@ -157,4 +157,12 @@ public class DummyUriInfo implements UriInfo {
         return null;
     }
 
+    public URI relativize(URI uri) {
+        return null;
+    }
+
+    public URI resolve(URI uri) {
+        return null;
+    }
+
 }
