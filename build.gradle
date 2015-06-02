@@ -14,6 +14,7 @@
 * limitations under the License.
 *******************************************************************************/
 
+apply plugin: 'base'
 apply plugin: 'eclipse'
 
 boolean haveAnyTestsFailed = false;
@@ -147,6 +148,7 @@ subprojects {
 task dist(type: Sync) {
     into 'build/distributions'
     from subprojects*.getTasksByName('distZip', false)
+	from tasks.getByPath(':server:packageLars');
 }
 
 task globalTestReport(type: TestReport) {
