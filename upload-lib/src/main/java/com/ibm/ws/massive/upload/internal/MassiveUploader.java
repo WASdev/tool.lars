@@ -346,6 +346,9 @@ public abstract class MassiveUploader extends AbstractMassive {
                                             boolean includeDirectories) {
         Collection<File> result = new Stack<File>();
         File[] files = rootDir.listFiles();
+        if (files == null) {
+            return result;
+        }
         for (File f : files) {
             if (f.isDirectory()) {
                 result.addAll(doListAllFiles(f, includeDirectories));
@@ -474,7 +477,7 @@ public abstract class MassiveUploader extends AbstractMassive {
     /*
      * LAHeader typical value: "wlp/lafiles/LA" typical files names are of the form
      * "wlp/lafiles/LA_en"
-     *
+     * 
      * Both must be present unless GenerateEsas.specialFeatureTermsApply() which equates to
      * Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1 However by this point it's
      * very difficult to determine whether we're processing a resource that need only contain LA and
