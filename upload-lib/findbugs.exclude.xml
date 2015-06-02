@@ -20,5 +20,12 @@
         <Class name="com.ibm.ws.massive.upload.internal.MassiveUploader$ArtifactMetadata" />
         <Method name="&lt;init&gt;" />
     </Match>
+    
+    <!-- Although bundle.getFileName can return null, it never should as in this case the path is known to represent a file. -->
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
+        <Class name="com.ibm.ws.massive.esa.MassiveEsa" />
+        <Method name="setJavaRequirements" />
+    </Match>
 
 </FindBugsFilter>

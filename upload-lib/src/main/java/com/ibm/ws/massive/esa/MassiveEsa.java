@@ -150,7 +150,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.ibm.ws.massive.upload.RepositoryUploader#canUploadFile(java.io.File)
      */
     @Override
@@ -160,7 +160,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.ibm.ws.massive.upload.RepositoryUploader#uploadFile(java.io.File,
      * com.ibm.ws.massive.resources.UploadStrategy)
      */
@@ -457,7 +457,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
          * When we delete a feature we will also need to remove any enabling information that
          * reference it so keep track of which other assets we will need to update at the end.
          */
-        Collection<EsaResource> assetsForUpdating = new HashSet<EsaResource>();
+        //Collection<EsaResource> assetsForUpdating = new HashSet<EsaResource>();
         while (featureIterator.hasNext()) {
             EsaResource featureResource = featureIterator.next();
             String symbolicName = featureResource.getProvideFeature();
@@ -475,7 +475,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
          * adding back in. This will also process all of the assets that we need to update in
          * Massive. First make sure we haven't deleted the assets we thought needed updating!
          */
-        assetsForUpdating.retainAll(this.allFeatures.values());
+        //assetsForUpdating.retainAll(this.allFeatures.values());
         //  addEnablingInformation(assetsForUpdating);
 
     }
@@ -579,7 +579,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see java.lang.Object#hashCode()
          */
         @Override
@@ -594,7 +594,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
