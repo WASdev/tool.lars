@@ -21,8 +21,6 @@ limitations under the License.
         <feature>servlet-3.0</feature>
         <feature>jaxrs-1.1</feature>
         <feature>mongodb-2.0</feature>
-        <feature>ejbLite-3.1</feature>
-        <feature>localConnector-1.0</feature>
         <feature>cdi-1.0</feature>
         <feature>jndi-1.0</feature>
         <feature>appSecurity-2.0</feature>
@@ -50,8 +48,6 @@ limitations under the License.
 
     <!-- To access this server from a remote client add a host attribute to the following element, e.g. host="*" -->
     <httpEndpoint httpPort="9080" httpsPort="9443" id="defaultHttpEndpoint"/>
-
-    <applicationMonitor updateTrigger="mbean"/>
 
     <!-- This library must be used by the WAR app in order for both the app and the MongoDB feature to see the
          same MongoDB driver classes.
