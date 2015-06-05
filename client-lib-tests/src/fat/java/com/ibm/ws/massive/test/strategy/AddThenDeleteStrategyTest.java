@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -148,9 +149,39 @@ public class AddThenDeleteStrategyTest extends StrategyTestBaseClass {
         assertTrue("We should have done an update on one of the two original assets and deleted the other one", (id3.equals(readBack.get_id()) || id3.equals(readBack2.get_id())));
     }
 
+    @Test
+    public void shouldReportDeletedResources() throws RepositoryBackendException, RepositoryResourceException {
+        _testRes.uploadToMassive(new AddNewStrategy());
+        SampleResource readBack = SampleResource.getSample(_loginInfoEntry, _testRes.get_id());
+
+        // Add a matching resource to cause the original resource to be deleted
+        _testRes.setFeaturedWeight("5");
+        AddThenDeleteStrategy addThenDelete = new AddThenDeleteStrategy();
+        _testRes.uploadToMassive(addThenDelete);
+
+        List<MassiveResource> deletedResources = addThenDelete.getDeletedResources();
+        assertEquals("Should have deleted precisely one matching resource", 1, deletedResources.size());
+        assertEquals("Should have deleted the matching resource", readBack.get_id(), deletedResources.get(0).get_id());
+    }
+
+    @Test
+    public void shouldReportDeletedDuplicateResources() throws RepositoryBackendException, RepositoryResourceException {
+        // Add the same resource three times, meaning that when we then try to upload
+        // one identical matching resource, it will delete two of them (leaving just
+        // one resource)
+
+        _testRes.uploadToMassive(new AddNewStrategy());
+        _testRes.uploadToMassive(new AddNewStrategy());
+        _testRes.uploadToMassive(new AddNewStrategy());
+        AddThenDeleteStrategy addThenDelete = new AddThenDeleteStrategy();
+        _testRes.uploadToMassive(addThenDelete);
+
+        List<MassiveResource> deletedResources = addThenDelete.getDeletedResources();
+        assertEquals("Should delete two of the three duplicate resources", 2, deletedResources.size());
+    }
+
     @Override
     protected UploadStrategy createStrategy(State ifMatching, State ifNoMatching) {
         return new AddThenDeleteStrategy(ifMatching, ifNoMatching, false);
     }
-
 }

@@ -17,6 +17,7 @@
 package com.ibm.ws.massive.resources;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.ibm.ws.massive.RepositoryBackendException;
@@ -34,11 +35,15 @@ import com.ibm.ws.massive.resources.MassiveResource.State;
  * resource and a desiredStateIfMatchingFound state has been set then use it. If a desiredStateIfMatchingFound has not
  * been set (it's null) then set the new resource's state to match the state of the matching resource found in the
  * repo.
+ * 
+ * Note: this class is not threadsafe and should not be shared between multiple threads.
  */
 public class AddThenDeleteStrategy extends AddNewStrategy {
 
     private boolean _forceReplace;
     private List<MassiveResource> _matchingResources = null;
+
+    private List<MassiveResource> deletedResources = Collections.emptyList();
 
     /**
      * Delegate to super class for states
@@ -92,6 +97,12 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
         boolean deleteOriginal = false;
         MassiveResource firstMatch = (matchingResources == null || matchingResources.isEmpty()) ? null : matchingResources.get(0);
 
+        // The list of deleted resources is initialised to an empty list and
+        // remains so until we actually delete something.
+        // If we hit some logic in this method that causes resources to be deleted
+        // then we will set it appropriately.
+        deletedResources = Collections.emptyList();
+        
         // Check if we need to do an update
         if (_forceReplace) {
             doUpdate = true;
@@ -134,6 +145,8 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
 
             // If the action was an update to an existing resource then delete the original now
             if (deleteOriginal) {
+                deletedResources = matchingResources;
+
                 for (MassiveResource massiveResource : matchingResources) {
                     massiveResource.delete();
                 }
@@ -146,9 +159,13 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
             copyAsset(resource, firstMatch);
 
             // Also remove duplicates so there is only one asset left.  NOTE starting at 1, don't delete the first one as this is what we are using
+            List<MassiveResource> resourcesToDelete = new ArrayList<>();
             for (int i = 1; i < matchingResources.size(); i++) {
-                matchingResources.get(i).delete();
+                MassiveResource resourceToDelete = matchingResources.get(i);
+                resourcesToDelete.add(resourceToDelete);
+                resourceToDelete.delete();
             }
+            deletedResources = resourcesToDelete;
         }
         resource.refreshFromMassive();
     }
@@ -169,5 +186,14 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
     @Override
     protected State getTargetState(MassiveResource matchingResource) {
         return calculateTargetState(matchingResource);
+    }
+
+    /**
+     * Returns the list of resources (if any) that were deleted as a result of
+     * the upload operation that this AddThenDeleteStrategy object is responsible
+     * for.
+     */
+    public List<MassiveResource> getDeletedResources() {
+        return deletedResources;
     }
 }
