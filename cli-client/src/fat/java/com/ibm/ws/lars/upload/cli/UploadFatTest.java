@@ -16,10 +16,15 @@
 
 package com.ibm.ws.lars.upload.cli;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -161,6 +166,8 @@ public class UploadFatTest {
         tp.assertOutputContains("done");
     }
 
+    @SuppressWarnings("unchecked")
+    // needed to call generic varagrs method :-/
     @Test
     public void shouldUploadDirectory() throws Exception {
         LoginInfo loginInfo = repoServer.getLoginInfo();
@@ -178,6 +185,13 @@ public class UploadFatTest {
 
         tp.assertReturnCode(0);
         assertEquals("Incorrect resource count", 3, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 3, EsaResource.getAllFeatures(loginInfo).size());
+        Collection<EsaResource> features = EsaResource.getAllFeatures(loginInfo);
+        assertEquals("Incorrect feature count", 3, features.size());
+
+        assertThat("Should upload directory contents",
+                   features,
+                   containsInAnyOrder(hasProperty("name", equalTo("com.ibm.ws.test.simple")),
+                                      hasProperty("name", equalTo("com.ibm.ws.test.userFeature")),
+                                      hasProperty("name", equalTo("com.ibm.ws.test.versionrange"))));
     }
 }
