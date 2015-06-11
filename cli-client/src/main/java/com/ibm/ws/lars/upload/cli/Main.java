@@ -124,15 +124,15 @@ public class Main {
                     doListAll(remainingArgs);
                     break;
                 case HELP:
-                    showHelp();
+                    showHelp(remainingArgs);
                     break;
                 default:
-                    showHelp();
+                    showHelp(remainingArgs);
                     break;
             }
         } catch (ClientException e) {
             if (e.getHelpDisplay() == HelpDisplay.SHOW_HELP) {
-                showHelp(e.getMessage());
+                new Help(output).printMessageAndGlobalUsage(e.getMessage());
             } else {
                 output.println(e.getMessage());
             }
@@ -219,60 +219,35 @@ public class Main {
     }
 
     /**
-     * Prints an error message to the output stream, followed by some help
+     * Prints a help message to the output stream, either a global message (if remainingArgs is
+     * empty) or a help message for a particular command (if specified in remainingArgs).
      */
-    private void showHelp(String errorMessage) {
-        output.println(errorMessage);
-        output.println();
-        showHelp();
-    }
-
-    /**
-     * Prints some help to stdout.
-     */
-    private void showHelp() {
-        String programCommand = getInvokedName();
-        if (programCommand == null) {
-            programCommand = "java -jar larsClient.jar";
-        }
+    private void showHelp(List<String> remainingArgs) {
 
         Help help = new Help(output);
 
-        // Print usage
-        output.print("Usage: ");
-        output.print(programCommand);
-        output.print(" action [options] esaFile ...");
-        output.println();
-        output.println();
-        help.printArgument("esaFile", "A path to an OSGi enterprise subsystem archive which contains a liberty feature");
-
-        // Print actions
-        output.println("Actions:");
-        output.println();
-        for (Action action : Action.values()) {
-            help.printAction(action.getArgument(), action.getHelpMessage(), this.invokedName);
+        if (remainingArgs.size() == 0 ||
+            remainingArgs.size() > 1) {
+            help.printGlobalUsage();
+        } else {
+            Action action = Action.getByArgument(remainingArgs.get(0));
+            if (action != null) {
+                switch (action) {
+                    case HELP:
+                    case UPLOAD:
+                    case DELETE:
+                    case LISTALL:
+                        help.printCommandUsage(action.getUsage(), action.getHelpDetail());
+                        help.printGlobalOptions();
+                        break;
+                    default:
+                        help.printGlobalUsage();
+                        break;
+                }
+            } else {
+                help.printGlobalUsage();
+            }
         }
-
-        // Print options
-        output.println("Options:");
-        output.println();
-        help.printArgument("--url=\"repository URL\"", "Specify the URL of the repository to use.");
-        help.printArgument("--username=\"user name\"",
-                           "Specify the user name to use when connecting to the repository. If "
-                                   + "this and --password are not set then the client will connect without "
-                                   + "authentication.");
-        help.printArgument("--password=\"password\"",
-                           "Specify the password to use when connecting to the repository. If "
-                                   + "this and --username are not set then the client will connect without "
-                                   + "authentication. Using this option passes your password on the command "
-                                   + "line which exposes it to other users on the system who can view the "
-                                   + "list of running processes. Consider using --password without an "
-                                   + "argument to specify that the password should be prompted for on "
-                                   + "standard input.");
-        help.printArgument("--password",
-                           "Specify that the password should be prompted for on standard input. "
-                                   + "Using this option prevents your password from being seen by other "
-                                   + "users.");
     }
 
     /**
@@ -356,6 +331,7 @@ public class Main {
     }
 
     private void doListAll(List<String> params) throws ClientException {
+
         LoginInfoEntry loginInfoEntry = createLoginInfoEntry();
         Collection<MassiveResource> assets = null;
         try {
@@ -552,9 +528,8 @@ public class Main {
     }
 
     /**
-     * Converts this resource into a string that can be dispalyed to the user and
-     * which should be useful when presented in the context of "this resource
-     * replaced that one when uploaded."
+     * Converts this resource into a string that can be displayed to the user and which should be
+     * useful when presented in the context of "this resource replaced that one when uploaded."
      */
     private String resourceToString(MassiveResource resource) {
 

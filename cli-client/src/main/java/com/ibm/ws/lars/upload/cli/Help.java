@@ -18,12 +18,26 @@ package com.ibm.ws.lars.upload.cli;
 
 import java.io.PrintStream;
 
+/**
+ * The purpose of this class is to handle printing help messages to the specified PrintStream. This
+ * class doesn't contain the messages themselves but it knows how to print them.
+ */
 public class Help {
 
-    PrintStream outputStream;
+    private final PrintStream outputStream;
+    private final String programName;
 
     public Help(PrintStream outputStream) {
         this.outputStream = outputStream;
+
+        // Work out the name of the executable (which we will need for printing
+        // out usage instructions).
+        String invokedName = System.getenv("INVOKED");
+        if (invokedName != null) {
+            this.programName = invokedName;
+        } else {
+            this.programName = "java -jar larsClient.jar";
+        }
     }
 
     /**
@@ -69,6 +83,78 @@ public class Help {
         outputStream.print("    ");
         outputStream.println(option);
         printWrappedText(description);
+    }
+
+    /**
+     * Prints a usage message for the specified command.
+     *
+     * @param usageSummary the one line Usage: statement
+     * @param detail a detailed message that will be wrapped if necessary.
+     */
+    public void printCommandUsage(String usageSummary, String detail) {
+        outputStream.println("Usage: " + this.programName + " " + usageSummary);
+        if (detail != null) {
+            outputStream.println();
+            printWrappedText(detail);
+        }
+    }
+
+    /**
+     * Prints an error message to the output stream, followed by global help.
+     */
+    public void printMessageAndGlobalUsage(String errorMessage) {
+        outputStream.println(errorMessage);
+        outputStream.println();
+        printGlobalUsage();
+    }
+
+    /**
+     * Prints a global usage message for larsClient.
+     */
+    public void printGlobalUsage() {
+        // Print usage
+        outputStream.print("Usage: ");
+        outputStream.print(programName);
+        outputStream.print(" action [options] [arguments] ...");
+        outputStream.println();
+        outputStream.println();
+
+        // Print actions
+        outputStream.println("Actions:");
+        outputStream.println();
+        for (Action action : Action.values()) {
+            printAction(action.getArgument(), action.getHelpSummary(), programName);
+        }
+
+        // Print options
+        printGlobalOptions();
+    }
+
+    /**
+     * Prints the global usage message for larsClient. This message should be appropriate either in
+     * a global context or in the context of a particular command.
+     */
+    public void printGlobalOptions() {
+        // Print options
+        outputStream.println("Options:");
+        outputStream.println();
+        printArgument("--url=\"repository URL\"", "Specify the URL of the repository to use.");
+        printArgument("--username=\"user name\"",
+                      "Specify the user name to use when connecting to the repository. If "
+                              + "this and --password are not set then the client will connect without "
+                              + "authentication.");
+        printArgument("--password=\"password\"",
+                      "Specify the password to use when connecting to the repository. If "
+                              + "this and --username are not set then the client will connect without "
+                              + "authentication. Using this option passes your password on the command "
+                              + "line which exposes it to other users on the system who can view the "
+                              + "list of running processes. Consider using --password without an "
+                              + "argument to specify that the password should be prompted for on "
+                              + "standard input.");
+        printArgument("--password",
+                      "Specify that the password should be prompted for on standard input. "
+                              + "Using this option prevents your password from being seen by other "
+                              + "users.");
     }
 
     /**

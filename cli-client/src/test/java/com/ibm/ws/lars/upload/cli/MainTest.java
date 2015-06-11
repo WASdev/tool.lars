@@ -16,8 +16,9 @@
 
 package com.ibm.ws.lars.upload.cli;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
@@ -29,31 +30,106 @@ import com.ibm.ws.lars.testutils.FatUtils;
 
 public class MainTest {
 
-    /**
-     * Simple test to check that help is output if no arguments are given
-     */
-    @Test
-    public void testRun() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ByteArrayOutputStream ebaos = new ByteArrayOutputStream();
-        try (PrintStream output = new PrintStream(baos); PrintStream error = new PrintStream(ebaos)) {
-            Main main = new Main(output);
-            try {
-                main.run(new String[] {});
-            } catch (ClientException e) {
-                assertEquals("Unexpected exception message", "No options were given", e.getMessage());
-                String outputString = baos.toString();
-                assertTrue("The expected help output wasn't produced, was:\n" + outputString, outputString.contains("Usage: java"));
-                int numberOfLines = FatUtils.countLines(outputString);
-                assertEquals("The help output didn't contain the expected number of lines:\n" + outputString,
-                             46, numberOfLines);
+    private static class MainRunner {
+        public String stdout;
+        public String stderr;
 
-                String errorOutput = ebaos.toString();
-                assertEquals("No output was expected to stderr", "", errorOutput);
-                return;
-            }
-            fail("The expected client exception was not thrown");
+        private final String expectedExceptionMessage;
+        private final int expectedStdoutLines;
+
+        public MainRunner(String expectedExceptionMessage, int expectedStdoutLines) {
+            this.expectedExceptionMessage = expectedExceptionMessage;
+            this.expectedStdoutLines = expectedStdoutLines;
         }
 
+        public void run(String... args) throws ClientException {
+            ByteArrayOutputStream stdoutBAOS = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderrBAOS = new ByteArrayOutputStream();
+            try (PrintStream output = new PrintStream(stdoutBAOS);
+                    PrintStream error = new PrintStream(stderrBAOS)) {
+                Main main = new Main(output);
+                Exception exception = null;
+                try {
+                    main.run(args);
+                } catch (ClientException e) {
+                    if (expectedExceptionMessage != null) {
+                        exception = e;
+                        assertEquals("Unexpected exception message", expectedExceptionMessage, e.getMessage());
+                    } else {
+                        throw e;
+                    }
+                }
+                if (expectedExceptionMessage != null && exception == null) {
+                    fail("The expected client exception was not thrown");
+                }
+
+                stdout = stdoutBAOS.toString();
+                stderr = stderrBAOS.toString();
+
+                assertEquals("The help output didn't contain the expected number of lines:\n" + stdout,
+                             expectedStdoutLines,
+                             FatUtils.countLines(stdout));
+
+                assertEquals("No output was expected to stderr", "", stderr);
+            }
+        }
+    }
+
+    /**
+     * Simple test to check that help is output if no arguments are given
+     *
+     * @throws ClientException
+     */
+    @Test
+    public void testRun() throws ClientException {
+        MainRunner runner = new MainRunner("No options were given", 41);
+        runner.run();
+        assertThat(runner.stdout, containsString("Usage: java -jar larsClient.jar action [options] [arguments]"));
+    }
+
+    @Test
+    public void shouldPrintHelpMessageIfHelpOptionSpecified() throws ClientException {
+        MainRunner runner = new MainRunner(null, 39);
+        runner.run("--help");
+        assertThat(runner.stdout, containsString("Usage: java -jar larsClient.jar action [options] [arguments] ..."));
+        assertThat(runner.stdout, containsString("Show help for larsClient."));
+        assertThat(runner.stdout, containsString("Upload ESAs to the repository."));
+        assertThat(runner.stdout, containsString("Delete one or more assets from the repository, specified by id."));
+        assertThat(runner.stdout, containsString("List all the assets currently in the repository"));
+    }
+
+    @Test
+    public void shouldPrintHelpMessageIfHelpInvokedOnNonExistentComment() throws ClientException {
+        // there is no such command as "cheese"
+        MainRunner runner = new MainRunner(null, 39);
+        runner.run("--help", "cheese");
+    }
+
+    @Test
+    public void shouldPrintHelpForHelp() throws ClientException {
+        MainRunner runner = new MainRunner(null, 27);
+        runner.run("--help", "help");
+        assertThat(runner.stdout, containsString("Show help for larsClient."));
+    }
+
+    @Test
+    public void shouldPrintHelpForUpload() throws ClientException {
+        MainRunner runner = new MainRunner(null, 31);
+        runner.run("--help", "upload");
+        assertThat(runner.stdout, containsString("Uploads one or more features to a LARS server."));
+    }
+
+    @Test
+    public void shouldPrintHelpForDelete() throws ClientException {
+        MainRunner runner = new MainRunner(null, 27);
+        runner.run("--help", "delete");
+        assertThat(runner.stdout, containsString("Delete one or more assets from the repository, specified by id."));
+    }
+
+    @Test
+    public void shouldPrintHelpForListAll() throws ClientException {
+        MainRunner runner = new MainRunner(null, 27);
+        runner.run("--help", "listAll");
+        assertThat(runner.stdout, containsString("List all the assets currently in the repository"));
     }
 }
