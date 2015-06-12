@@ -32,7 +32,6 @@ public class MainTest {
 
     private static class MainRunner {
         public String stdout;
-        public String stderr;
 
         private final String expectedExceptionMessage;
         private final int expectedStdoutLines;
@@ -44,9 +43,7 @@ public class MainTest {
 
         public void run(String... args) throws ClientException {
             ByteArrayOutputStream stdoutBAOS = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderrBAOS = new ByteArrayOutputStream();
-            try (PrintStream output = new PrintStream(stdoutBAOS);
-                    PrintStream error = new PrintStream(stderrBAOS)) {
+            try (PrintStream output = new PrintStream(stdoutBAOS)) {
                 Main main = new Main(output);
                 Exception exception = null;
                 try {
@@ -64,13 +61,10 @@ public class MainTest {
                 }
 
                 stdout = stdoutBAOS.toString();
-                stderr = stderrBAOS.toString();
 
                 assertEquals("The help output didn't contain the expected number of lines:\n" + stdout,
                              expectedStdoutLines,
                              FatUtils.countLines(stdout));
-
-                assertEquals("No output was expected to stderr", "", stderr);
             }
         }
     }
