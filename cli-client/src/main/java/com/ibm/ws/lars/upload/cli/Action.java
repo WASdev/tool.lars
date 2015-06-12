@@ -23,26 +23,69 @@ public enum Action implements HelpMessage {
 
     HELP("help") {
         @Override
-        public String getHelpMessage() {
-            return "Show this help.";
+        public String getHelpSummary() {
+            return "Show help for larsClient.";
+        }
+
+        @Override
+        public String getUsage() {
+            return "help [COMMAND]";
+        }
+
+        @Override
+        public String getHelpDetail() {
+            return "Show help for larsClient.";
         }
     },
     UPLOAD("upload") {
         @Override
-        public String getHelpMessage() {
-            return "Upload ESAs to the repository. The ESA files to upload should be passed on the command line.";
+        public String getHelpSummary() {
+            return "Upload ESAs to the repository.";
+        }
+
+        @Override
+        public String getUsage() {
+            return "upload [FILE]...";
+        }
+
+        @Override
+        public String getHelpDetail() {
+            return "Uploads one or more features to a LARS server. "
+                   + "For each argument, if the argument is a file with the extension .esa then this is treated as a Liberty feature and uploaded. "
+                   + "If the argument is a directory then any .esa files within that directory are treated as Liberty features and uploaded. "
+                   + "Note that subdirectories are not recursively searched.";
         }
     },
     DELETE("delete") {
         @Override
-        public String getHelpMessage() {
-            return "Delete one or more assets from the repository, specified by asset ID";
+        public String getHelpSummary() {
+            return "Delete one or more assets from the repository, specified by id.";
+        }
+
+        @Override
+        public String getUsage() {
+            return "delete [ASSET-ID]...";
+        }
+
+        @Override
+        public String getHelpDetail() {
+            return "Delete one or more assets from the repository, specified by id.";
         }
     },
     LISTALL("listAll") {
         @Override
-        public String getHelpMessage() {
-            return "List all the assets currently in the repository";
+        public String getHelpSummary() {
+            return "List all the assets currently in the repository.";
+        }
+
+        @Override
+        public String getUsage() {
+            return "listAll";
+        }
+
+        @Override
+        public String getHelpDetail() {
+            return "List all the assets currently in the repository.";
         }
     };
 

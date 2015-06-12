@@ -18,6 +18,20 @@ package com.ibm.ws.lars.upload.cli;
 
 public interface HelpMessage {
 
-    String getHelpMessage();
+    /**
+     * @return a one-line help message summary for this command.
+     */
+    String getHelpSummary();
+
+    /**
+     * @return a usage message. Note that this should not include the String "Usage:" or the command
+     *         name
+     */
+    String getUsage();
+
+    /**
+     * @return a detailed help message or null if no detailed help message is appropriate
+     */
+    String getHelpDetail();
 
 }
