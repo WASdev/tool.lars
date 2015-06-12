@@ -32,7 +32,7 @@ public class Help {
 
         // Work out the name of the executable (which we will need for printing
         // out usage instructions).
-        String invokedName = System.getenv("INVOKED");
+        String invokedName = Main.getInvokedName();
         if (invokedName != null) {
             this.programName = invokedName;
         } else {

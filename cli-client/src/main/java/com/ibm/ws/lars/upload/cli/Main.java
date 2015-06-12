@@ -64,7 +64,6 @@ public class Main {
 
     private Map<Option, String> options;
     private Action action;
-    private String invokedName;
 
     private final PrintStream output;
 
@@ -109,7 +108,6 @@ public class Main {
      */
     public void run(String[] args) throws ClientException {
 
-        invokedName = System.getenv("INVOKED");
         try {
             List<String> remainingArgs = readActionAndOptions(args);
 
@@ -148,8 +146,8 @@ public class Main {
      *
      * @return the name by which this utility was invoked, or null if the jar was invoked directly
      */
-    public String getInvokedName() {
-        return invokedName;
+    public static String getInvokedName() {
+        return System.getenv("INVOKED");
     }
 
     /**
