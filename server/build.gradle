@@ -214,6 +214,73 @@ task stopTestMongod {
     }
 }
 
+
+// Use liberty's 'package' command to produce an artifact that can be installed with
+// the 'installUtility' command. The testServer can't just be packaged up as it is 
+// using the wrong server.xml, and the name is wrong. 
+task packageLars {
+    
+    description 'Package up LARS in a format that can be installed into a Liberty server using the server\'s installUtility command';
+    
+    dependsOn 'initAnt'
+    dependsOn 'createPackageUsrDir'
+    
+    def packageJarFile = 'build/' + archivesBaseName + 'Package.jar'
+    
+    outputs.file packageJarFile
+
+    doLast {
+        
+        // The 'package' command doesn't produce a jar
+        // which is suitable to be installed as a 'sample' using the
+        // server's installUtility (that is not the intention of the package command).
+        // To make it  work, create the jar and then tweak a few fields in the manifest.
+        ant.server(operation: 'package',
+                   installDir: libertyRoot,
+                   userDir: 'build/usr',
+                   serverName: serverName,
+                   include: 'usr',
+                   archive: packageJarFile)
+
+        // Get all the liberty features that LARS depends on
+        def requireFeatureValue = getRequireFeatureValue(file('config/server.xml'))
+
+        // TODO : Update the notices file, it currently has a todo in it.
+                
+        ant.jar(destfile: packageJarFile, update: true) {
+            fileset(dir: rootProject.getRootDir(), includes: 'LICENSE,NOTICES')
+            delegate.manifest {
+                attribute(name: 'Provide-Feature', value: '') // The sample doesn't provide anything
+                attribute(name: 'Require-Feature', value: requireFeatureValue) // All the  features the sample depends on
+                attribute(name: 'Sample-Type', value: 'thirdParty') // Tell install utility this is a 'sample'
+                attribute(name: 'Archive-Content-Type', value: 'sample')
+                attribute(name: 'Archive-Root', value: 'wlp/usr/') // This needs to be set to ensure that sample is uploaded to the repository correctly 
+            }
+        }
+    }
+    
+}
+
+// Searches a server.xml file for feature definitions, turns them
+// into a single string for sticking in the manifest.
+String getRequireFeatureValue(File serverXML) {
+    String contents = serverXML.text
+    String features = ""
+    // The mapping from the short name in the server.xml to the feature's package name
+    // isn't well defined. Appending 'com.ibm.websphere.appserver' is correct for all
+    // the features currently used, although it is a bit fragile.
+    (contents =~ /<feature>([^<]+)</).each() { fullMatch, name -> 
+        features += "com.ibm.websphere.appserver." + name + "," 
+        }
+    return features;     
+} 
+
+task createPackageUsrDir (type: Copy) {
+    description 'Create the /usr directory for a server to be packaged'    
+    into 'build/usr'
+    with usrDirSpec(serverName)
+}
+
 File getMongodExecutable() {
     File mongod = new File(property('mongodExecutable'))
     if (!mongod.exists()) {
