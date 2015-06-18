@@ -244,11 +244,9 @@ task packageLars {
 
         // Get all the liberty features that LARS depends on
         def requireFeatureValue = getRequireFeatureValue(file('config/server.xml'))
-
-        // TODO : Update the notices file, it currently has a todo in it.
                 
         ant.jar(destfile: packageJarFile, update: true) {
-            fileset(dir: rootProject.getRootDir(), includes: 'LICENSE,NOTICES')
+            fileset(dir: rootProject.getRootDir(), includes: 'LICENSE')
             delegate.manifest {
                 attribute(name: 'Provide-Feature', value: '') // The sample doesn't provide anything
                 attribute(name: 'Require-Feature', value: requireFeatureValue) // All the  features the sample depends on
