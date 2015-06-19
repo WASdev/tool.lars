@@ -17,14 +17,10 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-repositories {
-    mavenCentral();
-}
-
 dependencies {
-    compile group:'org.apache.aries', name:'org.apache.aries.util', version:'1.1.+'
-    compile group:'org.osgi', name:'org.osgi.core', version:'5.0.+'
-    compile group:'org.apache.wink', name:'wink-json4j', version:'1.4'
+    compile group:'org.apache.aries', name:'org.apache.aries.util', version:aries_util_version
+    compile group:'org.osgi', name:'org.osgi.core', version:osgi_core_version
+    compile group:'org.apache.wink', name:'wink-json4j', version:wink_json4j_version
 }
 
 
