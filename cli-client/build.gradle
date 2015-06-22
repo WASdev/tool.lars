@@ -47,7 +47,7 @@ test {
 testFat {
     dependsOn 'unpackDist'
     inputs.files({tasks.unpackDist})
-    
+
     File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
     jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
 }
@@ -63,6 +63,9 @@ distributions {
             into('bin') {
                 from('src/main/scripts')
                 fileMode(0755)
+            }
+            into('/') {
+                from(rootProject.file('LICENSE'))
             }
         }
     }
