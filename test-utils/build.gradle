@@ -17,14 +17,10 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
-repositories {
-    mavenCentral();
-}
-
 dependencies {
-    compile group:'org.hamcrest', name:'hamcrest-library', version:'1.+'
-    compile group:'junit', name:'junit', version:'4.+'
-    compile group:'org.mongodb', name:'mongo-java-driver', version:'2.11.1'
+    compile group:'org.hamcrest', name:'hamcrest-library', version:hamcrest_version
+    compile group:'junit', name:'junit', version:junit_version
+    compile group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
     compile project(':client-lib')
 }
 

@@ -17,6 +17,12 @@
 apply plugin: 'base'
 apply plugin: 'eclipse'
 
+if (hasProperty('versionFile')) {
+    apply from: versionFile
+} else {
+    apply from: 'LARS_versions.gradle'
+}
+
 boolean haveAnyTestsFailed = false;
 
 loadProperties("${rootProject.rootDir}/test-utils/src/main/resources/config.properties");
@@ -29,6 +35,11 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
+    
+
+    repositories {
+        mavenCentral()
+    }
     
     sourceSets {
         fat {
@@ -46,10 +57,10 @@ subprojects {
     }
     
     findbugsMain {
-    	reports {
-	        xml.enabled = false
-	        html.enabled = true
-	    }
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
     }
     
     configurations {
@@ -148,7 +159,7 @@ subprojects {
 task dist(type: Sync) {
     into 'build/distributions'
     from subprojects*.getTasksByName('distZip', false)
-	from tasks.getByPath(':server:packageLars');
+    from tasks.getByPath(':server:packageLars');
 }
 
 task globalTestReport(type: TestReport) {
