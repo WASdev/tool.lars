@@ -1,41 +1,28 @@
 # LARS
 
-The Liberty Asset Repository Service implements a repository for Liberty features that you can deploy locally. You can host features you have developed and features retrieved from the Websphere Liberty Repository, and then use your Liberty server's installUtility command to install the hosted features into your server.
+The Liberty Asset Repository Service implements a repository for
+Liberty features that you can deploy locally. You can host features
+you have developed and features retrieved from the Websphere Liberty
+Repository, and then use your Liberty server's installUtility command
+to install the hosted features into your server.
 
-LARS is currently pre-release. Although it has been tested as a repository for a Liberty server, we recommend it is currently used for evaluation only. 
+## Documentation
 
-# Building
+The LARS documentation is organized into a number of pages:
 
-Make sure you have the following prerequisites installed: (older or newer versions may work but this is what we've tested with)
+ * [Building LARS] (doc/BUILDING.md)
+ * [Installing LARS] (doc/INSTALL.md)
+ * [Using `larsClient`] (doc/LARSCLIENT.md)
 
-* [gradle v2.0](http://gradle.org/downloads) 
-* [mongoDB v2.6](https://www.mongodb.org/downloads)
-* [WAS Liberty Profile 8.5.5.5](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-8.5.5-wlp-runtime)
-* [MongoDB Integration 2.0 Feature](https://developer.ibm.com/assets/wasdev/#asset/features-com.ibm.websphere.appserver.mongodb-2.0)
-* A Java 7 JDK
+## Getting started
 
-Either clone the repository or download and extract a snapshot
+The easiest way to install LARS is directly from the Liberty
+Repository using `installUtility`. Run:
 
-Edit `server/gradle.properties` to point to your mongodb and liberty installation directories.
+    bin/installUtility install larsServer
 
-Have a look at `test-utils/src/main/resources/config.properties` and check that you are happy with the
-specified test ports
-
-Launch gradle to build the code, run the tests and produce the distribution archives.
-
-    gradle build dist
-
-You should now have two files in the build/distributions directory, `larsServer.zip` and `larsClient.zip`
-
-# Installing
-
-Unzip larsServer.zip into the install directory of your liberty server. (The one which contains the `usr` directory)
-
-Open `usr/servers/larsServer/server.xml` and follow the directions in the comments to create users and assign them to User and Administrator roles in the larsServer application
-
-Find the JNDI entry named `lars/URLBase` and edit the value to point to the external URL of the server.
-
-If your mongodb server is not running on the same machine as your liberty server or uses authentication, you must also edit the mongodb configuration in the server.xml
+You need to customize `server.xml`. See [Installing LARS]
+(doc/INSTALL.md) for more details.
 
 Start mongodb
 
@@ -43,30 +30,37 @@ Now start the server
 
     bin/server start larsServer
 
-The server should now be running. Unless you've changed the default config, you should be able to visit http://localhost:9080/ma/v1/assets and see an empty list.
+The server should now be running. Unless you've changed the default
+config, you should be able to visit http://localhost:9080/ma/v1/assets
+and see an empty list.
 
     []
 
-# Adding assets
+## Adding assets
 
 Unzip `larsClient.zip` and then run `larsClient` to upload an asset.
 
     bin/larsClient upload --url=http://localhost:9080/ma/v1 --username=admin --password userFeature.esa
 
-Enter your password when prompted. You should see a message saying that the feature has been uploaded
+Enter your password when prompted. You should see a message saying
+that the feature has been uploaded
 
-# Listing assets
+## Listing assets
 
     bin/larsClient listAll --url=http://localhost:9080/ma/v1
 
-If you changed the config to require authentication for the user role, you'll need to provide your username and password as you did when adding an asset. You should see some output like this:
+If you changed the config to require authentication for the user role,
+you'll need to provide your username and password as you did when
+adding an asset. You should see some output like this:
 
     Listing all assets in the repository:
     Asset ID                       | Asset Type      | Liberty Version | Asset Name
     54da04d8735612bfdb13bf56       | Feature         |                 | com.ibm.ws.test.userFeature
 
-# Deleting assets
+## Deleting assets
 
-The list command shows the asset id. You can use this to delete the asset from the repository
+The list command shows the asset id. You can use this to delete the
+asset from the repository
 
     bin/larsClient delete --url=http://localhost:9080/ma/v1 --username=adminUser --password 123456789103456789
+
