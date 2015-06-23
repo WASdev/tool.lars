@@ -48,7 +48,7 @@ import com.mongodb.WriteConcern;
 
 public class PersistenceBeanTest {
 
-    // TODO read all this stuff from config somewhere
+    // TODO Should the db name be configurable?
     private static final String DB_NAME = "testdb";
     private static final WriteConcern WRITE_CONCERN = WriteConcern.JOURNAL_SAFE;
 

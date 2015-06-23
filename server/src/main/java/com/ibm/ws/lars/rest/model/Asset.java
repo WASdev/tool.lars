@@ -27,9 +27,6 @@ import com.ibm.ws.lars.rest.RepositoryException;
  * Enforces the constrains on a JSON document to turn it into a Asset as required by the asset
  * service.
  *
- * TODO: client test suite failures<br>
- * - do we need a review object?<br>
- * - should a private asset skip the awaiting approval stage?
  */
 public class Asset extends RepositoryObject {
 

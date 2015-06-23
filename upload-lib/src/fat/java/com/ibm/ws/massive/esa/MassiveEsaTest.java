@@ -1581,7 +1581,8 @@ public class MassiveEsaTest {
 
     @Test
     @Ignore
-    // TODO Story 144391 (port elastic search) must be delivered before the tests @Ignore can be removed
+    // LARS needs to support search before the tests @Ignore can be removed
+    // TODO: check whether the current mongo based search implementation is sufficient
     /**
      * Based on a small set of features make searches to see whether the correct results match each query
      * @throws Throwable
