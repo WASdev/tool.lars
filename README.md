@@ -17,7 +17,7 @@ The LARS documentation is organized into a number of pages:
 ## Getting started
 
 If you don't wish to build LARS from source, follow the [Installing LARS]
-(doc/INSTALL.md) instructions to install the latest binary release from the [Liberty Repository] (http://www.wasdev.net/downloads), and the necessary `server.xml` customization steps.
+(doc/INSTALL.md) instructions to install the latest binary release from the [Liberty Repository] (http://www.wasdev.net/downloads), and perform the necessary `server.xml` customization steps.
 
 Start mongodb
 
