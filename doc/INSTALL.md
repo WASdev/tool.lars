@@ -1,28 +1,17 @@
 # Installing and configuring LARS
 
-There are three ways that you can install LARS:
+There are two ways that you can install LARS:
 
- * Directly from the Liberty Repository using installUtility
  * Using the self-extracting jar installer from the Liberty Repository
  * By building and then unzipping larsServer.zip
 
 Whichever installation method you use, you will also need to configure
 LARS.
 
-## Installing LARS directly from the Liberty Repository using `installUtility`
-
-This is the simplest method of installing LARS. From the `wlp`
-directory of your Liberty 8.5.5.6 runtime, run the following command:
-
-    bin/installUtility install larsServer
-
-`installUtility` downloads LARS together with the application server
-features upon which it depends.
-
 ## Using the self-extracting jar installer from the Liberty Repository
 
 Visit [this
-page](https://developer.ibm.com/wasdev/downloads/#asset/opensource-Liberty_Asset_Repository_Service)
+page](https://developer.ibm.com/wasdev/downloads/#asset/tools-Liberty_Asset_Repository_Service)
 and click Download to download `larsServerPackage.jar`. Once the
 download is complete, run `larsServerPackage.jar`. For example, on the
 command line, run the following:
