@@ -243,12 +243,15 @@ task packageLars {
                 
         ant.jar(destfile: packageJarFile, update: true) {
             fileset(dir: rootProject.getRootDir(), includes: 'LICENSE')
+            zipfileset(file: rootProject.file('LA_en'), prefix: 'lafiles')
+            zipfileset(file: rootProject.file('LICENSE'), prefix: 'wlp/usr/servers/' + serverName) // make sure the license is in the server directory
             delegate.manifest {
                 attribute(name: 'Provide-Feature', value: '') // The sample doesn't provide anything
                 attribute(name: 'Require-Feature', value: requireFeatureValue) // All the  features the sample depends on
                 attribute(name: 'Sample-Type', value: 'thirdParty') // Tell install utility this is a 'sample'
                 attribute(name: 'Archive-Content-Type', value: 'sample')
-                attribute(name: 'Archive-Root', value: 'wlp/usr/') // This needs to be set to ensure that sample is uploaded to the repository correctly 
+                attribute(name: 'Archive-Root', value: 'wlp/usr/') // This needs to be set to ensure that sample is uploaded to the repository correctly
+                attribute(name: 'License-Agreement', value: 'lafiles/LA') // should contain a file called en.html
             }
         }
     }
