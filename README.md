@@ -16,13 +16,8 @@ The LARS documentation is organized into a number of pages:
 
 ## Getting started
 
-The easiest way to install LARS is directly from the Liberty
-Repository using `installUtility`. Run:
-
-    bin/installUtility install larsServer
-
-You need to customize `server.xml`. See [Installing LARS]
-(doc/INSTALL.md) for more details.
+If you don't wish to build LARS from source, follow the [Installing LARS]
+(doc/INSTALL.md) instructions to install the latest binary release from the [Liberty Repository] (http://www.wasdev.net/downloads), and the necessary `server.xml` customization steps.
 
 Start mongodb
 
