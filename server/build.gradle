@@ -281,7 +281,7 @@ task createPackageUsrDir (type: Copy) {
 File getMongodExecutable() {
     File mongod = new File(property('mongodExecutable'))
     if (!mongod.exists()) {
-        throw new Exception("Cannot find mongod executable")
+        throw new Exception("Cannot find mongod executable at: " + mongod)
     }
     return mongod
 }
