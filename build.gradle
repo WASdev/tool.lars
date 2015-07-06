@@ -156,10 +156,45 @@ subprojects {
     cleanEclipseJdt.enabled = false
 }
 
+
 task dist(type: Sync) {
+    description 'Produce distribution archives, and copy them to the build/distributions directory'
     into 'build/distributions'
-    from subprojects*.getTasksByName('distZip', false)
-    from tasks.getByPath(':server:packageLars');
+    from subprojects*.getTasksByName('dist', false)
+}
+
+
+/**
+ * If the zip file doesn't contain the all the files in the toCheck
+ * list, throws an exception.
+ */
+boolean checkZipContents(zipFileName, toCheck) {
+    // When you create a zip tree, the jar gets unpacked. So the paths 'inside' the jar
+    // end up looking a bit like this:
+    // /tmp/expandedArchives/larsServerPackage.jar_1vjjzyok4kl5hstxnvin6rjqx/wlp/usr/servers/larsServer/LICENSE
+    // so the matching logic is a bit ick.
+    FileTree tree = zipTree(zipFileName)
+    boolean found = tree.find { File file ->
+        def foundFiles = []
+        toCheck.each {
+            if (file.getPath().endsWith(it)) {
+                foundFiles << it
+            }
+        }
+        foundFiles.each {
+            toCheck.remove(it)
+        }
+        if (toCheck) {
+            return false
+        }
+        // toCheck is empty, so all files were found
+        return true;
+    }
+    
+    if (!found) {
+        throw new GradleException("Couldn't find files '${toCheck}' in the zip file '${zipFileName}'")
+    }
+    
 }
 
 task globalTestReport(type: TestReport) {
