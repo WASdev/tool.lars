@@ -79,4 +79,17 @@ task unpackDist(type: Copy) {
     into file('build/test-working/client')
 }
 
+task dist {
+    dependsOn 'distZip'
+    dependsOn 'testZipContents'
+    outputs.files(distZip.getOutputs().getFiles())
+}
+
+task testZipContents {
+    dependsOn 'distZip'
+    doLast{
+        checkZipContents(distZip.outputs.files.getAt(0), ['LICENSE', 'bin/larsClient.bat'])
+    }
+}
+
 // vim: set si:

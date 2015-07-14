@@ -214,18 +214,20 @@ task stopTestMongod {
 // Use liberty's 'package' command to produce an artifact that can be installed with
 // the 'installUtility' command. The testServer can't just be packaged up as it is 
 // using the wrong server.xml, and the name is wrong. 
-task packageLars {
+task createLarsPackage {
     
     description 'Package up LARS in a format that can be installed into a Liberty server using the server\'s installUtility command';
     
     dependsOn 'initAnt'
     dependsOn 'createPackageUsrDir'
     
-    def packageJarFile = 'build/' + archivesBaseName + 'Package.jar'
+
+    def packageJarFileDest = 'build/distributions/' + archivesBaseName + 'Package.jar'
     
-    outputs.file packageJarFile
+    outputs.file packageJarFileDest
 
     doLast {
+        mkdir('build/distributions')
         
         // The 'package' command doesn't produce a jar
         // which is suitable to be installed as a 'sample' using the
@@ -236,12 +238,12 @@ task packageLars {
                    userDir: 'build/usr',
                    serverName: serverName,
                    include: 'usr',
-                   archive: packageJarFile)
+                   archive: packageJarFileDest)
 
         // Get all the liberty features that LARS depends on
         def requireFeatureValue = getRequireFeatureValue(file('config/server.xml'))
                 
-        ant.jar(destfile: packageJarFile, update: true) {
+        ant.jar(destfile: packageJarFileDest, update: true) {
             fileset(dir: rootProject.getRootDir(), includes: 'LICENSE')
             zipfileset(file: rootProject.file('LA_en'), prefix: 'lafiles')
             zipfileset(file: rootProject.file('LICENSE'), prefix: 'wlp/usr/servers/' + serverName) // make sure the license is in the server directory
@@ -256,6 +258,61 @@ task packageLars {
         }
     }
     
+}
+
+task testLarsPackage(type: JavaExec) {
+    
+    // Can't actually install the package into Liberty as the server is a supplied dependency
+    // Next best thing, check that java -jar runs and fails in an expected way when supplied
+    // with a non-existent destination
+    
+    dependsOn 'createLarsPackage'
+    
+    description "Test that 'java -jar larsServerPackage.jar' will at least run and fail in an expected manner, and some limited check on the jar contents"
+    String badDirName = "jibberjibberjibberfoogogogo";
+    ignoreExitValue = true // Expecting this to fail
+    workingDir '.'
+    main = '-jar'
+    standardOutput = new ByteArrayOutputStream() // Hide the stdout from the screen.
+    errorOutput = new ByteArrayOutputStream()
+    standardInput = new ByteArrayInputStream(badDirName.getBytes())
+    args createLarsPackage.outputs.files.getAt(0)
+               
+    doLast {
+        String errorString = errorOutput.toString()
+        if (!(errorString =~ /The directory .*${badDirName} is not a valid installation./)) {
+            throw new GradleException("The expected output from the command was not seen. Actual output was: '${errorString}'"
+                + "\nAnd stdout was: '" + standardOutput + "'")
+        }        
+    }
+    
+}
+
+task testJarContents {
+    // minimal check on the contents of the server jar. Check for
+    // - license file that will be expanded into the server directory
+    // - server.xml
+    
+    dependsOn 'createLarsPackage'
+
+    doLast{
+        checkZipContents(createLarsPackage.outputs.files.getAt(0),
+            ['wlp/usr/servers/larsServer/server.xml', 'wlp/usr/servers/larsServer/LICENSE'])
+    }
+}
+
+
+task dist {
+    dependsOn 'distZip'
+    dependsOn 'packageLars'
+    outputs.files(createLarsPackage.getOutputs().getFiles())
+    outputs.files(distZip.getOutputs().getFiles())
+}
+
+task packageLars {
+    dependsOn 'createLarsPackage'
+    dependsOn 'testLarsPackage'
+    dependsOn 'testJarContents'
 }
 
 // Searches a server.xml file for feature definitions, turns them
