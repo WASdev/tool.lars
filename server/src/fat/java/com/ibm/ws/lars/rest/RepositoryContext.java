@@ -21,9 +21,17 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -44,6 +52,13 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -53,7 +68,7 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.junit.rules.ExternalResource;
@@ -93,7 +108,19 @@ public class RepositoryContext extends ExternalResource {
     private HttpHost targetHost;
     private HttpClientContext context;
 
-    public static final String DEFAULT_URL = "http://localhost:" + FatUtils.LIBERTY_PORT + FatUtils.LARS_APPLICATION_ROOT;
+    /* package */ enum Protocol {
+        HTTP, HTTPS
+    }
+
+    @SuppressWarnings("serial")
+    /* package */ static final Map<Protocol, String> DEFAULT_URLS = new HashMap<Protocol, String>() {
+        {
+            {
+                put(Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + FatUtils.LARS_APPLICATION_ROOT);
+                put(Protocol.HTTPS, "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS + FatUtils.LARS_APPLICATION_ROOT);
+            }
+        }
+    };
 
     /**
      * Special constant that can be passed as an expected response code to indicate that either a
@@ -102,13 +129,39 @@ public class RepositoryContext extends ExternalResource {
     public static final int RC_REJECT = -2;
 
     @Override
-    protected void before() throws InvalidJsonAssetException, IOException {
+    protected void before() throws InvalidJsonAssetException, IOException, KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
 
-        // First, create the credentials that we use to connect to the repository
         targetHost = new HttpHost(hostname, portNumber, protocol);
+
+        /* Create the HTTPClient that we use to make all HTTP calls */
+        HttpClientBuilder b = HttpClientBuilder.create();
+
+        // Trust all certificates
+        SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                return true;
+            }
+        }).build();
+        b.setSslcontext(sslContext);
+
+        // By default, it will verify the hostname in the certificate, which should be localhost
+        // and therefore should match. If we start running these tests against a LARS server on
+        // a different host then we may need disable hostname verification.
+        SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext);
+        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", sslSocketFactory)
+                .build();
 
         context = HttpClientContext.create();
 
+        httpClient = b.build();
+
+        /*
+         * Create the HTTPClientContext with the appropriate credentials. We'll use this whenever we
+         * make an HTTP call.
+         */
         if (user != null && password != null) {
             credentials = new UsernamePasswordCredentials(user, password);
 
@@ -123,10 +176,7 @@ public class RepositoryContext extends ExternalResource {
             context.setAuthCache(authCache);
         }
 
-        // Now, use those credentials to create the HTTP client
-        httpClient = HttpClients.createDefault();
-
-        // Clean the repository but only if the client asked us to.
+        /* Clean the repository but only if the client asked us to. */
         if (cleanRepository) {
             cleanRepo();
         }
@@ -178,12 +228,20 @@ public class RepositoryContext extends ExternalResource {
         return new RepositoryContext(url, "admin", "passw0rd", cleanRepository);
     }
 
-    protected static RepositoryContext createAsAdmin(boolean cleanRepository) {
-        return createAsAdmin(DEFAULT_URL, cleanRepository);
+    protected static RepositoryContext createAsAdmin(boolean cleanRepository, Protocol protocol) {
+        String url = DEFAULT_URLS.get(protocol);
+        if (url == null) {
+            throw new AssertionError("This should never happen. Didn't find url for " + protocol);
+        }
+        return createAsAdmin(url, cleanRepository);
     }
 
-    protected static RepositoryContext createAsUser() {
-        return new RepositoryContext(DEFAULT_URL, "user", "passw0rd", false);
+    protected static RepositoryContext createAsUser(Protocol protocol) {
+        String url = DEFAULT_URLS.get(protocol);
+        if (url == null) {
+            throw new AssertionError("This should never happen. Didn't find url for " + protocol);
+        }
+        return new RepositoryContext(url, "user", "passw0rd", false);
     }
 
     public String getFullURL() {

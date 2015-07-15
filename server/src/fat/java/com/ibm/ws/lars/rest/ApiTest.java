@@ -27,6 +27,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -61,11 +66,8 @@ import com.mongodb.WriteConcern;
  * Tests required: GET,POST,PUT,DELETE ON /assets GET,POST,PUT,DELETE ON /assets/{asset_id}
  *
  * With variations for good/error cases
- *
- *
- *
- *
  */
+@RunWith(Parameterized.class)
 public class ApiTest {
 
     /** ID for an asset which should never exist */
@@ -75,7 +77,17 @@ public class ApiTest {
     private Random random;
 
     @Rule
-    public RepositoryContext repository = RepositoryContext.createAsAdmin(true);
+    public final RepositoryContext repository;
+
+    @Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] { { Protocol.HTTP },
+                                             { Protocol.HTTPS } });
+    }
+
+    public ApiTest(Protocol protocol) {
+        this.repository = RepositoryContext.createAsAdmin(true, protocol);
+    }
 
     @Before
     public void setUp() throws FileNotFoundException, IOException, InvalidJsonAssetException {

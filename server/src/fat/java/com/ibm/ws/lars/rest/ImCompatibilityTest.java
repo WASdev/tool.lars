@@ -25,13 +25,16 @@ import java.util.Properties;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
+
 /**
  * Tests to check any additional requirements needed to support Installation Manager
  */
 public class ImCompatibilityTest {
 
+    // Note that we only run this test against HTTPS (not HTTP).
     @Rule
-    public RepositoryContext context = RepositoryContext.createAsUser();
+    public RepositoryContext context = RepositoryContext.createAsUser(Protocol.HTTPS);
 
     @Test
     public void testRepositoryConfig() throws Exception {

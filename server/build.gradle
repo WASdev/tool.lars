@@ -134,7 +134,8 @@ task createTestUsrDir (type: Copy) {
     from('config/testServer.xml') {
         into "servers/${testServerName}"
         rename 'testServer\\.xml', 'server.xml'
-        filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPort,
+        filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPortHTTP,
+                                      'HTTPS_PORT':testLibertyPortHTTPS,
                                       'TEST_DB_NAME':testDbName,
                                       'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':libertyTraceSpec])

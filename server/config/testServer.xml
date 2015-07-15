@@ -47,7 +47,7 @@ limitations under the License.
         <file name="${shared.resource.dir}/libs/mongo-java-driver-2.11.1.jar"/>
     </library>
 
-    <httpEndpoint httpPort="@HTTP_PORT@" id="defaultHttpEndpoint"/>
+    <httpEndpoint httpPort="@HTTP_PORT@" httpsPort="@HTTPS_PORT@" id="defaultHttpEndpoint"/>
 
     <!-- Use slightly safer write concern than the default -->
     <mongo id="mongo" libraryRef="mongo-lib" writeConcern="JOURNAL_SAFE">
