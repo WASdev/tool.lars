@@ -25,7 +25,8 @@ public class FatUtils {
     public static final String SCRIPT;
 
     public static final String DB_PORT;
-    public static final String LIBERTY_PORT;
+    public static final String LIBERTY_PORT_HTTP;
+    public static final String LIBERTY_PORT_HTTPS;
     public static final String TEST_DB_NAME;
     public static final String LARS_APPLICATION_ROOT;
 
@@ -46,13 +47,14 @@ public class FatUtils {
         }
 
         DB_PORT = defaultConfig.getProperty("testMongoPort");
-        LIBERTY_PORT = defaultConfig.getProperty("testLibertyPort");
+        LIBERTY_PORT_HTTP = defaultConfig.getProperty("testLibertyPortHTTP");
+        LIBERTY_PORT_HTTPS = defaultConfig.getProperty("testLibertyPortHTTPS");
         TEST_DB_NAME = defaultConfig.getProperty("testDbName");
         LARS_APPLICATION_ROOT = defaultConfig.getProperty("larsApplicationRoot");
 
     }
 
-    public static final String SERVER_URL = "http://localhost:" + LIBERTY_PORT + LARS_APPLICATION_ROOT;
+    public static final String SERVER_URL = "http://localhost:" + LIBERTY_PORT_HTTP + LARS_APPLICATION_ROOT;
 
     public static final String DEFAULT_HOST_AND_PORT = "localhost:" + DB_PORT;
 

@@ -34,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -52,16 +53,28 @@ public class PermissionTest {
     public RepositoryContext userContext;
 
     /**
-     * URL for the test instance where read operations are restricted to users with the User role.
+     * HTTP URL for the test instance where read operations are restricted to users with the User role.
      */
-    private static final String RESTRICTED_URL = RepositoryContext.DEFAULT_URL;
+    private static final String RESTRICTED_URL_HTTP = RepositoryContext.DEFAULT_URLS.get(Protocol.HTTP);
 
     /**
-     * URL for the test instance where read operations are unrestricted.
+     * HTTPS URL for the test instance where read operations are restricted to users with the User role.
+     */
+    private static final String RESTRICTED_URL_HTTPS = RepositoryContext.DEFAULT_URLS.get(Protocol.HTTPS);
+
+    /**
+     * HTTP URL for the test instance where read operations are unrestricted.
      * <p>
      * Write operations are still restricted to users with the Admin role.
      */
-    private static final String UNRESTRICTED_URL = "http://localhost:" + FatUtils.LIBERTY_PORT + "/unrestricted" + FatUtils.LARS_APPLICATION_ROOT;
+    private static final String UNRESTRICTED_URL_HTTP = "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + "/unrestricted" + FatUtils.LARS_APPLICATION_ROOT;
+
+    /**
+     * HTTPS URL for the test instance where read operations are unrestricted.
+     * <p>
+     * Write operations are still restricted to users with the Admin role.
+     */
+    private static final String UNRESTRICTED_URL_HTTPS = "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS + "/unrestricted" + FatUtils.LARS_APPLICATION_ROOT;
 
     /**
      * The available roles that we expect test users to be mapped to by the test server
@@ -145,8 +158,10 @@ public class PermissionTest {
     public static Collection<Object[]> makeParameters() {
         Collection<Object[]> data = new ArrayList<>();
         for (User user : User.values()) {
-            data.add(new Object[] { RESTRICTED_URL, user.username, user.password, user.restrictedConfigRole, user + " - restricted" });
-            data.add(new Object[] { UNRESTRICTED_URL, user.username, user.password, user.unrestrictedConfigRole, user + " - unrestricted" });
+            data.add(new Object[] { RESTRICTED_URL_HTTP, user.username, user.password, user.restrictedConfigRole, user + " - restricted - http" });
+            data.add(new Object[] { UNRESTRICTED_URL_HTTP, user.username, user.password, user.unrestrictedConfigRole, user + " - unrestricted - http" });
+            data.add(new Object[] { RESTRICTED_URL_HTTPS, user.username, user.password, user.restrictedConfigRole, user + " - restricted - https" });
+            data.add(new Object[] { UNRESTRICTED_URL_HTTPS, user.username, user.password, user.unrestrictedConfigRole, user + " - unrestricted - https" });
         }
         System.out.println("sending data: " + data.size());
         return data;
