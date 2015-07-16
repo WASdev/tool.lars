@@ -121,9 +121,9 @@ public class ApiTest {
 
         Asset assetAgain = repository.getAsset(returnedAsset.get_id());
         Object attachmentsAgain = assetAgain.get("attachments");
-        List attachmentsList = (List) attachmentsAgain;
+        List<?> attachmentsList = (List<?>) attachmentsAgain;
         assertEquals("Wrong number of attachments", 1, attachmentsList.size());
-        Map attachmentMap = (Map) attachmentsList.get(0);
+        Map<?, ?> attachmentMap = (Map<?, ?>) attachmentsList.get(0);
         assertEquals("", createdAttachment.get_id(), attachmentMap.get("_id"));
     }
 

@@ -122,7 +122,7 @@ public class AssetTest {
     public void testDeserializeAssetFromJson4() throws Exception {
 
         try {
-            Asset asset = Asset.deserializeAssetFromJson(jsonArray);
+            Asset.deserializeAssetFromJson(jsonArray);
         } catch (InvalidJsonAssetException e) {
             Throwable e2 = e.getCause();
             assertTrue("Wrong type of exception", e2 instanceof JsonMappingException);

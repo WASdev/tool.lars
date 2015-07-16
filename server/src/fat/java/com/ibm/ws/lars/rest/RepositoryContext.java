@@ -52,11 +52,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ByteArrayEntity;
@@ -148,11 +143,6 @@ public class RepositoryContext extends ExternalResource {
         // By default, it will verify the hostname in the certificate, which should be localhost
         // and therefore should match. If we start running these tests against a LARS server on
         // a different host then we may need disable hostname verification.
-        SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext);
-        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
-                .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslSocketFactory)
-                .build();
 
         context = HttpClientContext.create();
 
@@ -364,7 +354,7 @@ public class RepositoryContext extends ExternalResource {
     }
 
     protected void doGetAllAssetsBad(int expectedRC) throws ClientProtocolException, IOException, InvalidJsonAssetException {
-        String response = doGet("/assets", expectedRC);
+        doGet("/assets", expectedRC);
     }
 
     protected AssetList doGetAllAssets(int expectedRC) throws ClientProtocolException, IOException, InvalidJsonAssetException {
