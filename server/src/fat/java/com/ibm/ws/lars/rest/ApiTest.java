@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -243,6 +244,22 @@ public class ApiTest {
         assertEquals("Unexpected error message from server",
                      "asset not found for id: ffffffffffffffffffffffff",
                      repository.parseErrorObject(message));
+    }
+
+    @Test
+    public void testGeneratedFields() throws Exception {
+        Asset testAsset = AssetUtils.getTestAsset();
+        testAsset = repository.addAssetNoAttachments(testAsset);
+
+        Date now = new Date();
+        Date createdOn = IsoDate.parse(testAsset.getCreatedOn());
+        assertTrue("Created date is not close to current date", Math.abs(now.getTime() - createdOn.getTime()) < 2000);
+
+        Date updatedOn = IsoDate.parse(testAsset.getLastUpdatedOn());
+        assertTrue("Updated date is not close to current date", Math.abs(now.getTime() - updatedOn.getTime()) < 2000);
+
+        String createdBy = testAsset.getCreatedBy();
+        assertEquals(repository.getUser(), createdBy);
     }
 
     /**

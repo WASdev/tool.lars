@@ -108,12 +108,12 @@ public class RepositoryContext extends ExternalResource {
     private HttpHost targetHost;
     private HttpClientContext context;
 
-    /* package */ enum Protocol {
+    /* package */enum Protocol {
         HTTP, HTTPS
     }
 
     @SuppressWarnings("serial")
-    /* package */ static final Map<Protocol, String> DEFAULT_URLS = new HashMap<Protocol, String>() {
+    /* package */static final Map<Protocol, String> DEFAULT_URLS = new HashMap<Protocol, String>() {
         {
             {
                 put(Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + FatUtils.LARS_APPLICATION_ROOT);
@@ -242,6 +242,13 @@ public class RepositoryContext extends ExternalResource {
             throw new AssertionError("This should never happen. Didn't find url for " + protocol);
         }
         return new RepositoryContext(url, "user", "passw0rd", false);
+    }
+
+    /**
+     * @return the user
+     */
+    public String getUser() {
+        return user;
     }
 
     public String getFullURL() {

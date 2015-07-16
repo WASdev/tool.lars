@@ -24,8 +24,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
+import java.security.Principal;
 import java.util.Arrays;
 
 import javax.ws.rs.core.UriInfo;
@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.ibm.ws.lars.rest.injection.AssetServiceLayerInjection;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -48,6 +49,7 @@ public class AssetServiceLayerTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    private static final String TEST_USERNAME = "testUser";
     private Asset simpleObject;
     private Asset assetWithState;
     // private Asset complexObject;
@@ -68,13 +70,19 @@ public class AssetServiceLayerTest {
         attachmentContent = "I am some very simple content for the attachment!".getBytes();
 
         service = new AssetServiceLayer();
-        service.setConfiguration(new Configuration());
+
+        Principal testPrincipal = new Principal() {
+            @Override
+            public String getName() {
+                return TEST_USERNAME;
+            }
+        };
+
+        AssetServiceLayerInjection.setConfiguration(service, new Configuration());
+        AssetServiceLayerInjection.setPersistenceBean(service, memoryPersistor);
+        AssetServiceLayerInjection.setPrincipal(service, testPrincipal);
 
         dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/"));
-
-        Field beanField = AssetServiceLayer.class.getDeclaredField("persistenceBean");
-        beanField.setAccessible(true);
-        beanField.set(service, memoryPersistor);
 
     }
 
@@ -86,6 +94,7 @@ public class AssetServiceLayerTest {
         assertNotNull("created date should not be null", asset.getCreatedOn());
         String lastUpdated = asset.getLastUpdatedOn();
         assertNotNull("updated date should not be null", lastUpdated);
+        assertEquals("CreatedBy user is wrong", TEST_USERNAME, asset.getCreatedBy());
 
         String id = asset.get_id();
         Asset gotAsset = service.retrieveAsset(id, dummyUriInfo);
