@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +47,8 @@ import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 
+import mockit.Mocked;
+
 public class PersistenceBeanTest {
 
     // TODO Should the db name be configurable?
@@ -55,6 +58,9 @@ public class PersistenceBeanTest {
     private MongoClient mongoClient;
     private PersistenceBean persistenceBean;
     private DB db;
+
+    @Mocked
+    Logger logger;
 
     @Before
     public void setUp() throws Exception {

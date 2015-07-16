@@ -19,10 +19,12 @@ package com.ibm.ws.massive.esa;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.getAssetReflective;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.reflectiveCallNoPrimitives;
 import static com.ibm.ws.massive.resources.UploadStrategy.DEFAULT_STRATEGY;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1316,8 +1318,8 @@ public class MassiveEsaTest {
                                                      "wlpInformation.shortName=ldapRegistry-3.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.3&type=com.ibm.websphere.Feature",
                                                      "wlpInformation.shortName=servlet-3.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.3&type=com.ibm.websphere.Feature" }),
                          links.get(4));
-        assertEquals("supersededBy", Arrays.asList(new String[] { "appSecurity-2.0" }), resource.getSupersededBy());
-        assertEquals("supersededByOption", Arrays.asList(new String[] { "ldapRegistry-3.0", "servlet-3.0" }), resource.getSupersededByOptional());
+        assertThat("supersededBy", resource.getSupersededBy(), containsInAnyOrder("appSecurity-2.0"));
+        assertThat("supersededByOption", resource.getSupersededByOptional(), containsInAnyOrder("ldapRegistry-3.0", "servlet-3.0"));
     }
 
     @Test
@@ -1385,7 +1387,7 @@ public class MassiveEsaTest {
                          null,
                          links.get(4));
 
-        assertEquals("supersededBy", Arrays.asList(new String[] { "jpa-2.0", "blueprint-1.0" }), resource.getSupersededBy());
+        assertThat("supersededBy", resource.getSupersededBy(), containsInAnyOrder("jpa-2.0", "blueprint-1.0"));
         assertNull("supersededByOptional should be null", resource.getSupersededByOptional());
     }
 
@@ -1434,7 +1436,11 @@ public class MassiveEsaTest {
         assertEquals("linkLabelPrefix", expectedLinkLabelPrefix, actual.getLinkLabelPrefix());
         assertEquals("linkLabelSuffix", expectedLinkLabelSuffix, actual.getLinkLabelSuffix());
         assertEquals("linkLabelProperty", expectedLinkLabelProperty, actual.getLinkLabelProperty());
-        assertEquals("query", expectedQuery, actual.getQuery());
+        if (expectedQuery == null) {
+            assertNull("query", actual.getQuery());
+        } else {
+            assertThat("query", actual.getQuery(), containsInAnyOrder(expectedQuery.toArray()));
+        }
     }
 
     /**
