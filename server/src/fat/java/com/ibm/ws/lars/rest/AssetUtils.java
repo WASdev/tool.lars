@@ -120,6 +120,7 @@ public class AssetUtils {
 
         clone.getProperties().remove(Asset._ID);
         clone.getProperties().remove(Asset.CREATED_ON);
+        clone.getProperties().remove(Asset.CREATED_BY);
         clone.getProperties().remove(Asset.STATE);
         clone.getProperties().remove(Asset.LAST_UPDATED_ON);
 

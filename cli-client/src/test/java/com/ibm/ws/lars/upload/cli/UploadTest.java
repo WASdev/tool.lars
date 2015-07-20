@@ -408,7 +408,7 @@ public class UploadTest {
 
     @Test
     public void testShouldGiveProgressIndication() throws Exception {
-        MockUploader uploader = new MockUploader();
+        new MockUploader();
         new MockDirectoryWithFiles();
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 

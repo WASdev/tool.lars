@@ -17,6 +17,7 @@
 package com.ibm.ws.lars.rest.model;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +39,10 @@ public class Asset extends RepositoryObject {
     public static final String CREATED_ON = "createdOn";
 
     public static final String STATE = "state";
+
+    public static final String CREATED_BY = "createdBy";
+
+    public static final String NAME = "name";
 
     public Asset() {
         super();
@@ -81,6 +86,23 @@ public class Asset extends RepositoryObject {
 
     public void setLastUpdatedOn(String date) {
         put(LAST_UPDATED_ON, date);
+    }
+
+    public String getCreatedBy() {
+        String createdByName = null;
+    
+        Map<?, ?> createdBy = (Map<?, ?>) properties.get(CREATED_BY);
+        if (createdBy != null) {
+            createdByName = (String) createdBy.get(NAME);
+        }
+    
+        return createdByName;
+    }
+
+    public void setCreatedBy(String name) {
+        Map<String, Object> createdBy = new HashMap<>();
+        createdBy.put(NAME, name);
+        properties.put(CREATED_BY, createdBy);
     }
 
     /**

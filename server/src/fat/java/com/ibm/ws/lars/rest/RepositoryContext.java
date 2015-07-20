@@ -52,11 +52,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ByteArrayEntity;
@@ -108,12 +103,12 @@ public class RepositoryContext extends ExternalResource {
     private HttpHost targetHost;
     private HttpClientContext context;
 
-    /* package */ enum Protocol {
+    /* package */enum Protocol {
         HTTP, HTTPS
     }
 
     @SuppressWarnings("serial")
-    /* package */ static final Map<Protocol, String> DEFAULT_URLS = new HashMap<Protocol, String>() {
+    /* package */static final Map<Protocol, String> DEFAULT_URLS = new HashMap<Protocol, String>() {
         {
             {
                 put(Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + FatUtils.LARS_APPLICATION_ROOT);
@@ -148,11 +143,6 @@ public class RepositoryContext extends ExternalResource {
         // By default, it will verify the hostname in the certificate, which should be localhost
         // and therefore should match. If we start running these tests against a LARS server on
         // a different host then we may need disable hostname verification.
-        SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext);
-        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory> create()
-                .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslSocketFactory)
-                .build();
 
         context = HttpClientContext.create();
 
@@ -242,6 +232,13 @@ public class RepositoryContext extends ExternalResource {
             throw new AssertionError("This should never happen. Didn't find url for " + protocol);
         }
         return new RepositoryContext(url, "user", "passw0rd", false);
+    }
+
+    /**
+     * @return the user
+     */
+    public String getUser() {
+        return user;
     }
 
     public String getFullURL() {
@@ -357,7 +354,7 @@ public class RepositoryContext extends ExternalResource {
     }
 
     protected void doGetAllAssetsBad(int expectedRC) throws ClientProtocolException, IOException, InvalidJsonAssetException {
-        String response = doGet("/assets", expectedRC);
+        doGet("/assets", expectedRC);
     }
 
     protected AssetList doGetAllAssets(int expectedRC) throws ClientProtocolException, IOException, InvalidJsonAssetException {

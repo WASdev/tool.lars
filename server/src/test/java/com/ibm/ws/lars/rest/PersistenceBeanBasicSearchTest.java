@@ -18,10 +18,7 @@ package com.ibm.ws.lars.rest;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import mockit.Deencapsulation;
-import mockit.Expectations;
-import mockit.Mocked;
+import java.util.logging.Logger;
 
 import org.junit.Test;
 
@@ -31,6 +28,10 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+
+import mockit.Deencapsulation;
+import mockit.Expectations;
+import mockit.Mocked;
 
 /**
  * This is a set of basic unit tests for the search logic in
@@ -42,6 +43,9 @@ public class PersistenceBeanBasicSearchTest {
 
     @Mocked
     com.mongodb.DB db;
+
+    @Mocked
+    Logger logger;
 
     /**
      * There isn't an easy way to magically inject the database into the persistence bean, as it is

@@ -19,13 +19,11 @@ package com.ibm.ws.lars.rest;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TimeZone;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -55,7 +53,11 @@ public class AssetServiceLayer {
     @Inject
     private Configuration configuration;
 
-    static final TimeZone UTC_TZ = TimeZone.getTimeZone("UTC");
+    /**
+     * Current user, can only guarantee this is available for admin actions.
+     */
+    @Inject
+    private Principal principal;
 
     /**
      * @see Persistor#retrieveAllAssets()
@@ -71,10 +73,6 @@ public class AssetServiceLayer {
         return persistenceBean.retrieveAllAssets(filters, searchTerm);
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
-    }
-
     /**
      * @param asset
      * @return
@@ -85,9 +83,10 @@ public class AssetServiceLayer {
         Asset newAsset = new Asset(asset);
 
         verifyNewAsset(newAsset);
-        String now = getISODate();
+        String now = IsoDate.format(new Date());
         newAsset.setCreatedOn(now);
         newAsset.setLastUpdatedOn(now);
+        newAsset.setCreatedBy(principal.getName());
         newAsset.getProperties().put("state", Asset.State.DRAFT.getValue());
 
         return persistenceBean.createAsset(newAsset);
@@ -138,7 +137,7 @@ public class AssetServiceLayer {
         Asset existingAsset = persistenceBean.retrieveAsset(id);
 
         action.performAction(existingAsset);
-        existingAsset.setLastUpdatedOn(getISODate());
+        existingAsset.setLastUpdatedOn(IsoDate.format(new Date()));
 
         try {
             persistenceBean.updateAsset(id, existingAsset);
@@ -199,8 +198,7 @@ public class AssetServiceLayer {
             attachmentMetadata.setContentType(contentType);
         }
         attachmentMetadata.setName(name);
-        String now = getISODate();
-        attachmentMetadata.setUploadOn(now);
+        attachmentMetadata.setUploadOn(IsoDate.format(new Date()));
 
         // Create the attachment content
         if (attachmentContentStream != null) {
@@ -320,12 +318,6 @@ public class AssetServiceLayer {
         if (id != null) {
             throw new InvalidJsonAssetException("When creating a new asset, the _id field must be blank");
         }
-    }
-
-    private static String getISODate() {
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'");
-        df.setTimeZone(UTC_TZ);
-        return df.format(new Date());
     }
 
     /**

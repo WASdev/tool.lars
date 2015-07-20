@@ -31,6 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import mockit.Mocked;
 
 import org.junit.After;
 import org.junit.Before;
@@ -55,6 +58,9 @@ public class PersistenceBeanTest {
     private MongoClient mongoClient;
     private PersistenceBean persistenceBean;
     private DB db;
+
+    @Mocked
+    Logger logger;
 
     @Before
     public void setUp() throws Exception {
@@ -295,6 +301,7 @@ public class PersistenceBeanTest {
      *
      * @throws Exception
      */
+    @SuppressWarnings("unused")
     @Test
     public void testRetrieveAllAssetsNotFiltered() throws InvalidJsonAssetException {
         Asset asset1 = persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"name\":\"new name1\", \"layer1\":{\"layer1field\":\"layer1value\",\"layer2\":{\"layer2field\":\"layer2value\",\"layer3\":{\"layer3field\":\"layer3value\"}}}}"));

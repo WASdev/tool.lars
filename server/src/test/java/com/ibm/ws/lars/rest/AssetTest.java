@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.lang.reflect.Field;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,11 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.ibm.ws.lars.rest.AssetServiceLayer;
-import com.ibm.ws.lars.rest.Configuration;
-import com.ibm.ws.lars.rest.InvalidJsonAssetException;
-import com.ibm.ws.lars.rest.Persistor;
-import com.ibm.ws.lars.rest.RepositoryException;
+import com.ibm.ws.lars.rest.injection.AssetServiceLayerInjection;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
 
@@ -43,10 +39,11 @@ import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
  */
 public class AssetTest {
 
-    private final String jsonArray = "[\"one\", \"two\", \"three\"]";
-    private final String simpleObject = "{\"name\":\"foo\"}";
+    private static final String TEST_USERNAME = "testUser";
+    private static final String jsonArray = "[\"one\", \"two\", \"three\"]";
+    private static final String simpleObject = "{\"name\":\"foo\"}";
 
-    final String complexObject = "{\"name\":\"foo\", \"arrayField\": " + jsonArray + "}";
+    private static final String complexObject = "{\"name\":\"foo\", \"arrayField\": " + jsonArray + "}";
 
     AssetServiceLayer service;
     Persistor memoryPersistor = new MemoryPersistor();
@@ -59,16 +56,23 @@ public class AssetTest {
     @Before
     public void setup() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         service = new AssetServiceLayer();
-        service.setConfiguration(new Configuration());
 
-        Field beanField = AssetServiceLayer.class.getDeclaredField("persistenceBean");
-        beanField.setAccessible(true);
-        beanField.set(service, memoryPersistor);
+        Principal testPrincipal = new Principal() {
+            @Override
+            public String getName() {
+                return TEST_USERNAME;
+            }
+        };
+
+        AssetServiceLayerInjection.setConfiguration(service, new Configuration());
+        AssetServiceLayerInjection.setPersistenceBean(service, memoryPersistor);
+        AssetServiceLayerInjection.setPrincipal(service, testPrincipal);
     }
 
     /**
-     * deserializeAssetFromJson should return an asset that has not been modified in anyway, so it
-     * should not have created/updated times set, and should not have a state.
+     * deserializeAssetFromJson should return an asset that has not been modified in any way, so it
+     * should not have any generated fields set (e.g. created/updated times), and should not have a
+     * state.
      *
      * @throws Exception
      */
@@ -78,6 +82,7 @@ public class AssetTest {
         Asset asset = Asset.deserializeAssetFromJson(complexObject);
         assertNull(asset.getCreatedOn());
         assertNull(asset.getLastUpdatedOn());
+        assertNull(asset.getCreatedBy());
         assertNull(asset.get_id());
         assertEquals("No attachments should have been created", 0, asset.getAttachments().size());
         assertEquals("Name property has been modified", "foo", asset.getProperty("name"));
@@ -87,6 +92,7 @@ public class AssetTest {
         Asset asset2 = Asset.createAssetFromMap(simpleAssetMap);
         assertNull(asset2.getCreatedOn());
         assertNull(asset2.getLastUpdatedOn());
+        assertNull(asset2.getCreatedBy());
         assertNull(asset2.get_id());
         assertEquals("No attachments should have been created", 0, asset2.getAttachments().size());
         assertEquals("Name property has been modified", "foo", asset2.getProperty("name"));
@@ -116,7 +122,7 @@ public class AssetTest {
     public void testDeserializeAssetFromJson4() throws Exception {
 
         try {
-            Asset asset = Asset.deserializeAssetFromJson(jsonArray);
+            Asset.deserializeAssetFromJson(jsonArray);
         } catch (InvalidJsonAssetException e) {
             Throwable e2 = e.getCause();
             assertTrue("Wrong type of exception", e2 instanceof JsonMappingException);
