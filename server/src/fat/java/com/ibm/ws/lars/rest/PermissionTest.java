@@ -53,12 +53,14 @@ public class PermissionTest {
     public RepositoryContext userContext;
 
     /**
-     * HTTP URL for the test instance where read operations are restricted to users with the User role.
+     * HTTP URL for the test instance where read operations are restricted to users with the User
+     * role.
      */
     private static final String RESTRICTED_URL_HTTP = RepositoryContext.DEFAULT_URLS.get(Protocol.HTTP);
 
     /**
-     * HTTPS URL for the test instance where read operations are restricted to users with the User role.
+     * HTTPS URL for the test instance where read operations are restricted to users with the User
+     * role.
      */
     private static final String RESTRICTED_URL_HTTPS = RepositoryContext.DEFAULT_URLS.get(Protocol.HTTPS);
 
@@ -343,6 +345,20 @@ public class PermissionTest {
             userContext.updateAssetState(createdAsset.get_id(), Asset.StateAction.PUBLISH.getValue(), 200);
         } else {
             userContext.updateAssetState(createdAsset.get_id(), Asset.StateAction.PUBLISH.getValue(), RC_REJECT);
+        }
+    }
+
+    /**
+     * GET /assets/summary
+     *
+     * Allowed for ADMIN and USER
+     */
+    @Test
+    public void testGetAssetSummary() throws Exception {
+        if (role.isUser()) {
+            userContext.getAssetSummary("fields=name");
+        } else {
+            userContext.getBadAssetSummary("fields=name", RC_REJECT);
         }
     }
 }

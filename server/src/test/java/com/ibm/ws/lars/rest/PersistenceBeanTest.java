@@ -17,8 +17,10 @@
 package com.ibm.ws.lars.rest;
 
 import static com.ibm.ws.lars.rest.TestUtils.assertAssetList;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -394,6 +396,37 @@ public class PersistenceBeanTest {
         filters.put("ground", Arrays.asList(neq("mountainous")));
         AssetList result4 = persistenceBean.retrieveAllAssets(filters, "long");
         assertAssetList(result4, asset1, asset2, asset7);
+    }
+
+    @Test
+    public void testGetDistinctValues() throws InvalidJsonAssetException {
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"hot\", \"ground\":\"flat\", \"name\":\"hot and flat\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"hot\", \"ground\":\"hilly\", \"name\":\"hot and hilly\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"hot\", \"ground\":\"mountainous\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"cold\", \"ground\":\"flat\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"cold\", \"ground\":\"hilly\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"cold\", \"ground\":\"mountainous\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"warm\", \"ground\":\"flat\", \"name\":\"warm and flat\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"warm\", \"ground\":\"hilly\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"warm\", \"ground\":\"mountainous\"}"));
+
+        Map<String, List<Condition>> filters;
+
+        filters = Collections.emptyMap();
+        List<Object> weathers = persistenceBean.getDistinctValues("weather", filters, null);
+        assertThat("Wrong list of possible weathers", weathers, containsInAnyOrder((Object) "hot", "warm", "cold"));
+
+        List<Object> names = persistenceBean.getDistinctValues("name", filters, null);
+        assertThat("Wrong list of possible names", names, containsInAnyOrder((Object) "hot and flat", "hot and hilly", "warm and flat"));
+
+        filters = new HashMap<>();
+        filters.put("weather", Arrays.asList(eq("hot")));
+        List<Object> hotNames = persistenceBean.getDistinctValues("name", filters, null);
+        assertThat("Wrong list of possible names with weather=hot", hotNames, containsInAnyOrder((Object) "hot and flat", "hot and hilly"));
+
+        filters = Collections.emptyMap();
+        List<Object> searchNames = persistenceBean.getDistinctValues("name", filters, "hot");
+        assertThat("Wrong list of possible names with searchTerm=hot", searchNames, containsInAnyOrder((Object) "hot and flat", "hot and hilly"));
     }
 
     static void putAll(Map<String, Object> map, String[] keys, Object[] values) {
