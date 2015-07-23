@@ -61,6 +61,10 @@ public class PersistenceBeanTest {
     private PersistenceBean persistenceBean;
     private DB db;
 
+    // We needed to mock the logger here because something about running other jmockit tests
+    // which mock it meant that the Logger class wasn't getting initialized properly and would
+    // null pointer unexpectedly. Probably a bug in jmockit but the easiest thing is just to
+    // always mock the logger.
     @Mocked
     Logger logger;
 
