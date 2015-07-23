@@ -39,17 +39,35 @@ public interface Persistor {
      * filter map should be a field specification as per the mongo query syntax. So a key of
      * 'foo.bar' would refer to a document containing a field named 'foo' where 'foo' is an object
      * containing a field name 'bar'
-     *
+     * <p>
      * This method will return each asset where <b>all</b> of the the fields indicated by a key is a
      * match for <b>any</b> of the conditions in the corresponding list.
-     *
+     * <p>
      * The search string may be null if not required.
-     *
+     * <p>
      * If the filter map is empty, and the searchTerm is null, all entries in the store will be
      * returned.
-     *
      */
     public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm);
+
+    /**
+     * Gets the list of distinct values of the given field in all assets which match the given
+     * filters and searchTerm.
+     * <p>
+     * If the filter map is empty, and the searchTerm is null, all distinct values for the field
+     * will be returned. Otherwise, only the distict values for the the field in assets which are
+     * matched by the filters and search term will be returned.
+     * <p>
+     * The <code>filters</code> and <code>searchTerm</code> arguments have the same meaning as in
+     * {@link #retrieveAllAssets(Map, String)}.
+     *
+     * @param field the field to look at
+     * @param filters the filters
+     * @param searchTerm the search term
+     * @return the list of distinct values for the field within assets which match filters and
+     *         searchTerm
+     */
+    public List<Object> getDistinctValues(String field, Map<String, List<Condition>> filters, String searchTerm);
 
     /**
      * Retrieve a single asset by its id.

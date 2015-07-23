@@ -19,16 +19,10 @@ package com.ibm.ws.lars.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,7 +43,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
@@ -62,7 +55,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ibm.ws.lars.rest.Condition.Operation;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -90,6 +82,8 @@ public class RepositoryRESTResource {
     private static final String ADMIN_ROLE = "Administrator";
 
     private static final Logger logger = Logger.getLogger(RepositoryRESTResource.class.getCanonicalName());
+
+    private static final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Inject
     private AssetServiceLayer assetService;
@@ -121,75 +115,9 @@ public class RepositoryRESTResource {
             logger.fine("getAssets called with query parameters: " + info.getRequestUri().getRawQuery());
         }
 
-        // Specifiying 'true' results in decoded % sequences, but not '+' for spaces
-        // which is a bit odd. Hence the step below to decode manually
-        MultivaluedMap<String, String> params = info.getQueryParameters(false);
-        decodeParams(params);
+        AssetQueryParameters params = AssetQueryParameters.parse(info);
 
-        // Massive appears to use any query parameters as filters, apart from a
-        // few exceptions. For now, remove the exceptions and ignore them,
-        // so the relevant features can be introduced in the future if required.
-        // 'limit' and 'offset' - used for pagination
-        // 'apiKey' - used to allow different market places on the same server
-        // TODO: Removing these should probably cause a log warning message
-        params.remove("limit");
-        params.remove("offset");
-        params.remove("fields");
-        params.remove("apiKey");
-
-        // A parameter of 'q' is a search term
-        String searchTerm = null;
-        List<String> searches = params.remove("q");
-        if (searches != null && searches.size() != 0) {
-            searchTerm = searches.get(searches.size() - 1);
-            if (searchTerm.isEmpty()) {
-                // massive seems to treat this is as no search at all
-                searchTerm = null;
-            }
-        }
-
-        // process any remaining parameters as filters
-        // Filters have the following syntax
-        // field=value[|value]...
-
-        // Multiple filters with the same name are meaningless as the value is treated as an exact match
-        // use the last one in the list.
-        Map<String, List<Condition>> filterMap = new HashMap<>();
-        for (Entry<String, List<String>> entry : params.entrySet()) {
-            List<String> values = entry.getValue();
-            int size = values.size();
-            String lastValue = values.get(size - 1);
-
-            // Pipe (|) separates values which should be ORed together
-            // split(<regex>, -1) is used to retain any trailing empty strings, ensuring that we always have a non-empty list
-            List<String> orParts = new ArrayList<String>(Arrays.asList(lastValue.split("\\|", -1)));
-
-            List<Condition> conditions = new ArrayList<>();
-
-            // The first value can begin with ! to indicate that a filter for NOT that value
-            if (orParts.get(0).startsWith("!")) {
-                conditions.add(new Condition(Operation.NOT_EQUALS, orParts.get(0).substring(1)));
-                orParts.remove(0);
-            }
-
-            // Any later values beginning with ! are ignored
-            for (Iterator<String> iterator = orParts.iterator(); iterator.hasNext();) {
-                if (iterator.next().startsWith("!")) {
-                    iterator.remove();
-                }
-            }
-
-            // Finally all remaining values represent an equals condition
-            if (!orParts.isEmpty()) {
-                for (String part : orParts) {
-                    conditions.add(new Condition(Operation.EQUALS, part));
-                }
-            }
-
-            filterMap.put(entry.getKey(), conditions);
-        }
-
-        AssetList assets = assetService.retrieveAllAssets(filterMap, searchTerm);
+        AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm());
         String json = assets.toJson();
         return Response.ok(json).build();
     }
@@ -245,6 +173,37 @@ public class RepositoryRESTResource {
         // TODO This could produce a 202 (rather than a 204 no content), to
         // reflect that there is no guarantee that mongo's delete is complete
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/assets/summary")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAssetFieldSummary(@Context UriInfo uriInfo) {
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getAssetFieldSummary called with query parameters: " + uriInfo.getRequestUri().getRawQuery());
+        }
+
+        AssetQueryParameters params = AssetQueryParameters.parse(uriInfo);
+        String fieldsString = params.getFields();
+
+        if (fieldsString == null || fieldsString.isEmpty()) {
+            String body = getErrorJson(Response.Status.BAD_REQUEST, "The fields parameter was not provided");
+            return Response.status(Response.Status.BAD_REQUEST).entity(body).build();
+        }
+
+        List<String> fields = Arrays.asList(fieldsString.split(","));
+
+        List<Map<String, Object>> summary = assetService.summarizeAssets(fields, params.getFilterMap(), params.getSearchTerm());
+
+        String resultJson;
+        try {
+            resultJson = jsonMapper.writeValueAsString(summary);
+        } catch (JsonProcessingException e) {
+            throw new RepositoryException("Could not serialize summary result", e);
+        }
+
+        return Response.ok(resultJson).build();
     }
 
     @POST
@@ -432,10 +391,6 @@ public class RepositoryRESTResource {
         return false;
     }
 
-    // Used for the error json below
-    // TODO hopefully we get rid of this and replace with exception mapper
-    private static ObjectMapper errorMapper = new ObjectMapper();
-
     /**
      * Produce a JSON string with an error message, hopefully matching the same standard as what
      * comes out of Massive. Except without the stack trace for the moment.
@@ -446,7 +401,7 @@ public class RepositoryRESTResource {
         errorMap.put("message", message);
         String error;
         try {
-            error = errorMapper.writeValueAsString(errorMap);
+            error = jsonMapper.writeValueAsString(errorMap);
         } catch (JsonProcessingException e) {
             // Ooer missus, this really shouldn't happen
             throw new WebApplicationException(e);
@@ -472,7 +427,7 @@ public class RepositoryRESTResource {
     static Asset.StateAction getStateAction(String input) {
         Map<String, String> inputMap = null;
         try {
-            inputMap = errorMapper.readValue(input, new TypeReference<Map<String, String>>() {});
+            inputMap = jsonMapper.readValue(input, new TypeReference<Map<String, String>>() {});
         } catch (JsonParseException e) {
             return null;
         } catch (JsonMappingException e) {
@@ -482,30 +437,6 @@ public class RepositoryRESTResource {
         }
         String actionString = inputMap.get("action");
         return Asset.StateAction.forValue(actionString);
-    }
-
-    /**
-     * Remove URL encoding from both the keys and values of the supplied map. This will deal with
-     * both % encoding and + for spaces. Uses URLDecoder ( {@link URLDecoder#decode(String, String)}
-     * )
-     *
-     * @param params
-     */
-    private static void decodeParams(MultivaluedMap<String, String> params) {
-        Map<String, List<String>> copy = new HashMap<String, List<String>>();
-        copy.putAll(params);
-        params.clear();
-        try {
-            for (Map.Entry<String, List<String>> entry : copy.entrySet()) {
-                List<String> decodedValues = new ArrayList<String>();
-                for (String value : entry.getValue()) {
-                    decodedValues.add(URLDecoder.decode(value, StandardCharsets.UTF_8.name()));
-                }
-                params.put(URLDecoder.decode(entry.getKey(), StandardCharsets.UTF_8.name()), decodedValues);
-            }
-        } catch (UnsupportedEncodingException e) {
-            throw new RepositoryException("UTF-8 is unexpectedly missing.", e);
-        }
     }
 
     /**

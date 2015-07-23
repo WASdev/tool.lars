@@ -69,6 +69,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.rules.ExternalResource;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.ws.lars.rest.model.Asset;
@@ -102,6 +103,8 @@ public class RepositoryContext extends ExternalResource {
 
     private HttpHost targetHost;
     private HttpClientContext context;
+
+    private final static ObjectMapper jsonReader = new ObjectMapper();
 
     /* package */enum Protocol {
         HTTP, HTTPS
@@ -429,6 +432,15 @@ public class RepositoryContext extends ExternalResource {
         filter = filter.replace("|", "%7C");
         String assetsJson = doGet("/assets?" + filter, 200);
         return AssetList.jsonArrayToAssetList(assetsJson);
+    }
+
+    List<Map<String, Object>> getAssetSummary(String parameters) throws JsonParseException, JsonMappingException, IOException {
+        String resultString = doGet("/assets/summary?" + parameters, 200);
+        return jsonReader.readValue(resultString, new TypeReference<List<Map<String, Object>>>() {});
+    }
+
+    void getBadAssetSummary(String parameters, int expectedRC) throws IOException {
+        doGet("/assets/summary?" + parameters, expectedRC);
     }
 
     protected Attachment doPostAttachmentNoContent(String assetId, String name, Attachment attachment) throws ClientProtocolException, IOException, InvalidJsonAssetException {

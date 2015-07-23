@@ -20,7 +20,9 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,6 +73,43 @@ public class AssetServiceLayer {
      */
     public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
         return persistenceBean.retrieveAllAssets(filters, searchTerm);
+    }
+
+    /**
+     * Summarizes a list of fields from the assets matched by the given filters and search term.
+     * <p>
+     * For each field, the result is the list of unique values that are stored in that field, across
+     * all of the assets matched by the filters and searchTerm.
+     * <p>
+     * This result is put into a map of the following form:
+     *
+     * <pre>
+     * {
+     *   "filterName": fieldName
+     *   "filterValue": listOfDistinctValues
+     * }
+     * </pre>
+     * <p>
+     * Filters and searchTerm are treated the same as they are in
+     * {@link #retrieveAllAssets(Map, String)}.
+     *
+     * @param fields a list of fields to summarize
+     * @param filters a map of filters, which may be empty
+     * @param searchTerm a term to search for, which may be null
+     * @return a list of result maps, one for each field
+     */
+    public List<Map<String, Object>> summarizeAssets(List<String> fields, Map<String, List<Condition>> filters, String searchTerm) {
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (String field : fields) {
+            List<Object> values = persistenceBean.getDistinctValues(field, filters, searchTerm);
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("filterName", field);
+            resultMap.put("filterValue", values);
+            result.add(resultMap);
+        }
+
+        return result;
     }
 
     /**

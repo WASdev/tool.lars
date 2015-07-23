@@ -233,4 +233,25 @@ public class RepositoryRESTResourceLoggingTest {
         getRestResource().getFakeImConfig();
     }
 
+    @Test
+    public void testGetAssetFieldSummary(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException {
+
+        new Expectations() {
+            {
+                info.getQueryParameters(false);
+
+                logger.isLoggable(Level.FINE);
+                result = true;
+
+                info.getRequestUri();
+                result = new URI("http://localhost:9085/ma/v1/assets/summary?fields=xyz");
+
+                logger.fine("getAssetFieldSummary called with query parameters: fields=xyz");
+            }
+        };
+
+        getRestResource().getAssetFieldSummary(info);
+
+    }
+
 }

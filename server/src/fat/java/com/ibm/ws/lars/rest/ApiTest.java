@@ -16,8 +16,12 @@
 
 package com.ibm.ws.lars.rest;
 
+import static com.ibm.ws.lars.testutils.matchers.SummaryResultMatcher.summaryResult;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -743,6 +747,44 @@ public class ApiTest {
         // !hot|hot == (!hot) OR (hot) == everything -> 9 results
         AssetList result6 = repository.getAllAssets("weather=!hot|hot");
         assertEquals("Unexpected number of assets retrieved", 9, result6.size());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testGetAssetSummary() throws Exception {
+        addLittleAsset("weather", "hot", "ground", "flat", "description", "lovely");
+        addLittleAsset("weather", "hot", "ground", "hilly", "description", "ok");
+        addLittleAsset("weather", "hot", "ground", "mountainous", "description", "exhausting");
+        addLittleAsset("weather", "cold", "ground", "flat", "description", "bleak");
+        addLittleAsset("weather", "cold", "ground", "hilly", "description", "ok");
+        addLittleAsset("weather", "cold", "ground", "mountainous");
+        addLittleAsset("weather", "warm", "ground", "flat");
+        addLittleAsset("weather", "warm", "ground", "hilly", "description", "dull");
+        addLittleAsset("weather", "warm", "ground", "mountainous");
+
+        List<Map<String, Object>> result;
+        result = repository.getAssetSummary("fields=weather");
+        assertThat(result, contains(summaryResult("weather", "hot", "cold", "warm")));
+
+        result = repository.getAssetSummary("fields=weather,ground");
+        assertThat(result, containsInAnyOrder(summaryResult("weather", "hot", "cold", "warm"),
+                                              summaryResult("ground", "flat", "hilly", "mountainous")));
+
+        result = repository.getAssetSummary("fields=description&ground=flat");
+        assertThat(result, contains(summaryResult("description", "lovely", "bleak")));
+
+        result = repository.getAssetSummary("fields=description&ground=mountainous");
+        assertThat(result, contains(summaryResult("description", "exhausting")));
+
+        result = repository.getAssetSummary("fields=weather&q=ok");
+        assertThat(result, contains(summaryResult("weather", "hot", "cold")));
+
+        result = repository.getAssetSummary("fields=foo");
+        assertThat(result, contains(summaryResult("foo")));
+
+        repository.getBadAssetSummary("fields=", 400);
+
+        repository.getBadAssetSummary("", 400);
     }
 
     // Add and asset with an extra properties

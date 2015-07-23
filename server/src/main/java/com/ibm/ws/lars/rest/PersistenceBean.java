@@ -146,6 +146,50 @@ public class PersistenceBean implements Persistor {
             return retrieveAllAssets();
         }
 
+        BasicDBObject filterObject = createFilterObject(filters, searchTerm);
+
+        DBObject sortObject = null;
+
+        if (searchTerm != null) {
+            sortObject = new BasicDBObject("score", new BasicDBObject("$meta", "textScore"));
+        }
+
+        List<DBObject> results = query(filterObject, sortObject);
+        List<Map<String, Object>> assets = new ArrayList<Map<String, Object>>();
+        for (DBObject result : results) {
+            // BSON spec says that all keys have to be strings
+            // so this should be safe.
+            @SuppressWarnings("unchecked")
+            Map<String, Object> resultMap = result.toMap();
+            if (sortObject != null) {
+                resultMap.remove("score");
+            }
+            assets.add(resultMap);
+        }
+        return AssetList.createAssetListFromMaps(assets);
+    }
+
+    /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<Object> getDistinctValues(String field, Map<String, List<Condition>> filters, String searchTerm) {
+        return getAssetCollection().distinct(field, createFilterObject(filters, searchTerm));
+    }
+
+    /**
+     * Create a filter object for a mongodb query from a filtermap and search term
+     *
+     * @param filters the filter map
+     * @param searchTerm the search term
+     * @return a filter object which can be passed as a query to mongodb find()
+     */
+    private BasicDBObject createFilterObject(Map<String, List<Condition>> filters, String searchTerm) {
+
+        // Must return an empty object if there are no filters or search term
+        if ((filters == null || filters.isEmpty()) && searchTerm == null) {
+            return new BasicDBObject();
+        }
+
         // Need to use a filterList and an $and operator because we may add multiple $or sections
         // which would overwrite each other if we just appended them to the filterObject
         BasicDBList filterList = new BasicDBList();
@@ -164,28 +208,13 @@ public class PersistenceBean implements Persistor {
             }
         }
 
-        DBObject sortObject = null;
-
         if (searchTerm != null) {
             BasicDBObject value = new BasicDBObject("$search", searchTerm);
             BasicDBObject searchObject = new BasicDBObject("$text", value);
             filterList.add(searchObject);
-            sortObject = new BasicDBObject("score", new BasicDBObject("$meta", "textScore"));
         }
 
-        List<DBObject> results = query(filterObject, sortObject);
-        List<Map<String, Object>> assets = new ArrayList<Map<String, Object>>();
-        for (DBObject result : results) {
-            // BSON spec says that all keys have to be strings
-            // so this should be safe.
-            @SuppressWarnings("unchecked")
-            Map<String, Object> resultMap = result.toMap();
-            if (sortObject != null) {
-                resultMap.remove("score");
-            }
-            assets.add(resultMap);
-        }
-        return AssetList.createAssetListFromMaps(assets);
+        return filterObject;
     }
 
     private BasicDBObject createFilterObject(String field, Condition condition) {
