@@ -75,8 +75,8 @@ public class AssetServiceLayer {
     /**
      * @see Persistor#retrieveAllAssets(Map,String)
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
-        return persistenceBean.retrieveAllAssets(filters, searchTerm);
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination) {
+        return persistenceBean.retrieveAllAssets(filters, searchTerm, pagination);
     }
 
     /**

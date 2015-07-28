@@ -31,12 +31,38 @@ import javax.ws.rs.core.UriInfo;
 public class DummyUriInfo implements UriInfo {
 
     private final URI baseUri;
+    private final URI appUri;
+    private final URI fullUri;
 
     /**
      * Create a UriInfo with the given base URI
      */
     public DummyUriInfo(URI baseUri) {
         this.baseUri = baseUri;
+        this.appUri = null;
+        this.fullUri = baseUri;
+    }
+
+    /**
+     * Create a UriInfo with the given base URI and app-relative URI
+     *
+     * @param baseUri the base URI of the application
+     * @param appUri the URI requested relative to the base URI
+     * @throws Exception
+     */
+    public DummyUriInfo(String baseUri, String appUri) throws Exception {
+        this.baseUri = new URI(baseUri);
+        this.appUri = new URI(appUri);
+
+        if (!this.baseUri.isAbsolute()) {
+            throw new Exception("Base URI must be absolute");
+        }
+
+        if (this.appUri.isAbsolute()) {
+            throw new Exception("App URI must be relative");
+        }
+
+        this.fullUri = this.baseUri.resolve(this.appUri);
     }
 
     /** {@inheritDoc} */
@@ -48,105 +74,119 @@ public class DummyUriInfo implements UriInfo {
     /** {@inheritDoc} */
     @Override
     public URI getAbsolutePath() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public UriBuilder getAbsolutePathBuilder() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public UriBuilder getBaseUriBuilder() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public List<Object> getMatchedResources() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public List<String> getMatchedURIs() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public List<String> getMatchedURIs(boolean arg0) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public String getPath() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public String getPath(boolean arg0) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public MultivaluedMap<String, String> getPathParameters() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public MultivaluedMap<String, String> getPathParameters(boolean arg0) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public List<PathSegment> getPathSegments() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public List<PathSegment> getPathSegments(boolean arg0) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /** {@inheritDoc} */
     @Override
     public MultivaluedMap<String, String> getQueryParameters() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Do a simplified parsing of query parameters, splitting strings on '&' and '='
+     * <p>
+     * Decoding of parameters is not supported.
+     */
     @Override
-    public MultivaluedMap<String, String> getQueryParameters(boolean arg0) {
-        return null;
+    public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
+        if (decode == true) {
+            throw new UnsupportedOperationException("Decoding of query parameters is not supported");
+        }
+
+        MultivaluedMap<String, String> result = new MultivaluedMapImpl<String, String>();
+
+        String query = fullUri.getRawQuery();
+
+        for (String parameter : query.split("&")) {
+            String[] parts = parameter.split("=");
+
+            if (parts.length != 2) {
+                throw new RuntimeException("Bad parameter: " + parameter);
+            }
+
+            result.add(parts[0], parts[1]);
+        }
+
+        return result;
     }
 
     /** {@inheritDoc} */
     @Override
     public URI getRequestUri() {
-        return null;
+        return fullUri;
     }
 
     /** {@inheritDoc} */
     @Override
     public UriBuilder getRequestUriBuilder() {
-        return null;
-    }
-
-    public URI relativize(URI uri) {
-        return null;
-    }
-
-    public URI resolve(URI uri) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
 }

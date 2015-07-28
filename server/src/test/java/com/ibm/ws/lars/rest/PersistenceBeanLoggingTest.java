@@ -67,17 +67,21 @@ public class PersistenceBeanLoggingTest {
     @Test
     public void testQuery() {
         final BasicDBObject filter = new BasicDBObject("name", "value");
+        final BasicDBObject sort = new BasicDBObject();
+        final PaginationOptions pagination = new PaginationOptions(0, 2);
         new Expectations() {
             {
                 logger.isLoggable(Level.FINE);
                 result = true;
 
                 logger.fine("query: Querying database with query object " + filter);
+                logger.fine("query: sort object " + sort);
+                logger.fine("query: pagination object " + pagination);
 
                 logger.fine("query: found " + 0 + " assets.");
             }
         };
-        Deencapsulation.invoke(createTestBean(), "query", filter, new BasicDBObject());
+        Deencapsulation.invoke(createTestBean(), "query", filter, sort, pagination);
     }
 
     @Test

@@ -20,6 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
+import mockit.Deencapsulation;
+import mockit.Expectations;
+import mockit.Injectable;
+import mockit.Mocked;
+
 import org.junit.Test;
 
 import com.ibm.ws.lars.rest.Condition.Operation;
@@ -28,10 +33,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-
-import mockit.Deencapsulation;
-import mockit.Expectations;
-import mockit.Mocked;
 
 /**
  * This is a set of basic unit tests for the search logic in
@@ -69,7 +70,7 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        createTestBean().retrieveAllAssets(new HashMap<String, List<Condition>>(), null);
+        createTestBean().retrieveAllAssets(new HashMap<String, List<Condition>>(), null, null);
     }
 
     /**
@@ -90,7 +91,30 @@ public class PersistenceBeanBasicSearchTest {
 
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
         filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
-        createTestBean().retrieveAllAssets(filters, null);
+        createTestBean().retrieveAllAssets(filters, null, null);
+    }
+
+    /**
+     * Test that providing a PaginationOptions object results in the correct skip() and limit()
+     * methods being called on the result cursor.
+     */
+    @Test
+    public void testRetrieveAllAssetsPaginated(final @Mocked DBCollection collection, final @Injectable DBCursor cursor) {
+
+        new Expectations() {
+            {
+
+                collection.find((DBObject) withNotNull(), (DBObject) withNull());
+                result = cursor;
+                cursor.skip(20);
+                cursor.limit(10);
+            }
+        };
+
+        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
+        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        PaginationOptions pagination = new PaginationOptions(20, 10);
+        createTestBean().retrieveAllAssets(filters, null, pagination);
     }
 
     /**
@@ -112,7 +136,7 @@ public class PersistenceBeanBasicSearchTest {
         };
 
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        createTestBean().retrieveAllAssets(filters, "foo");
+        createTestBean().retrieveAllAssets(filters, "foo", null);
     }
 
     /**
@@ -133,6 +157,6 @@ public class PersistenceBeanBasicSearchTest {
 
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
         filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
-        createTestBean().retrieveAllAssets(filters, "foo");
+        createTestBean().retrieveAllAssets(filters, "foo", null);
     }
 }
