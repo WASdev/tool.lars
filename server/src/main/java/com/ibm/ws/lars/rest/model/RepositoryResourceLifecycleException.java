@@ -19,7 +19,7 @@ package com.ibm.ws.lars.rest.model;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.ibm.ws.lars.rest.RepositoryClientException;
+import com.ibm.ws.lars.rest.exceptions.RepositoryClientException;
 
 /**
  * Thrown when attempting to do an invalid state change on an asset

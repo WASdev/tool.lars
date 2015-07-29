@@ -33,6 +33,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
+import com.ibm.ws.lars.rest.exceptions.InvalidIdException;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
 
 public class RepositoryRESTResourceLoggingTest {

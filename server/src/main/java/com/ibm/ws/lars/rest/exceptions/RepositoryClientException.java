@@ -14,28 +14,44 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.exceptions;
 
 import javax.ws.rs.core.Response;
 
-public class InvalidJsonAssetException extends RepositoryClientException {
+/**
+ * An exception which represents an error in input data from the client
+ */
+public abstract class RepositoryClientException extends Exception {
 
-    private static final long serialVersionUID = 1L;
-
-    public InvalidJsonAssetException() {
-        super();
-    }
-
-    public InvalidJsonAssetException(Exception cause) {
-        super(cause);
-    }
-
-    public InvalidJsonAssetException(String message) {
+    /**
+     * @param string
+     */
+    public RepositoryClientException(String message) {
         super(message);
     }
 
-    @Override
-    public Response.Status getResponseStatus() {
-        return Response.Status.BAD_REQUEST;
+    /**
+     * @param string
+     * @param cause
+     */
+    public RepositoryClientException(String message, Throwable cause) {
+        super(message, cause);
     }
+
+    /**
+     *
+     */
+    public RepositoryClientException() {
+        super();
+    }
+
+    public RepositoryClientException(Throwable cause) {
+        super(cause);
+    }
+
+    public abstract Response.Status getResponseStatus();
+
+    /**  */
+    private static final long serialVersionUID = 1L;
+
 }

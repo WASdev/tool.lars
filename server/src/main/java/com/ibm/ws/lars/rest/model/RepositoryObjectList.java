@@ -26,7 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ibm.ws.lars.rest.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 
 /**
  *

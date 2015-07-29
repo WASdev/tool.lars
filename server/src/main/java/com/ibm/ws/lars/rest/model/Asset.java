@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.ws.lars.rest.InvalidJsonAssetException;
-import com.ibm.ws.lars.rest.RepositoryException;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 
 /**
  * Enforces the constrains on a JSON document to turn it into a Asset as required by the asset

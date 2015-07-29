@@ -19,7 +19,7 @@ package com.ibm.ws.lars.rest.model;
 import java.io.InputStream;
 import java.util.Map;
 
-import com.ibm.ws.lars.rest.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 
 /**
  *

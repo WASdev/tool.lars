@@ -32,6 +32,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
 import com.ibm.ws.lars.rest.Condition.Operation;
+import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 
 /**
  * Parses query parameters for REST calls which query for assets.

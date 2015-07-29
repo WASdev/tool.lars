@@ -30,6 +30,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 
 @Provider
 public class RepositoryExceptionMapper implements ExceptionMapper<RepositoryException> {
