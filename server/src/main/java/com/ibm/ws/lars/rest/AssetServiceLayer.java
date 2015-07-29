@@ -32,7 +32,6 @@ import javax.inject.Singleton;
 import javax.ws.rs.core.UriInfo;
 
 import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
-import com.ibm.ws.lars.rest.exceptions.InvalidIdException;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
@@ -324,25 +323,21 @@ public class AssetServiceLayer {
         persistenceBean.deleteAttachmentContent(attachmentId);
     }
 
-    public Attachment retrieveAttachmentMetadata(String assetId, String attachmentId, UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
+    public Attachment retrieveAttachmentMetadata(String assetId, String attachmentId, UriInfo uriInfo) throws NonExistentArtefactException {
         Attachment attachment = persistenceBean.retrieveAttachmentMetadata(attachmentId);
         if (!Objects.equals(attachment.getAssetId(), assetId)) {
-            throw new InvalidIdException("Attachment " + attachmentId + " does not have assetId " + assetId);
+            throw new NonExistentArtefactException("Asset " + assetId + " has no associated attachment with id " + attachmentId);
         }
         computeAttachmentURL(attachment, uriInfo);
         return attachment;
     }
 
-    public AttachmentContentResponse retrieveAttachmentContent(String assetId, String attachmentId, String name, UriInfo uriInfo) throws InvalidIdException,
+    public AttachmentContentResponse retrieveAttachmentContent(String assetId, String attachmentId, String name, UriInfo uriInfo) throws
             NonExistentArtefactException {
         Attachment attachmentMetadata = retrieveAttachmentMetadata(assetId, attachmentId, uriInfo);
 
-        if (!Objects.equals(assetId, attachmentMetadata.getAssetId())) {
-            throw new InvalidIdException("Attachment " + attachmentId + " does not have assetId " + assetId);
-        }
-
         if (!Objects.equals(name, attachmentMetadata.getName())) {
-            throw new InvalidIdException("Attachment " + attachmentId + " does not have name " + name);
+            throw new NonExistentArtefactException("Attachment with id " + attachmentId + " and name " + name + " does not exist in the repository.");
         }
 
         String gridFSId = attachmentMetadata.getGridFSId();

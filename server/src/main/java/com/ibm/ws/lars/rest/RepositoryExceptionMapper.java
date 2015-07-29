@@ -18,8 +18,6 @@ package com.ibm.ws.lars.rest;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,8 +26,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 
 @Provider
@@ -48,28 +44,8 @@ public class RepositoryExceptionMapper implements ExceptionMapper<RepositoryExce
         }
 
         return Response.status(Status.INTERNAL_SERVER_ERROR)
-                .entity(getErrorJson(Status.INTERNAL_SERVER_ERROR, "Internal server error, please contact the server administrator"))
+                .entity(RepositoryClientExceptionMapper.getErrorJson(Status.INTERNAL_SERVER_ERROR, "Internal server error, please contact the server administrator"))
                 .build();
     }
 
-    // Used for the error json below
-    private static final ObjectMapper errorMapper = new ObjectMapper();
-
-    /**
-     * Produce a JSON string with an error message, hopefully matching the same standard as what
-     * comes out of Massive. Except without the stack trace for the moment.
-     */
-    private static String getErrorJson(Response.Status status, String message) {
-        Map<String, Object> errorMap = new HashMap<String, Object>();
-        errorMap.put("statusCode", status.getStatusCode());
-        errorMap.put("message", message);
-        String error;
-        try {
-            error = errorMapper.writeValueAsString(errorMap);
-        } catch (JsonProcessingException e) {
-            // This really shouldn't happen. Try and return a string in case it is helpful
-            error = "Internal server error: " + message;
-        }
-        return error;
-    }
 }
