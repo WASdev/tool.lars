@@ -23,6 +23,8 @@ import mockit.Mocked;
 
 import org.junit.Test;
 
+import com.ibm.ws.lars.rest.exceptions.RepositoryException;
+
 public class RepositoryExceptionMapperLoggingTest {
 
     @Test

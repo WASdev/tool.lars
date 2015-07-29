@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.ibm.ws.lars.rest.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 
 /**
  *

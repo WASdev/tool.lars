@@ -14,30 +14,21 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.exceptions;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-public class InvalidIdException extends RepositoryClientException {
+public class AssetPersistenceException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidIdException() {
-        super("Invalid asset id");
+    public AssetPersistenceException() {
+        super();
     }
 
-    public InvalidIdException(Exception cause) {
+    public AssetPersistenceException(Exception cause) {
         super(cause);
     }
 
-    public InvalidIdException(String message) {
+    public AssetPersistenceException(String message) {
         super(message);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Status getResponseStatus() {
-        return Response.Status.BAD_REQUEST;
     }
 }

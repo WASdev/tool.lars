@@ -14,34 +14,30 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.exceptions;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-public class NonExistentArtefactException extends RepositoryClientException {
+public class InvalidIdException extends RepositoryClientException {
 
     private static final long serialVersionUID = 1L;
 
-    public NonExistentArtefactException() {
-        super("Asset not found");
+    public InvalidIdException() {
+        super("Invalid asset id");
     }
 
-    public NonExistentArtefactException(Exception cause) {
+    public InvalidIdException(Exception cause) {
         super(cause);
     }
 
-    public NonExistentArtefactException(String id, String type) {
-        super(type + " not found for id: " + id);
-    }
-
-    public NonExistentArtefactException(String message) {
+    public InvalidIdException(String message) {
         super(message);
     }
 
     /** {@inheritDoc} */
     @Override
     public Status getResponseStatus() {
-        return Response.Status.NOT_FOUND;
+        return Response.Status.BAD_REQUEST;
     }
 }

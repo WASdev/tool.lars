@@ -50,6 +50,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;

@@ -14,21 +14,34 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.exceptions;
 
-public class AssetPersistenceException extends Exception {
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+public class NonExistentArtefactException extends RepositoryClientException {
 
     private static final long serialVersionUID = 1L;
 
-    public AssetPersistenceException() {
-        super();
+    public NonExistentArtefactException() {
+        super("Asset not found");
     }
 
-    public AssetPersistenceException(Exception cause) {
+    public NonExistentArtefactException(Exception cause) {
         super(cause);
     }
 
-    public AssetPersistenceException(String message) {
+    public NonExistentArtefactException(String id, String type) {
+        super(type + " not found for id: " + id);
+    }
+
+    public NonExistentArtefactException(String message) {
         super(message);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Status getResponseStatus() {
+        return Response.Status.NOT_FOUND;
     }
 }

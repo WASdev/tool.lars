@@ -14,22 +14,28 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.exceptions;
 
-/**
- * An exception representing a non-recoverable error in the repository. This would typically
- * translate to a 500 error
- */
-public class RepositoryException extends RuntimeException {
+import javax.ws.rs.core.Response;
 
-    public RepositoryException(String message) {
-        super(message);
-    }
-
-    public RepositoryException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public class InvalidJsonAssetException extends RepositoryClientException {
 
     private static final long serialVersionUID = 1L;
 
+    public InvalidJsonAssetException() {
+        super();
+    }
+
+    public InvalidJsonAssetException(Exception cause) {
+        super(cause);
+    }
+
+    public InvalidJsonAssetException(String message) {
+        super(message);
+    }
+
+    @Override
+    public Response.Status getResponseStatus() {
+        return Response.Status.BAD_REQUEST;
+    }
 }

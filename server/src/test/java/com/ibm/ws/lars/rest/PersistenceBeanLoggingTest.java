@@ -24,6 +24,8 @@ import mockit.Mocked;
 
 import org.junit.Test;
 
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.mongodb.BasicDBObject;

@@ -32,6 +32,10 @@ import javax.inject.Singleton;
 
 import org.bson.types.ObjectId;
 
+import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
+import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
+import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
