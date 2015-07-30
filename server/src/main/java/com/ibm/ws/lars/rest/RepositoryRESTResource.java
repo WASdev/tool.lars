@@ -416,7 +416,7 @@ public class RepositoryRESTResource {
 
     private static void sanitiseId(String id, ArtefactType typeOfId) throws InvalidIdException {
         if (!validId(id)) {
-            throw new InvalidIdException("Invalid " + typeOfId.getValue() + " id");
+            throw new InvalidIdException(typeOfId.getValue(), id);
         }
     }
 

@@ -136,7 +136,7 @@ public class ApiTest {
     public void testGetAssetInvalid() throws Exception {
         String message = repository.getBadAsset("foo_bar_asset_id", 400);
         // massive gives a 500, LARS gives a 404
-        assertEquals("Unexpected error message returned from server", "Invalid asset id", repository.parseErrorObject(message));
+        assertEquals("Unexpected error message returned from server", "Invalid asset id: foo_bar_asset_id", repository.parseErrorObject(message));
     }
 
     /**
@@ -165,7 +165,7 @@ public class ApiTest {
         // "Cannot read property 'createdBy' of null"
         // which really does look like a 500.
         String message = repository.deleteAsset("foobar", 400);
-        assertEquals("Unexpected message from server", "Invalid asset id", repository.parseErrorObject(message));
+        assertEquals("Unexpected message from server", "Invalid asset id: foobar", repository.parseErrorObject(message));
         return;
     }
 
@@ -567,8 +567,32 @@ public class ApiTest {
         repository.doGetAttachmentContentInError(NON_EXISTENT_ID,
                                                  createdAttachment.get_id(),
                                                  attachmentName,
-                                                 400,
-                                                 "Attachment " + createdAttachment.get_id() + " does not have assetId " + NON_EXISTENT_ID);
+                                                 404,
+                                                 "Asset " + NON_EXISTENT_ID + " has no associated attachment with id " + createdAttachment.get_id());
+
+    }
+
+    /**
+     * Attempts to retrieve an attachment that does exist from a URL but using the wrong name and
+     * verifies that the server does not allow this.
+     *
+     */
+    @Test
+    public void testErrorRetrieveAttachmentOnNonWrongName() throws InvalidJsonAssetException, IOException {
+        Asset testAsset = AssetUtils.getTestAsset();
+        Asset returnedAsset = repository.addAssetNoAttachments(testAsset);
+        Attachment attachmentNoContent = AssetUtils.getTestAttachmentNoContent();
+        String attachmentName = "nocontent.txt";
+        Attachment createdAttachment = repository.doPostAttachmentNoContent(returnedAsset.get_id(),
+                                                                            attachmentName,
+                                                                            attachmentNoContent);
+
+        repository.doGetAttachmentContentInError(returnedAsset.get_id(),
+                                                 createdAttachment.get_id(),
+                                                 "foobar",
+                                                 404,
+                                                 "Attachment with id " + createdAttachment.get_id() + " and name foobar does not exist in the repository.");
+
     }
 
     /**

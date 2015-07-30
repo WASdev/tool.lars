@@ -23,16 +23,8 @@ public class InvalidIdException extends RepositoryClientException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidIdException() {
-        super("Invalid asset id");
-    }
-
-    public InvalidIdException(Exception cause) {
-        super(cause);
-    }
-
-    public InvalidIdException(String message) {
-        super(message);
+    public InvalidIdException(String type, String badId) {
+        super("Invalid " + type + " id: " + badId);
     }
 
     /** {@inheritDoc} */

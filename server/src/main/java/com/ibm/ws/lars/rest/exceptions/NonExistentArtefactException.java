@@ -27,10 +27,6 @@ public class NonExistentArtefactException extends RepositoryClientException {
         super("Asset not found");
     }
 
-    public NonExistentArtefactException(Exception cause) {
-        super(cause);
-    }
-
     public NonExistentArtefactException(String id, String type) {
         super(type + " not found for id: " + id);
     }
