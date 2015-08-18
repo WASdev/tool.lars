@@ -641,15 +641,6 @@ public class ApiTest {
         // This is to test that various parameters are ignored as filters by the server.
         // This is because Massive uses them for other purposes, but unhelpfully,
         // they are not clearly distinguished from filter parameters.
-        // LARS doesn't currently support the operations defined by these parameters,
-        // with the exception of 'q', which is used for searching
-        AssetList assets3 = repository.getAllAssets("limit=nolimit");
-
-        assertEquals("limit should not be treated as a filter, so all assets should be retrieved", 9, assets3.size());
-
-        AssetList assets4 = repository.getAllAssets("offset=bigoffset");
-        assertEquals("offset should not be treated as a filter, so all assets should be retrieved", 9, assets4.size());
-
         AssetList assets8 = repository.getAllAssets("fields=fields_to_search_on");
         assertEquals("fields should not be treated as a filter, so all assets should be retrieved", 9, assets8.size());
 
@@ -774,6 +765,32 @@ public class ApiTest {
         assertEquals("Unexpected number of assets retrieved", 9, result6.size());
     }
 
+    @Test
+    public void testGetAllAssetsPagination() throws Exception {
+        Asset asset1 = addLittleAsset("name", "asset1");
+        Asset asset2 = addLittleAsset("name", "asset2");
+        Asset asset3 = addLittleAsset("name", "asset3");
+        Asset asset4 = addLittleAsset("name", "asset4");
+
+        AssetList page1 = repository.getAllAssets("offset=0&limit=2");
+        assertEquals("Wrong number of assets on page 1", page1.size(), 2);
+        AssetList page2 = repository.getAllAssets("offset=2&limit=2");
+        assertEquals("Wrong number of assets on page 2", page2.size(), 2);
+        AssetList page3 = repository.getAllAssets("offset=4&limit=2");
+        assertEquals("Wrong number of assets on page 3", page3.size(), 0);
+
+        assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset1, asset2, asset3, asset4));
+
+        page1 = repository.getAllAssets("offset=0&name=asset2|asset3|asset4&limit=2");
+        assertEquals("Wrong number of assets on page 1", page1.size(), 2);
+        page2 = repository.getAllAssets("offset=2&name=asset2|asset3|asset4&limit=2");
+        assertEquals("Wrong number of assets on page 2", page2.size(), 1);
+        page3 = repository.getAllAssets("offset=4&name=asset2|asset3|asset4&limit=2");
+        assertEquals("Wrong number of assets on page 3", page3.size(), 0);
+
+        assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset2, asset3, asset4));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetAssetSummary() throws Exception {
@@ -819,6 +836,25 @@ public class ApiTest {
             littleAsset.setProperty(values[i], values[i + 1]);
         }
         return repository.addAssetNoAttachments(littleAsset);
+    }
+
+    /**
+     * Collate the contents of several AssetLists into one List.
+     * <p>
+     * The asset lists are processed in order, each asset in each list is appended to the result
+     * list.
+     *
+     * @param lists the AssetLists
+     * @return the collated list
+     */
+    private static List<Asset> collatePages(AssetList... lists) {
+        List<Asset> result = new ArrayList<Asset>();
+        for (AssetList list : lists) {
+            for (Asset asset : list) {
+                result.add(asset);
+            }
+        }
+        return result;
     }
 
     /**

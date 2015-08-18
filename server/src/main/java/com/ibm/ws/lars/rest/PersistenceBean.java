@@ -144,9 +144,9 @@ public class PersistenceBean implements Persistor {
 
     /** {@inheritDoc} */
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination) {
 
-        if (filters.size() == 0 && searchTerm == null) {
+        if (filters.size() == 0 && searchTerm == null && pagination == null) {
             return retrieveAllAssets();
         }
 
@@ -158,7 +158,7 @@ public class PersistenceBean implements Persistor {
             sortObject = new BasicDBObject("score", new BasicDBObject("$meta", "textScore"));
         }
 
-        List<DBObject> results = query(filterObject, sortObject);
+        List<DBObject> results = query(filterObject, sortObject, pagination);
         List<Map<String, Object>> assets = new ArrayList<Map<String, Object>>();
         for (DBObject result : results) {
             // BSON spec says that all keys have to be strings
@@ -235,17 +235,23 @@ public class PersistenceBean implements Persistor {
         return new BasicDBObject(field, value);
     }
 
-    private List<DBObject> query(DBObject filterObject, DBObject sortObject) {
+    private List<DBObject> query(DBObject filterObject, DBObject sortObject, PaginationOptions pagination) {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("query: Querying database with query object " + filterObject);
             logger.fine("query: sort object " + sortObject);
+            logger.fine("query: pagination object " + pagination);
         }
 
         List<DBObject> results = new ArrayList<DBObject>();
         try (DBCursor cursor = getAssetCollection().find(filterObject, sortObject)) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("query: found " + cursor.count() + " assets.");
+            }
+
+            if (pagination != null) {
+                cursor.skip(pagination.getOffset());
+                cursor.limit(pagination.getLimit());
             }
 
             if (sortObject != null) {

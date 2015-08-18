@@ -77,7 +77,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAssets(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException {
+    public void testGetAssets(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
 
         new Expectations() {
             {
@@ -238,11 +238,15 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAssetFieldSummary(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException {
+    public void testGetAssetFieldSummary(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
+
+        final MultivaluedMapImpl<String, String> parameters = new MultivaluedMapImpl<>();
+        parameters.add("fields", "xyz");
 
         new Expectations() {
             {
                 info.getQueryParameters(false);
+                result = parameters;
 
                 logger.isLoggable(Level.FINE);
                 result = true;

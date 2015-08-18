@@ -60,7 +60,7 @@ public class AssetQueryParameters {
      * @param uriInfo the UriInfo
      * @return the asset query parameters
      */
-    public static AssetQueryParameters parse(UriInfo uriInfo) {
+    public static AssetQueryParameters create(UriInfo uriInfo) {
 
         MultivaluedMap<String, String> params = uriInfo.getQueryParameters(false);
 
@@ -136,6 +136,51 @@ public class AssetQueryParameters {
         }
 
         return filterMap;
+    }
+
+    /**
+     * Parses the limit and offset parameters to create and return a PaginationOptions.
+     * <p>
+     * If both parameters are present and are integers, a PaginationOptions object will be returned.
+     * <p>
+     * If only one or neither parameters are present, null will be returned. Pagination is only
+     * enabled if both options are provided.
+     * <p>
+     * If both parameters are present but are not both integers, an InvalidParameterException is
+     * thrown
+     *
+     * @return a PaginationOptions if both limit and offset parameters are provided, otherwise null
+     * @throws InvalidParameterException if limit and offset parameters are provided but are not
+     *             integers
+     */
+    public PaginationOptions getPagination() throws InvalidParameterException {
+        String limitString = params.get(LIMIT_PARAM);
+        String offsetString = params.get(OFFSET_PARAM);
+
+        if (limitString == null && offsetString == null) {
+            return null;
+        }
+
+        if (limitString == null || offsetString == null) {
+            throw new InvalidParameterException("If either " + LIMIT_PARAM + " or " + OFFSET_PARAM + " is provided then both must be provided");
+        }
+
+        int limit;
+        int offset;
+
+        try {
+            limit = Integer.parseInt(limitString);
+        } catch (NumberFormatException e) {
+            throw new InvalidParameterException(LIMIT_PARAM + " must be an integer");
+        }
+
+        try {
+            offset = Integer.parseInt(offsetString);
+        } catch (NumberFormatException e) {
+            throw new InvalidParameterException(OFFSET_PARAM + " must be an integer");
+        }
+
+        return new PaginationOptions(offset, limit);
     }
 
     /**

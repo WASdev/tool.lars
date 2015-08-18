@@ -114,15 +114,15 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAssets(@Context UriInfo info) throws JsonProcessingException {
+    public Response getAssets(@Context UriInfo info) throws JsonProcessingException, InvalidParameterException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssets called with query parameters: " + info.getRequestUri().getRawQuery());
         }
 
-        AssetQueryParameters params = AssetQueryParameters.parse(info);
+        AssetQueryParameters params = AssetQueryParameters.create(info);
 
-        AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm());
+        AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm(), params.getPagination());
         String json = assets.toJson();
         return Response.ok(json).build();
     }
@@ -183,18 +183,17 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets/summary")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAssetFieldSummary(@Context UriInfo uriInfo) {
+    public Response getAssetFieldSummary(@Context UriInfo uriInfo) throws InvalidParameterException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssetFieldSummary called with query parameters: " + uriInfo.getRequestUri().getRawQuery());
         }
 
-        AssetQueryParameters params = AssetQueryParameters.parse(uriInfo);
+        AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
         String fieldsString = params.getFields();
 
         if (fieldsString == null || fieldsString.isEmpty()) {
-            String body = getErrorJson(Response.Status.BAD_REQUEST, "The fields parameter was not provided");
-            return Response.status(Response.Status.BAD_REQUEST).entity(body).build();
+            throw new InvalidParameterException("The fields parameter was not provided");
         }
 
         List<String> fields = Arrays.asList(fieldsString.split(","));

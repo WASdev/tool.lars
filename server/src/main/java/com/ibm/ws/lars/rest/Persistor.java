@@ -50,8 +50,13 @@ public interface Persistor {
      * <p>
      * If the filter map is empty, and the searchTerm is null, all entries in the store will be
      * returned.
+     *
+     * @param filters filters to apply to the results, may be empty to not filter
+     * @param searchTerm search to match against the results, may be null to not search
+     * @param pagination pagination options to apply to the results, may be null to not apply
+     *            pagination
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm);
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination);
 
     /**
      * Gets the list of distinct values of the given field in all assets which match the given

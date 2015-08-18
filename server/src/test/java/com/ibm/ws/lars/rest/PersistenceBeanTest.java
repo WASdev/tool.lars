@@ -28,6 +28,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -230,13 +231,13 @@ public class PersistenceBeanTest {
         Map<String, List<Condition>> filters = new HashMap<>();
 
         filters.put("name", Arrays.asList(eq("new name1")));
-        AssetList assets = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList assets = persistenceBean.retrieveAllAssets(filters, null, null);
         assertEquals("Should only have got 1 asset back", 1, assets.size());
         assertEquals("Got the wrong asset back", asset1.get_id(), assets.get(0).get_id());
 
         Map<String, List<Condition>> filters2 = new HashMap<>();
         filters2.put("layer1.layer1field", Arrays.asList(eq("layer1value")));
-        AssetList assets2 = persistenceBean.retrieveAllAssets(filters2, null);
+        AssetList assets2 = persistenceBean.retrieveAllAssets(filters2, null, null);
         assertEquals("Should have got 2 asset back", 2, assets2.size());
         for (Asset retrievedAsset : assets2) {
             if (!retrievedAsset.get_id().equals(asset1.get_id()) && !retrievedAsset.get_id().equals(asset2.get_id())) {
@@ -246,7 +247,7 @@ public class PersistenceBeanTest {
 
         Map<String, List<Condition>> filters3 = new HashMap<>();
         filters3.put("name", Arrays.asList(eq("new name1"), eq("new name2")));
-        AssetList assets3 = persistenceBean.retrieveAllAssets(filters3, null);
+        AssetList assets3 = persistenceBean.retrieveAllAssets(filters3, null, null);
         assertEquals("Should have got 2 asset back", 2, assets3.size());
         for (Asset retrievedAsset : assets3) {
             if (!retrievedAsset.get_id().equals(asset1.get_id()) && !retrievedAsset.get_id().equals(asset2.get_id())) {
@@ -257,7 +258,7 @@ public class PersistenceBeanTest {
         // With a search term as well
         Map<String, List<Condition>> filters4 = new HashMap<>();
         filters4.put("name", Arrays.asList(eq("new name1"), eq("new name2")));
-        AssetList assets4 = persistenceBean.retrieveAllAssets(filters4, "name1");
+        AssetList assets4 = persistenceBean.retrieveAllAssets(filters4, "name1", null);
         assertEquals("Wrong number of assets retrieved", 1, assets4.size());
         Asset retrieved = assets4.get(0);
         assertEquals("Got the wrong asset back", asset1.get_id(), retrieved.get_id());
@@ -275,13 +276,13 @@ public class PersistenceBeanTest {
 
         // Test with an empty set of filters
         Map<String, List<Condition>> emptyFilters = Collections.emptyMap();
-        AssetList assets = persistenceBean.retrieveAllAssets(emptyFilters, null);
+        AssetList assets = persistenceBean.retrieveAllAssets(emptyFilters, null, null);
         assertEquals("An empty filter should get all assets", 4, assets.size());
 
         Map<String, List<Condition>> filters = new HashMap<>();
         // test which retrieves no assets
         filters.put("blurgh", Arrays.asList(eq("new name1")));
-        AssetList assets2 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList assets2 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertEquals("Should not have got any assets back", 0, assets2.size());
 
         // test which uses multiple entries in the map
@@ -289,7 +290,7 @@ public class PersistenceBeanTest {
         filters.put("name", Arrays.asList(eq("new name1")));
         filters.put("layer1.layer1field", Arrays.asList(eq("layer1value")));
 
-        AssetList assets3 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList assets3 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertEquals("Wrong number of assets retrieved", 2, assets3.size());
         String id1 = asset1.get_id();
         String id2 = asset2.get_id();
@@ -318,7 +319,7 @@ public class PersistenceBeanTest {
 
         // Empty filters should get everything
         Map<String, List<Condition>> emptyFilters = Collections.emptyMap();
-        AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null);
+        AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null, null);
         assertEquals("Unexpected number of assets returned", 3, allAssets.size());
 
         Map<String, List<Condition>> filters;
@@ -326,14 +327,14 @@ public class PersistenceBeanTest {
         // query that should return nothing
         filters = new HashMap<>();
         filters.put("layer1.layer1field", Arrays.asList(neq("layer1value")));
-        AssetList emptyAssets = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList emptyAssets = persistenceBean.retrieveAllAssets(filters, null, null);
         assertEquals("Unexpected number of assets returned", 0, emptyAssets.size());
         filters.clear();
 
         // basic not filter
         filters = new HashMap<>();
         filters.put("name", Arrays.asList(neq("new name1")));
-        AssetList assets1 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList assets1 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertEquals("Unexpected number of assets returned", 1, assets1.size());
         assertEquals("The wrong asset id was retrieved", asset3.get_id(), assets1.get(0).get_id());
 
@@ -342,7 +343,7 @@ public class PersistenceBeanTest {
         filters = new HashMap<>();
         filters.put("name", Arrays.asList(neq("new name1")));
         filters.put("layer1.layer1field", Arrays.asList(eq("layer1value2")));
-        AssetList assets2 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList assets2 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertEquals("Unexpected number of assets returned", 1, assets2.size());
         assertEquals("The wrong asset id was retrieved", asset4.get_id(), assets2.get(0).get_id());
 
@@ -350,7 +351,7 @@ public class PersistenceBeanTest {
         filters = new HashMap<>();
         filters.put("name", Arrays.asList(neq("new name1")));
         filters.put("layer1.layer1field", Arrays.asList(eq("layer1value2")));
-        AssetList assets3 = persistenceBean.retrieveAllAssets(filters, "\"new name2\"");
+        AssetList assets3 = persistenceBean.retrieveAllAssets(filters, "\"new name2\"", null);
         assertEquals("Unexpected number of assets returned", 1, assets3.size());
         assertEquals("The wrong asset id was retrieved", asset4.get_id(), assets3.get(0).get_id());
 
@@ -370,7 +371,7 @@ public class PersistenceBeanTest {
 
         // Empty filters should get everything
         Map<String, List<Condition>> emptyFilters = Collections.emptyMap();
-        AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null);
+        AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null, null);
         assertEquals("Unexpected number of assets returned", 9, allAssets.size());
         assertAssetList(allAssets, asset1, asset2, asset3, asset4, asset5, asset6, asset7, asset8, asset9);
 
@@ -379,28 +380,28 @@ public class PersistenceBeanTest {
         // Simple OR filter
         filters = new HashMap<>();
         filters.put("weather", Arrays.asList(eq("hot"), eq("warm")));
-        AssetList result1 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList result1 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertAssetList(result1, asset1, asset2, asset3, asset7, asset8, asset9);
 
         // OR with NOT
         filters = new HashMap<>();
         filters.put("weather", Arrays.asList(eq("hot"), eq("warm")));
         filters.put("ground", Arrays.asList(neq("mountainous")));
-        AssetList result2 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList result2 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertAssetList(result2, asset1, asset2, asset7, asset8);
 
         // Two ORs
         filters = new HashMap<>();
         filters.put("weather", Arrays.asList(eq("hot"), eq("warm")));
         filters.put("ground", Arrays.asList(eq("hilly"), eq("mountainous")));
-        AssetList result3 = persistenceBean.retrieveAllAssets(filters, null);
+        AssetList result3 = persistenceBean.retrieveAllAssets(filters, null, null);
         assertAssetList(result3, asset2, asset3, asset8, asset9);
 
         // OR with NOT and searchTerm
         filters = new HashMap<>();
         filters.put("weather", Arrays.asList(eq("hot"), eq("warm")));
         filters.put("ground", Arrays.asList(neq("mountainous")));
-        AssetList result4 = persistenceBean.retrieveAllAssets(filters, "long");
+        AssetList result4 = persistenceBean.retrieveAllAssets(filters, "long", null);
         assertAssetList(result4, asset1, asset2, asset7);
     }
 
@@ -433,6 +434,62 @@ public class PersistenceBeanTest {
         filters = Collections.emptyMap();
         List<Object> searchNames = persistenceBean.getDistinctValues("name", filters, "hot");
         assertThat("Wrong list of possible names with searchTerm=hot", searchNames, containsInAnyOrder((Object) "hot and flat", "hot and hilly"));
+    }
+
+    @Test
+    public void testPagination() throws Exception {
+        Asset asset1 = persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"name\":\"asset1\"}"));
+        Asset asset2 = persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"name\":\"asset2\"}"));
+        Asset asset3 = persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"name\":\"asset3\"}"));
+        Asset asset4 = persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"name\":\"asset4\"}"));
+
+        Map<String, List<Condition>> emptyFilter = Collections.emptyMap();
+
+        // Test 2 per page
+        AssetList page1 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 2));
+        assertEquals("Wrong number of assets on page 1", 2, page1.size());
+        AssetList page2 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(2, 2));
+        assertEquals("Wrong number of assets on page 2", 2, page2.size());
+        AssetList page3 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(4, 2));
+        assertEquals("Wrong number of assets on page 3", 0, page3.size());
+        assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset1, asset2, asset3, asset4));
+
+        // Test 3 per page
+        page1 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 3));
+        assertEquals("Wrong number of assets on page 1", 3, page1.size());
+        page2 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(3, 3));
+        assertEquals("Wrong number of assets on page 2", 1, page2.size());
+        page3 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(6, 3));
+        assertEquals("Wrong number of assets on page 3", 0, page3.size());
+        assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset1, asset2, asset3, asset4));
+
+        // Test with filter
+        Map<String, List<Condition>> conditions = new HashMap<>();
+        conditions.put("name", Arrays.asList(eq("asset2"), eq("asset3"), eq("asset4")));
+        page1 = persistenceBean.retrieveAllAssets(conditions, null, new PaginationOptions(0, 2));
+        assertEquals("Wrong number of assets on page 1", 2, page1.size());
+        page2 = persistenceBean.retrieveAllAssets(conditions, null, new PaginationOptions(2, 2));
+        assertEquals("Wrong number of assets on page 2", 1, page2.size());
+        assertThat(collatePages(page1, page2), containsInAnyOrder(asset2, asset3, asset4));
+    }
+
+    /**
+     * Collate the contents of several AssetLists into one List.
+     * <p>
+     * The asset lists are processed in order, each asset in each list is appended to the result
+     * list.
+     *
+     * @param lists the AssetLists
+     * @return the collated list
+     */
+    private static List<Asset> collatePages(AssetList... lists) {
+        List<Asset> result = new ArrayList<Asset>();
+        for (AssetList list : lists) {
+            for (Asset asset : list) {
+                result.add(asset);
+            }
+        }
+        return result;
     }
 
     static void putAll(Map<String, Object> map, String[] keys, Object[] values) {
