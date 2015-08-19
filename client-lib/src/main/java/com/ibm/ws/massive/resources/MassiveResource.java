@@ -1144,12 +1144,20 @@ public abstract class MassiveResource extends AbstractMassive {
         this._appliesToHelper = a;
     }
 
-    public void setMainAttachmentSize(long size) {
+    private void setMainAttachmentSize(long size) {
         _asset.getWlpInformation().setMainAttachmentSize(size);
     }
 
     public long getMainAttachmentSize() {
         return _asset.getWlpInformation().getMainAttachmentSize();
+    }
+
+    private void setMainAttachmentSHA256(String mainAttachmentSHA256) {
+        _asset.getWlpInformation().setMainAttachmentSHA256(mainAttachmentSHA256);
+    }
+
+    public String getMainAttachmentSHA256() {
+        return _asset.getWlpInformation().getMainAttachmentSHA256();
     }
 
     public void setDownloadPolicy(DownloadPolicy policy) {
@@ -1232,6 +1240,11 @@ public abstract class MassiveResource extends AbstractMassive {
         _contentAttached = true;
         AttachmentResource at = addAttachment(file, AttachmentType.CONTENT, name);
         setMainAttachmentSize(at.getSize());
+        try {
+            setMainAttachmentSHA256((file == null) ? null : HashUtils.getFileSHA256String(file));
+        } catch (IOException ioe) {
+            throw new RepositoryException(ioe);
+        }
         return at;
     }
 
@@ -1253,6 +1266,12 @@ public abstract class MassiveResource extends AbstractMassive {
         _contentAttached = true;
         AttachmentResource at = addAttachment(file, AttachmentType.CONTENT, name, url, linkType);
         setMainAttachmentSize(at.getSize());
+        try {
+            setMainAttachmentSHA256((file == null) ? null : HashUtils.getFileSHA256String(file));
+        } catch (IOException ioe) {
+            throw new RepositoryException(ioe);
+        }
+
         return at;
     }
 
@@ -1665,6 +1684,7 @@ public abstract class MassiveResource extends AbstractMassive {
         setLicenseId(fromResource.getLicenseId());
         setLicenseType(fromResource.getLicenseType());
         setMainAttachmentSize(fromResource.getMainAttachmentSize());
+        setMainAttachmentSHA256(fromResource.getMainAttachmentSHA256());
         setFeaturedWeight(fromResource.getFeaturedWeight());
 
         if (includeAttachmentInfo) {
@@ -2197,6 +2217,7 @@ public abstract class MassiveResource extends AbstractMassive {
      */
     @SuppressWarnings("unchecked")
     public static <T extends MassiveResource> Collection<T> getAllResources(Type type, LoginInfo loginInfo) throws RepositoryBackendException {
+        @SuppressWarnings("rawtypes")
         Collection<T> resources = new ResourceList();
         for (LoginInfoEntry loginInfoResource : loginInfo) {
             MassiveClient client = new MassiveClient(loginInfoResource.getClientLoginInfo());
@@ -2237,18 +2258,18 @@ public abstract class MassiveResource extends AbstractMassive {
          * -- Product ID
          * -- Version (see comment below)
          * -- Visibility (see other comment below)
-         * 
+         *
          * The fields we can't filter on are:
          * -- Edition: no edition = all editions and you can't search for a missing field
          * -- InstallType: not install type = all install types and you can't search for a missing field
-         * 
+         *
          * Version is special as there are two ways we version content in the repository. It may have a specific version (minVersion=maxVersion) or a just a specific version (no
          * maxVersion). As we can't search for a missing field there is an additional field stored on the applies to filter info to allow us to search for the absence of a max
          * version. All massive queries use AND so we first search for the specific version then for the absence of the max version.
-         * 
+         *
          * Visibility is also special as it only applies to features. If you are getting anything other than features and put the visibility on the URL then it will come back with
          * zero hits (or only hits for features) so we can only do this efficiently in Massive if only searching for features, otherwise have to do it here.
-         * 
+         *
          * Once we have all the results back then feed it into the matches method to a) ensure that the content that just has a min version is in the right range b) also filter out
          * anything from fields that we can't filter on the server.
          */
