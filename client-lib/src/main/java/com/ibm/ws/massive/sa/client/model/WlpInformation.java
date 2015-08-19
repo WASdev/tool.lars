@@ -62,6 +62,7 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
     private Collection<String> supersededBy;
     private Collection<String> supersededByOptional;
     private JavaSEVersionRequirements javaSEVersionRequirements;
+    private String mainAttachmentSHA256;
 
     public String getFeaturedWeight() {
         return featuredWeight;
@@ -372,6 +373,14 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
         this.mainAttachmentSize = mainAttachmentSize;
     }
 
+    public String getMainAttachmentSHA256() {
+        return mainAttachmentSHA256;
+    }
+
+    public void setMainAttachmentSHA256(String mainAttachmentSHA256) {
+        this.mainAttachmentSHA256 = mainAttachmentSHA256;
+    }
+
     public void addSupersededBy(String supersededByFeature) {
         if (this.supersededBy == null) {
             this.supersededBy = new HashSet<String>();
@@ -673,6 +682,14 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
                 return false;
             }
         } else if (!javaSEVersionRequirements.equals(other.javaSEVersionRequirements)) {
+            return false;
+        }
+
+        if (mainAttachmentSHA256 == null) {
+            if (other.mainAttachmentSHA256 != null) {
+                return false;
+            }
+        } else if (!mainAttachmentSHA256.equals(other.mainAttachmentSHA256)) {
             return false;
         }
 

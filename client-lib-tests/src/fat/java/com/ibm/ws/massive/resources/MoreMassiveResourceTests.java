@@ -19,16 +19,20 @@ package com.ibm.ws.massive.resources;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 
 import org.junit.Test;
 
+import com.ibm.ws.massive.RepositoryException;
 import com.ibm.ws.massive.sa.client.model.Attachment;
 import com.ibm.ws.massive.sa.client.model.AttachmentSummary;
 
 public class MoreMassiveResourceTests {
+
+    private final static File resourceDir = new File("resources");
 
     @Test
     public void testLocaleProcessing() {
@@ -124,13 +128,34 @@ public class MoreMassiveResourceTests {
         }
     }
 
+    /**
+     * Test mainAttachementSHA256
+     *
+     * @throws IOException
+     * @throws RepositoryException
+     */
+    @Test
+    public void testMainAttachmentSHA256() throws IOException, RepositoryException {
+
+        File contentFile = new File(resourceDir, "crc1.txt");
+
+        String fileHash = HashUtils.getFileSHA256String(contentFile);
+
+        MassiveResource mr = new EsaResource(null);
+        mr.addContent(contentFile);
+
+        String contentHash = mr.getMainAttachmentSHA256();
+
+        assertEquals("Main attachment SHA256 hash should be the same as the hash of the file added", fileHash, contentHash);
+    }
+
     /*
      * attachement = get attachment by locale;
      * if (attachment != null)
      * return attachment;
      * targetLocale = new Locale(locale.getLanguage());
      * return get attachment by targetLocale;
-     *
+     * 
      * private Locale matchLocale (Locale matchThis) {
      * if (knownLocales.contains(matchThis)) {
      * return matchThis;
