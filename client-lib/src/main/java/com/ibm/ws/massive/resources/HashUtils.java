@@ -32,17 +32,6 @@ public class HashUtils {
     static final String MD5 = "MD5";
 
     /**
-     * Calculate MD5 hash of a String
-     *
-     * @param str - the String to hash
-     * @return the MD5 hash value
-     */
-    public static String getMD5String(String str) {
-        MessageDigest messageDigest = getMessageDigest(MD5);
-        return getHashString(str, messageDigest);
-    }
-
-    /**
      * Calculate MD5 hash of a File
      *
      * @param file - the File to hash
@@ -55,17 +44,6 @@ public class HashUtils {
     }
 
     /**
-     * Calculate SHA-256 hash of a String
-     *
-     * @param str - the String to hash
-     * @return the SHA-256 hash value
-     */
-    public static String getSHA256String(String str) {
-        MessageDigest messageDigest = getMessageDigest(SHA256);
-        return getHashString(str, messageDigest);
-    }
-
-    /**
      * Calculate SHA-256 hash of a File
      *
      * @param file - the File to hash
@@ -75,11 +53,6 @@ public class HashUtils {
     public static String getFileSHA256String(File file) throws IOException {
         MessageDigest messageDigest = getMessageDigest(SHA256);
         return getFileHashString(file, messageDigest);
-    }
-
-    private static String getHashString(String str, MessageDigest messagedigest) {
-        messagedigest.update(str.getBytes());
-        return byteArrayToHexString(messagedigest.digest());
     }
 
     private static String getFileHashString(File file, MessageDigest messagedigest) throws IOException {
