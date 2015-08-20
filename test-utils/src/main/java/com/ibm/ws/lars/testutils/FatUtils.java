@@ -29,6 +29,7 @@ public class FatUtils {
     public static final String LIBERTY_PORT_HTTPS;
     public static final String TEST_DB_NAME;
     public static final String LARS_APPLICATION_ROOT;
+    public static final String BASEURL_LIBERTY_PORT_HTTP;
 
     static {
         if (System.getProperty("os.name").startsWith("Windows")) {
@@ -51,6 +52,7 @@ public class FatUtils {
         LIBERTY_PORT_HTTPS = defaultConfig.getProperty("testLibertyPortHTTPS");
         TEST_DB_NAME = defaultConfig.getProperty("testDbName");
         LARS_APPLICATION_ROOT = defaultConfig.getProperty("larsApplicationRoot");
+        BASEURL_LIBERTY_PORT_HTTP = defaultConfig.getProperty("baseUrlLibertyPortHTTP");
 
     }
 
@@ -65,6 +67,8 @@ public class FatUtils {
     private static final String USER_ROLE_USERNAME = "user";
 
     private static final String USER_ROLE_PASSWORD = "passw0rd";
+
+    public static final String BASEURL_SERVER_URL = "http://localhost:" + BASEURL_LIBERTY_PORT_HTTP + LARS_APPLICATION_ROOT;
 
     public static final RepositoryFixture FAT_REPO = new RepositoryFixture(SERVER_URL,
             DEFAULT_HOST_AND_PORT,

@@ -29,6 +29,7 @@ archivesBaseName = 'larsServer'
 ext {
     serverName = archivesBaseName
     testServerName = 'testServer'
+    baseUrlServerName = 'baseUrlServer'
 }
 
 configurations {
@@ -90,6 +91,11 @@ test {
     jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
 }
 
+testFat {
+	dependsOn 'startBaseUrlServer'
+	finalizedBy 'stopBaseUrlServer'
+}
+
 task initAnt << {
     // Load the Liberty ant tasks
     ant.taskdef(resource: "net/wasdev/wlp/ant/antlib.xml",
@@ -128,6 +134,7 @@ task createTestUsrDir (type: Copy) {
     
     into 'build/usr'
     with usrDirSpec(testServerName)
+    with usrDirSpec(baseUrlServerName)
     
     rename 'server\\.xml', 'mainServer.xml'
     
@@ -136,6 +143,15 @@ task createTestUsrDir (type: Copy) {
         rename 'testServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPortHTTP,
                                       'HTTPS_PORT':testLibertyPortHTTPS,
+                                      'TEST_DB_NAME':testDbName,
+                                      'MONGO_PORT':testMongoPort,
+                                      'LIBERTY_TRACE_SPEC':libertyTraceSpec])
+    }
+    
+    from('config/baseUrlServer.xml') {
+        into "servers/${baseUrlServerName}"
+        rename 'baseUrlServer\\.xml', 'server.xml'
+        filter(ReplaceTokens, tokens:['HTTP_PORT':baseUrlLibertyPortHTTP,
                                       'TEST_DB_NAME':testDbName,
                                       'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':libertyTraceSpec])
@@ -169,6 +185,36 @@ task stopTestServer {
                    installDir: libertyRoot,
                    userDir: 'build/usr',
                    serverName: testServerName)
+    }
+}
+
+task startBaseUrlServer {
+    description 'Start the server with the base URL test config'
+    dependsOn initAnt
+    dependsOn createTestUsrDir
+    
+    onlyIf {!isServerRunning(baseUrlServerName)}
+    
+    doLast {
+        ant.server(operation: 'start',
+                   installDir: libertyRoot,
+                   userDir: 'build/usr',
+                   serverName: baseUrlServerName)
+    }
+}
+
+task stopBaseUrlServer {
+    description 'Shutdown the base URL test server'
+    dependsOn initAnt
+    mustRunAfter startBaseUrlServer
+    
+    onlyIf { !startBaseUrlServer.state.skipped && isServerRunning(baseUrlServerName) }
+
+    doLast {
+        ant.server(operation: 'stop',
+                   installDir: libertyRoot,
+                   userDir: 'build/usr',
+                   serverName: baseUrlServerName)
     }
 }
 

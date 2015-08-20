@@ -16,16 +16,29 @@
 
 package com.ibm.ws.lars.rest;
 
-import javax.annotation.Resource;
+import javax.enterprise.context.ApplicationScoped;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.ws.rs.core.UriInfo;
 
 /**
- *
+ * Holds configuration options for the application
  */
+@ApplicationScoped
 public class Configuration {
 
-    @Resource(lookup = "lars/URLBase")
-    private String urlBase;
+    private final String urlBase;
+
+    public Configuration() {
+        String urlBase = null;
+        try {
+            urlBase = (String) new InitialContext().lookup("lars/URLBase");
+        } catch (NamingException e) {
+            // lars/URLBase setting is optional
+        }
+
+        this.urlBase = urlBase;
+    }
 
     public String getURLBase(UriInfo uriInfo) {
         if (urlBase != null) {
