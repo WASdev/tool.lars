@@ -402,8 +402,8 @@ public class UploadTest {
         main.run(new String[] { "--upload", "--url=http://example.org", "superDirectory" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("cheese.esa", "ston.esa"), uploader.getFilesUploaded());
-        assertThat("Output incorrect", out.toString(), containsString("Uploading superDirectory/cheese.esa ... done"));
-        assertThat("Output incorrect", out.toString(), containsString("Uploading superDirectory/ston.esa ... done"));
+        assertThat("Output incorrect", out.toString(), containsString("Uploading superDirectory" + File.separator + "cheese.esa ... done"));
+        assertThat("Output incorrect", out.toString(), containsString("Uploading superDirectory" + File.separator + "ston.esa ... done"));
     }
 
     @Test
@@ -418,8 +418,8 @@ public class UploadTest {
 
         String output = outStream.toString();
 
-        assertThat("Output incorrect", output, containsString("1 of 3: Uploading superDirectory/cheese.esa"));
-        assertThat("Output incorrect", output, containsString("2 of 3: Uploading superDirectory/ston.esa"));
+        assertThat("Output incorrect", output, containsString("1 of 3: Uploading superDirectory" + File.separator + "cheese.esa"));
+        assertThat("Output incorrect", output, containsString("2 of 3: Uploading superDirectory" + File.separator + "ston.esa"));
         assertThat("Output incorrect", output, containsString("3 of 3: Uploading i-am-a-feature.esa"));
     }
 
@@ -441,7 +441,7 @@ public class UploadTest {
         main2.run(new String[] { "--upload", "--url=http://example.org", "superDirectory/cheese.esa" });
 
         assertThat("Output incorrect", outStream.toString(),
-                   containsString("1 of 1: Uploading superDirectory/cheese.esa ... done, replacing existing asset " +
+                   containsString("1 of 1: Uploading superDirectory" + File.separator + "cheese.esa ... done, replacing existing asset " +
                                   "a-fake-name type=FEATURE, appliesTo=fake-applies-to, " +
                                   "version=1.2.3.4, provideFeature=a-fake-feature"));
     }
@@ -464,9 +464,12 @@ public class UploadTest {
         main2.run(new String[] { "--upload", "--url=http://example.org", "superDirectory/cheese.esa" });
 
         assertEquals("Output incorrect",
-                     "1 of 1: Uploading superDirectory/cheese.esa ... done, replacing multiple duplicate assets:\n" +
-                             "a-fake-name type=FEATURE, appliesTo=fake-applies-to, version=1.2.3.4, provideFeature=a-fake-feature\n" +
-                             "a-fake-name type=FEATURE, appliesTo=fake-applies-to, version=1.2.3.4, provideFeature=a-fake-feature\n",
+                     "1 of 1: Uploading superDirectory" + File.separator + "cheese.esa ... done, replacing multiple duplicate assets:" +
+                             System.getProperty("line.separator") +
+                             "a-fake-name type=FEATURE, appliesTo=fake-applies-to, version=1.2.3.4, provideFeature=a-fake-feature" +
+                             System.getProperty("line.separator") +
+                             "a-fake-name type=FEATURE, appliesTo=fake-applies-to, version=1.2.3.4, provideFeature=a-fake-feature" +
+                             System.getProperty("line.separator"),
                      outStream.toString());
     }
 }
