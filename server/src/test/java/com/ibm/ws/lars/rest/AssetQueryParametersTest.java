@@ -28,6 +28,8 @@ import javax.ws.rs.core.UriInfo;
 
 import org.junit.Test;
 
+import com.ibm.ws.lars.rest.exceptions.InvalidParameterException;
+
 /**
  * Unit tests for the {@link AssetQueryParameters} class
  */

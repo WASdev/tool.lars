@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.exceptions;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import com.ibm.ws.lars.rest.exceptions.RepositoryClientException;
 
 /**
  * Thrown to indicate that the user has provided an invalid value for a parameter
