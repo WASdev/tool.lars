@@ -244,7 +244,7 @@ public class ApiTest {
     }
 
     @Test
-    public void testPutStateNonExistendId() throws Exception {
+    public void testPutStateNonExistentId() throws Exception {
         String message = repository.updateAssetState(NON_EXISTENT_ID, Asset.StateAction.UNPUBLISH.getValue(), 404);
         assertEquals("Unexpected error message from server",
                      "asset not found for id: ffffffffffffffffffffffff",
@@ -274,7 +274,7 @@ public class ApiTest {
      * @throws Exception
      */
     @Test
-    public void testGoldenPath() throws Exception {
+    public void testAssetBasicLifecycle() throws Exception {
         Asset testAsset = AssetUtils.getTestAsset();
         testAsset = repository.addAssetNoAttachments(testAsset);
         String id = testAsset.get_id();
