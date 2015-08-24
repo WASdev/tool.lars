@@ -62,10 +62,10 @@ public class Asset extends RepositoryObject {
     /**
      * Copy another attachment, creating a new copy of the internal set of properties.
      *
-     * @param toCopy the attachment to clone
+     * @param toClone the attachment to clone
      */
-    public Asset(Asset clone) {
-        super(clone);
+    public Asset(Asset toClone) {
+        super(toClone);
     }
 
     public String getCreatedOn() {
@@ -90,12 +90,12 @@ public class Asset extends RepositoryObject {
 
     public String getCreatedBy() {
         String createdByName = null;
-    
+
         Map<?, ?> createdBy = (Map<?, ?>) properties.get(CREATED_BY);
         if (createdBy != null) {
             createdByName = (String) createdBy.get(NAME);
         }
-    
+
         return createdByName;
     }
 

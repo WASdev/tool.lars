@@ -32,7 +32,6 @@ import javax.inject.Singleton;
 
 import org.bson.types.ObjectId;
 
-import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
@@ -275,7 +274,7 @@ public class PersistenceBean implements Persistor {
      * Retrieve a single asset by its id.
      *
      * @return The requested asset
-     * @throws AssetNotFoundException if the asset doesn't exist
+     * @throws NonExistentArtefactException if the asset doesn't exist
      */
     private Asset retrieveAsset(ObjectId assetId) throws NonExistentArtefactException {
         BasicDBObject query = new BasicDBObject(ID, assetId);
@@ -353,7 +352,6 @@ public class PersistenceBean implements Persistor {
     /**
      * @param attachmentContentStream
      * @return
-     * @throws AssetPersistenceException
      */
     @Override
     public AttachmentContentMetadata createAttachmentContent(String name, String contentType, InputStream attachmentContentStream) {
@@ -372,7 +370,6 @@ public class PersistenceBean implements Persistor {
     /**
      * @param attachment
      * @return
-     * @throws AssetNotFoundException
      */
     @Override
     public Attachment createAttachmentMetadata(Attachment attachment) {

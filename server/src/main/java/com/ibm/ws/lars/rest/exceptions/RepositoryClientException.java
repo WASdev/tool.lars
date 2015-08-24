@@ -23,28 +23,22 @@ import javax.ws.rs.core.Response;
  */
 public abstract class RepositoryClientException extends Exception {
 
-    /**
-     * @param string
-     */
+    /** @see java.lang.Exception#Exception(String) */
     public RepositoryClientException(String message) {
         super(message);
     }
 
-    /**
-     * @param string
-     * @param cause
-     */
+    /** @see java.lang.Exception#Exception(String,Throwable) */
     public RepositoryClientException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    /**
-     *
-     */
+    /** @see java.lang.Exception#Exception() */
     public RepositoryClientException() {
         super();
     }
 
+    /** @see java.lang.Exception#Exception(Throwable) */
     public RepositoryClientException(Throwable cause) {
         super(cause);
     }

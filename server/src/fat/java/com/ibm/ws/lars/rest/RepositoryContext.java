@@ -375,11 +375,11 @@ public class RepositoryContext extends ExternalResource {
     }
 
     /**
-     * Expected response should be -1 to indicate a standard response is expected
+     * expectedStatusCode should be -1 to indicate a standard response is expected
      *
      * @param id the id of the attachment to delete or, oddly, if it's null then we want to DELETE
      *            the /assets URL (which should fail).
-     * @param expectedReponse
+     * @param expectedStatusCode
      * @throws IOException
      */
     protected String deleteAsset(String id, int expectedStatusCode) throws IOException {

@@ -73,7 +73,7 @@ public class AssetServiceLayer {
     }
 
     /**
-     * @see Persistor#retrieveAllAssets(Map,String)
+     * @see Persistor#retrieveAllAssets(Map,String, PaginationOptions)
      */
     public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination) {
         return persistenceBean.retrieveAllAssets(filters, searchTerm, pagination);
@@ -95,7 +95,7 @@ public class AssetServiceLayer {
      * </pre>
      * <p>
      * Filters and searchTerm are treated the same as they are in
-     * {@link #retrieveAllAssets(Map, String)}.
+     * {@link #retrieveAllAssets(Map, String,PaginationOptions)}.
      *
      * @param fields a list of fields to summarize
      * @param filters a map of filters, which may be empty
@@ -120,7 +120,6 @@ public class AssetServiceLayer {
      * @param asset
      * @return
      * @throws InvalidJsonAssetException
-     * @throws AssetNotFoundException
      */
     public Asset createAsset(Asset asset) throws InvalidJsonAssetException {
         Asset newAsset = new Asset(asset);
@@ -138,7 +137,7 @@ public class AssetServiceLayer {
     /**
      * @param assetId
      * @return
-     * @throws AssetNotFoundException
+     * @throws NonExistentArtefactException
      */
     public Asset retrieveAsset(String assetId, UriInfo uriInfo) throws NonExistentArtefactException {
         Asset asset = persistenceBean.retrieveAsset(assetId);
@@ -155,10 +154,10 @@ public class AssetServiceLayer {
 
     /**
      * @param assetId
-     * @param assetJSON
+     * @param asset
      * @return
      * @throws InvalidJsonAssetException
-     * @throws AssetNotFoundException
+     * @throws NonExistentArtefactException
      */
     public Asset updateAsset(String assetId, Asset asset) throws InvalidJsonAssetException, NonExistentArtefactException {
         Asset existingAsset = persistenceBean.retrieveAsset(assetId);
@@ -173,7 +172,7 @@ public class AssetServiceLayer {
      *
      * @param action
      * @param id
-     * @return
+     *
      * @throws RepositoryResourceLifecycleException
      */
     public void updateAssetState(Asset.StateAction action, String id) throws RepositoryResourceLifecycleException, NonExistentArtefactException {
@@ -195,7 +194,7 @@ public class AssetServiceLayer {
 
     /**
      * @param assetId
-     * @throws AssetNotFoundException
+     * @throws NonExistentArtefactException
      */
     public void deleteAsset(String assetId) throws NonExistentArtefactException {
 
@@ -349,8 +348,6 @@ public class AssetServiceLayer {
      * There are no required fields for an asset, all that needs to be checked is that there is no
      * _id field. It is not allowed to specify an id in the JSON when an asset is being created.
      * Allowing a user to do so is exposing a mongo implementation.
-     *
-     * @param assetJSON
      */
     void verifyNewAsset(Asset newAsset) throws InvalidJsonAssetException {
         String id = newAsset.get_id();
