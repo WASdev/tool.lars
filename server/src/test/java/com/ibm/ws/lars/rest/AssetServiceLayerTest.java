@@ -44,6 +44,7 @@ import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.RepositoryObject;
+import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
 
 /**
  *
@@ -88,6 +89,14 @@ public class AssetServiceLayerTest {
 
         dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/"));
 
+    }
+
+    @Test
+    public void badStateTransitionTest() throws InvalidJsonAssetException, NonExistentArtefactException, RepositoryResourceLifecycleException {
+        thrown.expect(RepositoryResourceLifecycleException.class);
+        thrown.expectMessage("Invalid action approve performed on the asset with state draft");
+        Asset simpleAsset = service.createAsset(simpleObject);
+        service.updateAssetState(Asset.StateAction.APPROVE, simpleAsset.get_id());
     }
 
     @Test
