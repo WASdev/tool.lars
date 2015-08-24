@@ -26,6 +26,12 @@ import static java.lang.ProcessBuilder.Redirect.INHERIT
 
 archivesBaseName = 'larsServer'
 
+def requiredSpecJars = [
+    'com.ibm.ws.javaee.jaxrs.1.1_*.jar',
+    'com.ibm.ws.javaee.servlet.3.0_*.jar',
+    'com.ibm.ws.javaee.cdi.1.0_*.jar',
+    'com.ibm.ws.javaee.annotation.1.1_*.jar']
+
 ext {
     serverName = archivesBaseName
     testServerName = 'testServer'
@@ -44,7 +50,8 @@ dependencies {
     compile group:'com.fasterxml.jackson.core', name:'jackson-annotations', version:jackson_version
     
     sharedLibs group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
-    providedCompile fileTree(dir: "${libertyRoot}/dev/api", include: '**/*.jar')
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api/spec", include: requiredSpecJars)
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: 'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar')
 
     testCompile group:'junit', name:'junit', version:junit_version
     testCompile group:'org.hamcrest', name:'hamcrest-library', version:hamcrest_version
