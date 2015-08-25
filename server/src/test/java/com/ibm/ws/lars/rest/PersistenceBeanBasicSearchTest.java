@@ -36,9 +36,9 @@ import com.mongodb.DBObject;
 
 /**
  * This is a set of basic unit tests for the search logic in
- * {@link PersistenceBean#retrieveAllAssets(java.util.Map, String)} , where those tests don't
- * require replicating any database logic. Tests that do require database logic are written as FAT
- * tests in {@link PersistenceBeanTest}.
+ * {@link PersistenceBean#retrieveAllAssets(java.util.Map, String, PaginationOptions)} , where those
+ * tests don't require replicating any database logic. Tests that do require database logic are
+ * written as FAT tests in {@link PersistenceBeanTest}.
  */
 public class PersistenceBeanBasicSearchTest {
 

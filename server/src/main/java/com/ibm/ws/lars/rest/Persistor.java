@@ -67,7 +67,7 @@ public interface Persistor {
      * matched by the filters and search term will be returned.
      * <p>
      * The <code>filters</code> and <code>searchTerm</code> arguments have the same meaning as in
-     * {@link #retrieveAllAssets(Map, String)}.
+     * {@link #retrieveAllAssets(Map, String, PaginationOptions)}.
      *
      * @param field the field to look at
      * @param filters the filters
@@ -80,7 +80,7 @@ public interface Persistor {
     /**
      * Retrieve a single asset by its id.
      *
-     * @throws AssetNotFoundException
+     * @throws NonExistentArtefactException
      */
     public Asset retrieveAsset(String assetId) throws NonExistentArtefactException;
 
@@ -89,7 +89,7 @@ public interface Persistor {
      *
      * The id need not be set on the asset that is passed in.
      *
-     * @throws AssetNotFoundException
+     * @throws InvalidJsonAssetException
      */
     public Asset createAsset(Asset newAsset) throws InvalidJsonAssetException;
 
@@ -97,7 +97,8 @@ public interface Persistor {
      * Update an existing asset.
      *
      * @return the updated asset, or if the id didn't previously exist, returns null
-     * @throws AssetNotFoundException
+     * @throws InvalidJsonAssetException
+     * @throws NonExistentArtefactException
      */
     public Asset updateAsset(String assetId, Asset asset) throws InvalidJsonAssetException, NonExistentArtefactException;
 
@@ -120,15 +121,13 @@ public interface Persistor {
 
     /**
      * Creates the (JSON) metadata for an attachment in the persistence store.
-     *
-     * @throws AssetNotFoundException
      */
     public Attachment createAttachmentMetadata(Attachment attachment);
 
     /**
      * Retrieves metadata for the specified attachment.
      *
-     * @throws AssetNotFoundException
+     * @throws NonExistentArtefactException
      */
     public Attachment retrieveAttachmentMetadata(String attachmentId) throws NonExistentArtefactException;
 

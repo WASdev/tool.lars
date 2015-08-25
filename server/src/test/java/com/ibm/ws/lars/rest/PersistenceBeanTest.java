@@ -119,8 +119,9 @@ public class PersistenceBeanTest {
     /**
      * Simple test that does create. retrieve, update and delete on one object.
      *
+     * @throws IOException
      * @throws InvalidJsonAssetException
-     * @throws AssetNotFoundException
+     * @throws NonExistentArtefactException
      */
     @Test
     public void testCRUD() throws IOException, InvalidJsonAssetException, NonExistentArtefactException {
@@ -304,11 +305,9 @@ public class PersistenceBeanTest {
     }
 
     /**
-     * Test for {@link PersistenceBean#retrieveAllAssets(Map, Map)}
+     * Test for {@link PersistenceBean#retrieveAllAssets(Map, String, PaginationOptions)}
      *
      * @throws InvalidJsonAssetException
-     *
-     * @throws Exception
      */
     @SuppressWarnings("unused")
     @Test
