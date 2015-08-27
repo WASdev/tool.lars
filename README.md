@@ -14,8 +14,8 @@ The LARS documentation is organized into a number of pages:
  * [Installing LARS] (doc/INSTALL.md)
  * [Using `larsClient`] (doc/LARSCLIENT.md)
 
-For documentation on how to configure a WebSphere Liberty server to use a LARS repository, please see the WebSphere Liberty Knowledge Center
- * [Configuring installUtility to install from a LARS server] (https://www-01.ibm.com/support/knowledgecenter/SSD28V_8.5.5/com.ibm.websphere.wlp.core.doc/ae/twlp_config_installutility.html)
+The wiki has docs on [using LARS with WebSphere Liberty](https://github.com/WASdev/tool.lars/wiki/Using%20LARS%20with%20WebSphere%20Liberty)
+ 
 
 
 
