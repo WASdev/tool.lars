@@ -41,7 +41,6 @@ import org.junit.Test;
 
 import com.ibm.ws.lars.upload.cli.ClientException.HelpDisplay;
 import com.ibm.ws.massive.LoginInfoEntry;
-import com.ibm.ws.massive.RepositoryBackendIOException;
 import com.ibm.ws.massive.esa.MassiveEsa;
 import com.ibm.ws.massive.resources.AddThenDeleteStrategy;
 import com.ibm.ws.massive.resources.EsaResource;
@@ -176,15 +175,12 @@ public class UploadTest {
 
         @Mock
         public List<MassiveResource> getDeletedResources() {
-            try {
-                ArrayList<MassiveResource> result = new ArrayList<>();
-                for (int i = 0; i < numDeletedResources; i++) {
-                    result.add(new EsaResource(new LoginInfoEntry()));
-                }
-                return result;
-            } catch (RepositoryBackendIOException e) {
-                throw new AssertionError();
+            ArrayList<MassiveResource> result = new ArrayList<>();
+            MockEsaResource mockESA = new MockEsaResource();
+            for (int i = 0; i < numDeletedResources; i++) {
+                result.add(mockESA.getMockInstance());
             }
+            return result;
         }
     }
 
