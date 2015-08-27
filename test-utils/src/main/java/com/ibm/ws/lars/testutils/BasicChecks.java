@@ -74,7 +74,7 @@ public class BasicChecks {
         ArrayList<String> methodsToIgnore = new ArrayList<String>();
         methodsToIgnore.add("setState");
         methodsToIgnore.add("setType");
-        methodsToIgnore.add("setLoginInfo");
+        methodsToIgnore.add("setLoginInfoEntry");
         for (Method m : left.getClass().getMethods()) {
             if (m.getName().startsWith("set")) {
                 Class<?>[] parameterss = m.getParameterTypes();
