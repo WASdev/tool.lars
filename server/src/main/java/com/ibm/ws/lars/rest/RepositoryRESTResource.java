@@ -380,7 +380,7 @@ public class RepositoryRESTResource {
             logger.fine("getFakeImConfig called");
         }
 
-        return "LayoutPolicy=Composite\n"
+        return "LayoutPolicy=P1\n"
                + "LayoutPolicyVersion=0.0.0.1\n"
                + "# repository.type=liberty.lars\n";
     }
