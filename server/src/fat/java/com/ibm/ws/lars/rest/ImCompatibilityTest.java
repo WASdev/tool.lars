@@ -42,7 +42,7 @@ public class ImCompatibilityTest {
 
         Properties props = new Properties();
         props.load(new ByteArrayInputStream(response));
-        assertThat(props, hasEntry((Object) "LayoutPolicy", (Object) "Composite"));
+        assertThat(props, hasEntry((Object) "LayoutPolicy", (Object) "P1"));
         assertThat(props, hasEntry((Object) "LayoutPolicyVersion", (Object) "0.0.0.1"));
 
         String responseString = new String(response, "UTF-8");
