@@ -55,8 +55,10 @@ public interface Persistor {
      * @param searchTerm search to match against the results, may be null to not search
      * @param pagination pagination options to apply to the results, may be null to not apply
      *            pagination
+     * @param sortOptions options describing how to sort the results, may be null if the results are
+     *            not to be sorted
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination);
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions);
 
     /**
      * Gets the list of distinct values of the given field in all assets which match the given
@@ -67,7 +69,7 @@ public interface Persistor {
      * matched by the filters and search term will be returned.
      * <p>
      * The <code>filters</code> and <code>searchTerm</code> arguments have the same meaning as in
-     * {@link #retrieveAllAssets(Map, String, PaginationOptions)}.
+     * {@link #retrieveAllAssets(Map, String, PaginationOptions, SortOptions)}.
      *
      * @param field the field to look at
      * @param filters the filters

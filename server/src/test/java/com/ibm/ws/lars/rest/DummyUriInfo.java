@@ -165,7 +165,7 @@ public class DummyUriInfo implements UriInfo {
         String query = fullUri.getRawQuery();
 
         for (String parameter : query.split("&")) {
-            String[] parts = parameter.split("=");
+            String[] parts = parameter.split("=", -1); //-1 => Do not trim trailing empty strings
 
             if (parts.length != 2) {
                 throw new RuntimeException("Bad parameter: " + parameter);

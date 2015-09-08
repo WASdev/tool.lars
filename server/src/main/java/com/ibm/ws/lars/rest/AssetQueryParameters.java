@@ -32,6 +32,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
 import com.ibm.ws.lars.rest.Condition.Operation;
+import com.ibm.ws.lars.rest.SortOptions.SortOrder;
 import com.ibm.ws.lars.rest.exceptions.InvalidParameterException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 
@@ -47,9 +48,15 @@ public class AssetQueryParameters {
     private static final String FIELDS_PARAM = "fields";
     private static final String APIKEY_PARAM = "apiKey";
     private static final String SEARCH_PARAM = "q";
+    private static final String SORT_ORDER_PARAM = "sortOrder";
+    private static final String SORT_BY_PARAM = "sortBy";
+
+    // Permitted values for the SORT_BY parameter
+    private static final String SORT_BY_ASC = "ASC";
+    private static final String SORT_BY_DESC = "DESC";
 
     private static final Set<String> NON_QUERY_PARAMS = new HashSet<>(
-            Arrays.asList(LIMIT_PARAM, OFFSET_PARAM, FIELDS_PARAM, APIKEY_PARAM, SEARCH_PARAM));
+            Arrays.asList(LIMIT_PARAM, OFFSET_PARAM, FIELDS_PARAM, APIKEY_PARAM, SEARCH_PARAM, SORT_ORDER_PARAM, SORT_BY_PARAM));
 
     private AssetQueryParameters(Map<String, String> params) {
         this.params = params;
@@ -202,6 +209,40 @@ public class AssetQueryParameters {
      */
     public String getFields() {
         return params.get(FIELDS_PARAM);
+    }
+
+    /**
+     * @return SortOptions describing how the results should be sorted or null if the results should
+     *         not be sorted
+     */
+    public SortOptions getSortOptions() throws InvalidParameterException {
+        String sortByField = params.get(SORT_BY_PARAM);
+        String sortOrderParam = params.get(SORT_ORDER_PARAM);
+        SortOrder sortOrder;
+
+        if (sortByField != null && sortByField.isEmpty()) {
+            throw new InvalidParameterException(SORT_BY_PARAM + " must not be blank");
+        }
+
+        if (sortOrderParam != null && sortByField == null) {
+            throw new InvalidParameterException(SORT_ORDER_PARAM + " may only be provided if " + SORT_BY_PARAM + " is also provided");
+        }
+
+        if (sortOrderParam == null) {
+            sortOrder = SortOrder.ASCENDING;
+        } else if (sortOrderParam.equalsIgnoreCase(SORT_BY_ASC)) {
+            sortOrder = SortOrder.ASCENDING;
+        } else if (sortOrderParam.equalsIgnoreCase(SORT_BY_DESC)) {
+            sortOrder = SortOrder.DESCENDING;
+        } else {
+            throw new InvalidParameterException(SORT_ORDER_PARAM + " must be either \"" + SORT_BY_ASC + "\" or \"" + SORT_BY_DESC + "\"");
+        }
+
+        if (sortByField != null) {
+            return new SortOptions(sortByField, sortOrder);
+        } else {
+            return null;
+        }
     }
 
 }

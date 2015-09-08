@@ -28,6 +28,7 @@ import mockit.Mocked;
 import org.junit.Test;
 
 import com.ibm.ws.lars.rest.Condition.Operation;
+import com.ibm.ws.lars.rest.SortOptions.SortOrder;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -36,9 +37,9 @@ import com.mongodb.DBObject;
 
 /**
  * This is a set of basic unit tests for the search logic in
- * {@link PersistenceBean#retrieveAllAssets(java.util.Map, String, PaginationOptions)} , where those
- * tests don't require replicating any database logic. Tests that do require database logic are
- * written as FAT tests in {@link PersistenceBeanTest}.
+ * {@link PersistenceBean#retrieveAllAssets(java.util.Map, String, PaginationOptions, SortOptions)}
+ * , where those tests don't require replicating any database logic. Tests that do require database
+ * logic are written as FAT tests in {@link PersistenceBeanTest}.
  */
 public class PersistenceBeanBasicSearchTest {
 
@@ -70,7 +71,7 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        createTestBean().retrieveAllAssets(new HashMap<String, List<Condition>>(), null, null);
+        createTestBean().retrieveAllAssets(new HashMap<String, List<Condition>>(), null, null, null);
     }
 
     /**
@@ -91,7 +92,7 @@ public class PersistenceBeanBasicSearchTest {
 
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
         filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
-        createTestBean().retrieveAllAssets(filters, null, null);
+        createTestBean().retrieveAllAssets(filters, null, null, null);
     }
 
     /**
@@ -114,7 +115,27 @@ public class PersistenceBeanBasicSearchTest {
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
         filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
         PaginationOptions pagination = new PaginationOptions(20, 10);
-        createTestBean().retrieveAllAssets(filters, null, pagination);
+        createTestBean().retrieveAllAssets(filters, null, pagination, null);
+    }
+
+    /**
+     * Test that providing a SortOptions object results in the correct sort() method being called on
+     * the result cursor
+     */
+    public void testRetrieveAllAssetsSorted(final @Mocked DBCollection collection, final @Injectable DBCursor cursor) {
+        final DBObject sortObject = new BasicDBObject("key2", -1);
+        new Expectations() {
+            {
+                collection.find((DBObject) withNotNull(), (DBObject) withNull());
+                result = cursor;
+                cursor.sort(sortObject);
+            }
+        };
+
+        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
+        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        SortOptions sortOptions = new SortOptions("key2", SortOrder.DESCENDING);
+        createTestBean().retrieveAllAssets(filters, null, null, sortOptions);
     }
 
     /**
@@ -136,7 +157,7 @@ public class PersistenceBeanBasicSearchTest {
         };
 
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        createTestBean().retrieveAllAssets(filters, "foo", null);
+        createTestBean().retrieveAllAssets(filters, "foo", null, null);
     }
 
     /**
@@ -157,6 +178,27 @@ public class PersistenceBeanBasicSearchTest {
 
         HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
         filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
-        createTestBean().retrieveAllAssets(filters, "foo", null);
+        createTestBean().retrieveAllAssets(filters, "foo", null, null);
+    }
+
+    /**
+     * Test that a searchTerm and SortingOptions result in a database query with no projection
+     * object and a correct sort.
+     */
+    @Test
+    public void testRetrieveAllAssetsWithSearchAndSort(final @Mocked DBCollection collection, final @Mocked DBCursor cursor) {
+        final BasicDBObject sortObject = new BasicDBObject("key2", -1);
+
+        new Expectations() {
+            {
+                collection.find((DBObject) withNotNull(), (DBObject) withNull());
+                cursor.sort(sortObject);
+            }
+        };
+
+        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
+        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        SortOptions sortOptions = new SortOptions("key2", SortOrder.DESCENDING);
+        createTestBean().retrieveAllAssets(filters, "foo", null, sortOptions);
     }
 }

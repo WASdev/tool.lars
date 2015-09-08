@@ -59,7 +59,7 @@ public class MemoryPersistor implements Persistor {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.ibm.ws.lars.rest.Persistor#retrieveAllAssets()
      */
     @Override
@@ -69,7 +69,7 @@ public class MemoryPersistor implements Persistor {
     }
 
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination) {
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 
