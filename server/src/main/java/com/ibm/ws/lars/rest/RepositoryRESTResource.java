@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -126,6 +127,20 @@ public class RepositoryRESTResource {
         AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm(), params.getPagination(), params.getSortOptions());
         String json = assets.toJson();
         return Response.ok(json).build();
+    }
+
+    @HEAD
+    @Path("/assets")
+    public Response countAssets(@Context UriInfo info) throws InvalidParameterException {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("countAssets called with query parameters: " + info.getRequestUri().getRawQuery());
+        }
+
+        AssetQueryParameters params = AssetQueryParameters.create(info);
+
+        int count = assetService.countAllAssets(params.getFilterMap(), params.getSearchTerm());
+
+        return Response.noContent().header("count", count).build();
     }
 
     @POST

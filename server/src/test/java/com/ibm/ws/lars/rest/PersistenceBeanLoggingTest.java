@@ -29,6 +29,7 @@ import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
 
 public class PersistenceBeanLoggingTest {
 
@@ -144,4 +145,22 @@ public class PersistenceBeanLoggingTest {
         createTestBean().findAttachmentsForAsset(NON_EXISTENT_ID);
     }
 
+    @Test
+    public void testQueryCount(@Mocked final DBCursor cursor) {
+        final BasicDBObject filterObject = new BasicDBObject("key1", "value1");
+        new Expectations() {
+            {
+                logger.isLoggable(Level.FINE);
+                result = true;
+
+                logger.fine("queryCount: Querying database with query object " + filterObject);
+
+                cursor.count();
+                result = 3;
+
+                logger.fine("queryCount: found 3 assets.");
+            }
+        };
+        Deencapsulation.invoke(createTestBean(), "queryCount", filterObject);
+    }
 }

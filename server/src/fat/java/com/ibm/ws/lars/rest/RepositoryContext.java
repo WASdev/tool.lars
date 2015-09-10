@@ -36,6 +36,7 @@ import javax.net.ssl.SSLContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
@@ -47,6 +48,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -273,6 +275,15 @@ public class RepositoryContext extends ExternalResource {
         return doRequest(delete, expectedStatusCode);
     }
 
+    public HttpResponse doHead(String url, int expectedStatusCode)
+            throws ClientProtocolException, IOException {
+        HttpHead head = new HttpHead(fullURL + url);
+        HttpResponse response = httpClient.execute(targetHost, head, context);
+
+        assertStatusCode(expectedStatusCode, response);
+        return response;
+    }
+
     public String doRequest(HttpEntityEnclosingRequestBase request,
                             String content,
                             int expectedStatusCode)
@@ -442,6 +453,11 @@ public class RepositoryContext extends ExternalResource {
 
     void getBadAssetSummary(String parameters, int expectedRC) throws IOException {
         doGet("/assets/summary?" + parameters, expectedRC);
+    }
+
+    int getAssetCount(String parameters) throws IOException {
+        HttpResponse response = doHead("/assets?" + parameters, HttpStatus.SC_NO_CONTENT);
+        return Integer.parseInt(response.getFirstHeader("count").getValue());
     }
 
     protected Attachment doPostAttachmentNoContent(String assetId, String name, Attachment attachment) throws ClientProtocolException, IOException, InvalidJsonAssetException {

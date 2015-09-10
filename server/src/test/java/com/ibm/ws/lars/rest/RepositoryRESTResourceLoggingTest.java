@@ -98,6 +98,26 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
+    public void testCountAssets(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, InvalidParameterException {
+
+        new Expectations() {
+            {
+                info.getQueryParameters(false);
+
+                logger.isLoggable(Level.FINE);
+                result = true;
+
+                info.getRequestUri();
+                result = new URI("http://localhost:9085/ma/v1/assets?foo=bar");
+
+                logger.fine("countAssets called with query parameters: foo=bar");
+            }
+        };
+
+        getRestResource().countAssets(info);
+    }
+
+    @Test
     public void testPostAssets(@Mocked final Logger logger) {
 
         final String json = "{\"name\":\"myname\"}";

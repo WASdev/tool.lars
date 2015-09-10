@@ -78,6 +78,12 @@ public class MemoryPersistor implements Persistor {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+        throw new UnsupportedOperationException("Filtering is not supported in this test facade");
+    }
+
     /*
      * (non-Javadoc)
      *
