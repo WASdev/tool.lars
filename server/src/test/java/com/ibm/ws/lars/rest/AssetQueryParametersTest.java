@@ -28,12 +28,23 @@ import javax.ws.rs.core.UriInfo;
 
 import org.junit.Test;
 
+import com.ibm.ws.lars.rest.SortOptions.SortOrder;
 import com.ibm.ws.lars.rest.exceptions.InvalidParameterException;
 
 /**
  * Unit tests for the {@link AssetQueryParameters} class
  */
 public class AssetQueryParametersTest {
+
+    private static final DummyUriInfo ALL_PARAMS_URI;
+
+    static {
+        try {
+            ALL_PARAMS_URI = new DummyUriInfo("http://example.org/test", "/foobar?q=wibble&offset=100&name=foo&key=!value&limit=12&fields=a,b,c&sortBy=x&sortOrder=ASC");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Test
     public void testGetFilterMap() throws Exception {
@@ -48,8 +59,7 @@ public class AssetQueryParametersTest {
         expected.put("e", asList(new Condition(EQUALS, "testA"))); // NOT_EQUALS conditions are ignored if they are not first in the list
         assertEquals(expected, params.getFilterMap());
 
-        uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?q=wibble&offset=100&name=foo&key=!value&limit=12&fields=a,b,c");
-        params = AssetQueryParameters.create(uriInfo);
+        params = AssetQueryParameters.create(ALL_PARAMS_URI);
         expected.clear();
         expected.put("name", asList(new Condition(EQUALS, "foo")));
         expected.put("key", asList(new Condition(NOT_EQUALS, "value")));
@@ -62,8 +72,7 @@ public class AssetQueryParametersTest {
         AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
         assertEquals(new PaginationOptions(5, 2), params.getPagination());
 
-        uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?q=wibble&offset=100&name=foo&key=!value&limit=12&fields=a,b,c");
-        params = AssetQueryParameters.create(uriInfo);
+        params = AssetQueryParameters.create(ALL_PARAMS_URI);
         assertEquals(new PaginationOptions(100, 12), params.getPagination());
     }
 
@@ -92,13 +101,50 @@ public class AssetQueryParametersTest {
     }
 
     @Test
+    public void testGetSortOptions() throws Exception {
+        // Valid options for sortOrder are "ASC" and "DESC" case insensitive
+        UriInfo uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?sortBy=foo&sortOrder=aSc");
+        AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
+        assertEquals(new SortOptions("foo", SortOrder.ASCENDING), params.getSortOptions());
+
+        uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?sortBy=foo&sortOrder=DeSc");
+        params = AssetQueryParameters.create(uriInfo);
+        assertEquals(new SortOptions("foo", SortOrder.DESCENDING), params.getSortOptions());
+
+        // Default sortOrder is ascending
+        uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?sortBy=foo");
+        params = AssetQueryParameters.create(uriInfo);
+        assertEquals(new SortOptions("foo", SortOrder.ASCENDING), params.getSortOptions());
+
+        params = AssetQueryParameters.create(ALL_PARAMS_URI);
+        assertEquals(new SortOptions("x", SortOrder.ASCENDING), params.getSortOptions());
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testGetSortOptionsBadSortBy() throws Exception {
+        UriInfo uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?sortBy=&sortOrder=DESC");
+        AssetQueryParameters.create(uriInfo).getSortOptions();
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testGetSortOptionsBadSortOrder() throws Exception {
+        UriInfo uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?sortBy=foo&sortOrder=wibble");
+        AssetQueryParameters.create(uriInfo).getSortOptions();
+    }
+
+    @Test(expected = InvalidParameterException.class)
+    public void testGetSortOptionsNoSortBy() throws Exception {
+        UriInfo uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?sortOrder=DESC");
+        AssetQueryParameters.create(uriInfo).getSortOptions();
+    }
+
+    @Test
     public void testGetSearchTerm() throws Exception {
         UriInfo uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?q=TEST");
         AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
         assertEquals("TEST", params.getSearchTerm());
 
-        uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?q=wibble&offset=100&name=foo&key=!value&limit=12&fields=a,b,c");
-        params = AssetQueryParameters.create(uriInfo);
+        params = AssetQueryParameters.create(ALL_PARAMS_URI);
         assertEquals("wibble", params.getSearchTerm());
     }
 
@@ -108,8 +154,7 @@ public class AssetQueryParametersTest {
         AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
         assertEquals("field1,field2,field3", params.getFields());
 
-        uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?q=wibble&offset=100&name=foo&key=!value&limit=12&fields=a,b,c");
-        params = AssetQueryParameters.create(uriInfo);
+        params = AssetQueryParameters.create(ALL_PARAMS_URI);
         assertEquals("a,b,c", params.getFields());
     }
 

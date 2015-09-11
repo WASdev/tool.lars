@@ -32,6 +32,7 @@ import javax.inject.Singleton;
 
 import org.bson.types.ObjectId;
 
+import com.ibm.ws.lars.rest.SortOptions.SortOrder;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
@@ -143,28 +144,39 @@ public class PersistenceBean implements Persistor {
 
     /** {@inheritDoc} */
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination) {
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
 
-        if (filters.size() == 0 && searchTerm == null && pagination == null) {
+        if (filters.size() == 0 && searchTerm == null && pagination == null && sortOptions == null) {
             return retrieveAllAssets();
         }
 
         BasicDBObject filterObject = createFilterObject(filters, searchTerm);
 
         DBObject sortObject = null;
+        DBObject projectionObject = null;
+        boolean textScoreAdded = false;
 
-        if (searchTerm != null) {
-            sortObject = new BasicDBObject("score", new BasicDBObject("$meta", "textScore"));
+        if (sortOptions != null) {
+            // If sort options are provided, use them to sort the results
+            int sortOrder = getMongoSortOrder(sortOptions.getSortOrder());
+            sortObject = new BasicDBObject(sortOptions.getField(), sortOrder);
+        } else {
+            // If no sort options are provided but there is a search term, sort on relevance to the search term
+            if (searchTerm != null) {
+                sortObject = new BasicDBObject("score", new BasicDBObject("$meta", "textScore"));
+                projectionObject = sortObject;
+                textScoreAdded = true;
+            }
         }
 
-        List<DBObject> results = query(filterObject, sortObject, pagination);
+        List<DBObject> results = query(filterObject, sortObject, projectionObject, pagination);
         List<Map<String, Object>> assets = new ArrayList<Map<String, Object>>();
         for (DBObject result : results) {
             // BSON spec says that all keys have to be strings
             // so this should be safe.
             @SuppressWarnings("unchecked")
             Map<String, Object> resultMap = result.toMap();
-            if (sortObject != null) {
+            if (textScoreAdded) {
                 resultMap.remove("score");
             }
             assets.add(resultMap);
@@ -234,16 +246,17 @@ public class PersistenceBean implements Persistor {
         return new BasicDBObject(field, value);
     }
 
-    private List<DBObject> query(DBObject filterObject, DBObject sortObject, PaginationOptions pagination) {
+    private List<DBObject> query(DBObject filterObject, DBObject sortObject, DBObject projectionObject, PaginationOptions pagination) {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("query: Querying database with query object " + filterObject);
             logger.fine("query: sort object " + sortObject);
+            logger.fine("query: projection object " + projectionObject);
             logger.fine("query: pagination object " + pagination);
         }
 
         List<DBObject> results = new ArrayList<DBObject>();
-        try (DBCursor cursor = getAssetCollection().find(filterObject, sortObject)) {
+        try (DBCursor cursor = getAssetCollection().find(filterObject, projectionObject)) {
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine("query: found " + cursor.count() + " assets.");
             }
@@ -263,6 +276,17 @@ public class PersistenceBean implements Persistor {
             }
         }
         return results;
+    }
+
+    private int getMongoSortOrder(SortOrder sortOrder) {
+        switch (sortOrder) {
+            case ASCENDING:
+                return 1;
+            case DESCENDING:
+                return -1;
+            default:
+                throw new RepositoryException("Invalid sort order: " + sortOrder);
+        }
     }
 
     @Override

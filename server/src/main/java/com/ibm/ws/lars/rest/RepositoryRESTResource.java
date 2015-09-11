@@ -123,7 +123,7 @@ public class RepositoryRESTResource {
 
         AssetQueryParameters params = AssetQueryParameters.create(info);
 
-        AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm(), params.getPagination());
+        AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm(), params.getPagination(), params.getSortOptions());
         String json = assets.toJson();
         return Response.ok(json).build();
     }

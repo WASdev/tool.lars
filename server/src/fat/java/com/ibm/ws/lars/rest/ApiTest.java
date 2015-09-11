@@ -791,6 +791,36 @@ public class ApiTest {
         assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset2, asset3, asset4));
     }
 
+    @Test
+    public void testGetAllAssetsSorted() throws Exception {
+        Asset bigFoo = addLittleAsset("name", "Big Foo", "category", "foo", "size", "20");
+        Asset smallFoo = addLittleAsset("name", "Small Foo", "category", "foo", "size", "10");
+        Asset giantBar = addLittleAsset("name", "Giant Bar", "category", "bar", "size", "40");
+
+        // Test sort ASC and DESC
+        AssetList result = repository.getAllAssets("sortBy=name&sortOrder=ASC");
+        assertThat(result, contains(bigFoo, giantBar, smallFoo));
+        result = repository.getAllAssets("sortBy=name&sortOrder=DESC");
+        assertThat(result, contains(smallFoo, giantBar, bigFoo));
+
+        // Test with filter
+        result = repository.getAllAssets("sortBy=size&category=foo");
+        assertThat(result, contains(smallFoo, bigFoo));
+
+        // Test with search, sorting ascending
+        result = repository.getAllAssets("sortBy=size&sortOrder=ASC&q=Foo");
+        assertThat(result, contains(smallFoo, bigFoo));
+
+        // Test with search, sorting descending to verify that sort order is respected when doing text search
+        result = repository.getAllAssets("sortBy=size&sortOrder=DESC&q=Foo");
+        assertThat(result, contains(bigFoo, smallFoo));
+
+        // Test with pagination
+        AssetList page1 = repository.getAllAssets("sortBy=size&sortOrder=ASC&offset=0&limit=2");
+        AssetList page2 = repository.getAllAssets("sortBy=size&sortOrder=ASC&offset=2&limit=2");
+        assertThat(collatePages(page1, page2), contains(smallFoo, bigFoo, giantBar));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetAssetSummary() throws Exception {

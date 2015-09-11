@@ -73,10 +73,10 @@ public class AssetServiceLayer {
     }
 
     /**
-     * @see Persistor#retrieveAllAssets(Map,String, PaginationOptions)
+     * @see Persistor#retrieveAllAssets(Map,String, PaginationOptions, SortOptions)
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination) {
-        return persistenceBean.retrieveAllAssets(filters, searchTerm, pagination);
+    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+        return persistenceBean.retrieveAllAssets(filters, searchTerm, pagination, sortOptions);
     }
 
     /**
@@ -95,7 +95,7 @@ public class AssetServiceLayer {
      * </pre>
      * <p>
      * Filters and searchTerm are treated the same as they are in
-     * {@link #retrieveAllAssets(Map, String,PaginationOptions)}.
+     * {@link #retrieveAllAssets(Map, String, PaginationOptions, SortOptions)}.
      *
      * @param fields a list of fields to summarize
      * @param filters a map of filters, which may be empty
