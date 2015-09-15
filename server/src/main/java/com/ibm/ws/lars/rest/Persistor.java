@@ -61,6 +61,18 @@ public interface Persistor {
     public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions);
 
     /**
+     * Retrieve the number of assets which match the given set of filters.
+     * <p>
+     * <code>filters</code> and <code>searchTerm</code> have the same meaning as in
+     * {@link #retrieveAllAssets(Map, String, PaginationOptions, SortOptions)}
+     *
+     * @param filters filters to apply to the results, may be empty to not filter
+     * @param searchTerm search to match against the results, may be null to not search
+     * @return the number of assets which match the given filter and search term.
+     */
+    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm);
+
+    /**
      * Gets the list of distinct values of the given field in all assets which match the given
      * filters and searchTerm.
      * <p>

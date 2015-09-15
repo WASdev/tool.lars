@@ -185,6 +185,13 @@ public class PersistenceBean implements Persistor {
     }
 
     /** {@inheritDoc} */
+    @Override
+    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+        BasicDBObject filterObject = createFilterObject(filters, searchTerm);
+        return queryCount(filterObject);
+    }
+
+    /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override
     public List<Object> getDistinctValues(String field, Map<String, List<Condition>> filters, String searchTerm) {
@@ -276,6 +283,21 @@ public class PersistenceBean implements Persistor {
             }
         }
         return results;
+    }
+
+    private int queryCount(DBObject filterObject) {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("queryCount: Querying database with query object " + filterObject);
+        }
+
+        DBCursor cursor = getAssetCollection().find(filterObject);
+        int count = cursor.count();
+
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("queryCount: found " + count + " assets.");
+        }
+
+        return count;
     }
 
     private int getMongoSortOrder(SortOrder sortOrder) {

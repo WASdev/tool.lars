@@ -80,6 +80,13 @@ public class AssetServiceLayer {
     }
 
     /**
+     * @see Persistor#countAllAssets(Map, String)
+     */
+    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+        return persistenceBean.countAllAssets(filters, searchTerm);
+    }
+
+    /**
      * Summarizes a list of fields from the assets matched by the given filters and search term.
      * <p>
      * For each field, the result is the list of unique values that are stored in that field, across

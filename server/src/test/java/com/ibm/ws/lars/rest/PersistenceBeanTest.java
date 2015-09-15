@@ -502,6 +502,41 @@ public class PersistenceBeanTest {
         assertThat(collatePages(page1, page2), contains(asset1, asset2, asset3, asset4));
     }
 
+    @Test
+    public void testCountAllAssets() throws Exception {
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"hot\", \"ground\":\"flat\", \"name\":\"hot and flat\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"hot\", \"ground\":\"hilly\", \"name\":\"hot and hilly\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"hot\", \"ground\":\"mountainous\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"cold\", \"ground\":\"flat\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"cold\", \"ground\":\"hilly\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"cold\", \"ground\":\"mountainous\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"warm\", \"ground\":\"flat\", \"name\":\"warm and flat\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"warm\", \"ground\":\"hilly\"}"));
+        persistenceBean.createAsset(Asset.deserializeAssetFromJson("{\"weather\":\"warm\", \"ground\":\"mountainous\"}"));
+
+        Map<String, List<Condition>> emptyFilter = Collections.emptyMap();
+
+        // Test counting all assets
+        int result = persistenceBean.countAllAssets(emptyFilter, null);
+        assertEquals(9, result);
+
+        // Test counting assets with a filter
+        Map<String, List<Condition>> filter = new HashMap<>();
+        filter.put("weather", Arrays.asList(eq("hot")));
+        result = persistenceBean.countAllAssets(filter, null);
+        assertEquals(3, result);
+
+        // Test counting assets with a search
+        result = persistenceBean.countAllAssets(emptyFilter, "flat");
+        assertEquals(2, result);
+
+        // Test counting assets with a filter and a search
+        filter.clear();
+        filter.put("weather", Arrays.asList(eq("hot")));
+        result = persistenceBean.countAllAssets(filter, "flat");
+        assertEquals(1, result);
+    }
+
     /**
      * Collate the contents of several AssetLists into one List.
      * <p>

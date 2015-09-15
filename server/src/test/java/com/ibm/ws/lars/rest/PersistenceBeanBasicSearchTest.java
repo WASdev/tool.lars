@@ -15,6 +15,8 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -201,4 +203,50 @@ public class PersistenceBeanBasicSearchTest {
         SortOptions sortOptions = new SortOptions("key2", SortOrder.DESCENDING);
         createTestBean().retrieveAllAssets(filters, "foo", null, sortOptions);
     }
+
+    @Test
+    public void testCountAllAssets(final @Mocked DBCollection collection, final @Injectable DBCursor cursor) {
+        BasicDBList list = new BasicDBList();
+        list.add(new BasicDBObject("key1", "value1"));
+        final BasicDBObject searchObject = new BasicDBObject("$and", list);
+
+        new Expectations() {
+            {
+                collection.find(searchObject);
+                result = cursor;
+
+                cursor.count();
+                result = 3;
+            }
+        };
+
+        HashMap<String, List<Condition>> filters = new HashMap<>();
+        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        int count = createTestBean().countAllAssets(filters, null);
+        assertEquals(3, count);
+    }
+
+    @Test
+    public void testCountAllAssetsWithSearch(final @Mocked DBCollection collection, final @Injectable DBCursor cursor) {
+        BasicDBList list = new BasicDBList();
+        list.add(new BasicDBObject("key1", "value1"));
+        list.add(new BasicDBObject("$text", new BasicDBObject("$search", "foo")));
+        final BasicDBObject searchObject = new BasicDBObject("$and", list);
+
+        new Expectations() {
+            {
+                collection.find(searchObject);
+                result = cursor;
+
+                cursor.count();
+                result = 3;
+            }
+        };
+
+        HashMap<String, List<Condition>> filters = new HashMap<>();
+        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        int count = createTestBean().countAllAssets(filters, "foo");
+        assertEquals(3, count);
+    }
+
 }

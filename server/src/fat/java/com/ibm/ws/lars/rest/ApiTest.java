@@ -821,6 +821,27 @@ public class ApiTest {
         assertThat(collatePages(page1, page2), contains(smallFoo, bigFoo, giantBar));
     }
 
+    @SuppressWarnings("unused")
+    @Test
+    public void countAllAssets() throws Exception {
+        Asset bigFoo = addLittleAsset("name", "Big Foo", "category", "foo", "size", "20");
+        Asset smallFoo = addLittleAsset("name", "Small Foo", "category", "foo", "size", "10");
+        Asset giantBar = addLittleAsset("name", "Giant Bar", "category", "bar", "size", "40");
+        Asset smallBar = addLittleAsset("name", "Small Bar", "category", "bar", "size", "10");
+
+        int result = repository.getAssetCount("");
+        assertEquals(4, result);
+
+        result = repository.getAssetCount("category=foo");
+        assertEquals(2, result);
+
+        result = repository.getAssetCount("q=foo");
+        assertEquals(2, result);
+
+        result = repository.getAssetCount("q=foo&size=10");
+        assertEquals(1, result);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetAssetSummary() throws Exception {
