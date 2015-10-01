@@ -379,6 +379,21 @@ public class RepositoryRESTResource {
         return Response.ok().build();
     }
 
+    @GET
+    @Path("/assets/{assetId}/assetreviews")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAssetReviews(@PathParam("assetId") String assetId, @Context UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("getAssetReviews called with id of '" + assetId + "'");
+        }
+
+        sanitiseId(assetId, ArtefactType.ASSET);
+        assetService.retrieveAsset(assetId, uriInfo);
+
+        // Story 165844, for now just return an empty JSON array
+        return Response.ok("[]").build();
+    }
+
     /**
      * Returns a dummy installation manager repository.config file
      * <p>

@@ -283,4 +283,17 @@ public class RepositoryRESTResourceLoggingTest {
 
     }
 
+    @Test
+    public void testGetAssetReviews(@Mocked final Logger logger) throws InvalidIdException, NonExistentArtefactException {
+
+        new Expectations() {
+            {
+                logger.isLoggable(Level.FINE);
+                result = true;
+                logger.fine("getAssetReviews called with id of 'ffffffffffffffffffffffff'");
+            }
+        };
+
+        getRestResource().getAssetReviews(NON_EXISTENT_ID, dummyUriInfo);
+    }
 }

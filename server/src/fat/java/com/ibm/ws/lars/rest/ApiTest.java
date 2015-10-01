@@ -954,4 +954,30 @@ public class ApiTest {
         assetCollection.remove(new BasicDBObject());
         mongoClient.close();
     }
+
+    /**
+     * Test asset reviews
+     */
+    @Test
+    public void testAssetReviews() throws InvalidJsonAssetException, IOException {
+        Asset a = addLittleAsset("weather", "hot", "ground", "flat", "description", "lovely");
+        List<?> ars = repository.getAssetReviews(a.get_id());
+        // Story 165844, for now assetreviews just returns an empty JSON array
+        assertEquals(
+                     "Should be an empty List",
+                     0, ars.size());
+    }
+
+    /**
+     * Test asset reviews, non-existent asset
+     */
+    @Test
+    public void testAssetReviewsNonExistent() throws InvalidJsonAssetException, IOException {
+        try {
+            repository.getAssetReviews("bla-NonExistent");
+        } catch (AssertionError e) {
+            assertTrue(e.getMessage().contains("Unexpected status code: 400"));
+        }
+
+    }
 }
