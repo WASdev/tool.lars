@@ -432,6 +432,11 @@ public class RepositoryContext extends ExternalResource {
         return Asset.deserializeAssetFromJson(assetJson);
     }
 
+    List<Map<String, Object>> getAssetReviews(String id) throws IOException, InvalidJsonAssetException {
+        String resultJson = doGet("/assets/" + id + "/assetreviews", 200);
+        return jsonReader.readValue(resultJson, new TypeReference<List<Map<String, Object>>>() {});
+    }
+
     /**
      * Get asset with the expectation that it will fail
      */
