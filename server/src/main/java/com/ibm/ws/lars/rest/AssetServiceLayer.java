@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.ws.rs.core.UriInfo;
 
 import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
@@ -50,7 +50,7 @@ import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
  * -- time stamp updates<br>
  * -- partial updates (allowed or not??)
  */
-@Singleton
+@ApplicationScoped
 public class AssetServiceLayer {
 
     @Inject
@@ -389,7 +389,7 @@ public class AssetServiceLayer {
             throw new AssertionError("This should never happen.", e);
         }
 
-        String url = configuration.getURLBase(uriInfo) + "ma/v1/assets/" + attachment.getAssetId() + "/attachments/" + attachment.get_id() + "/" + encodedName;
+        String url = configuration.getRestBaseUri(uriInfo) + "assets/" + attachment.getAssetId() + "/attachments/" + attachment.get_id() + "/" + encodedName;
         attachment.setUrl(url);
     }
 

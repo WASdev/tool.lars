@@ -32,7 +32,8 @@ public class Configuration {
     public Configuration() {
         String urlBase = null;
         try {
-            urlBase = (String) new InitialContext().lookup("lars/URLBase");
+            String configString = (String) new InitialContext().lookup("lars/URLBase");
+            urlBase = computeRestBaseUri(configString);
         } catch (NamingException e) {
             // lars/URLBase setting is optional
         }
@@ -40,11 +41,44 @@ public class Configuration {
         this.urlBase = urlBase;
     }
 
-    public String getURLBase(UriInfo uriInfo) {
+    /**
+     * Returns the base URL of the REST application
+     * <p>
+     * This method should be used to compute any absolute URLs to resources within the REST
+     * application.
+     * <p>
+     * This will be the same as uriInfo.getBaseUri, unless the user has configured a different URL.
+     *
+     * @param uriInfo the UriInfo to use to compute the base URL if the user has not overridden it
+     * @return the base URL of the REST application
+     */
+    public String getRestBaseUri(UriInfo uriInfo) {
         if (urlBase != null) {
             return urlBase;
         } else {
             return uriInfo.getBaseUri().toString();
         }
+    }
+
+    /**
+     * Given a URLBase that the user has provided, compute the corresponding BaseUri for the JAX-RS
+     * application.
+     * <p>
+     * This is needed to maintain the same configuration behaviour after we moved the root of the
+     * rest application.
+     * <p>
+     * If the user configures http://example.org/wibble, this method should return
+     * http://example.org/wibble/ma/v1/
+     *
+     * @param configString the user-provided URLBase string
+     * @return the base URL of the REST application
+     */
+    private static String computeRestBaseUri(String configString) {
+        StringBuilder b = new StringBuilder(configString);
+        if (!configString.endsWith("/")) {
+            b.append("/");
+        }
+        b.append("ma/v1/");
+        return b.toString();
     }
 }

@@ -52,6 +52,7 @@ dependencies {
     sharedLibs group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/spec", include: requiredSpecJars)
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: 'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar')
+    providedCompile group:'com.google.code.findbugs', name:'annotations', version: '3.0.+'
 
     testCompile group:'junit', name:'junit', version:junit_version
     testCompile group:'org.hamcrest', name:'hamcrest-library', version:hamcrest_version
