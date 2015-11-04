@@ -81,7 +81,7 @@ import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
  * security constraint in the web.xml which ensures that the user at least has the User or
  * Administrator role.
  */
-@Path("/ma/v1")
+@Path("/")
 @PermitAll
 public class RepositoryRESTResource {
 

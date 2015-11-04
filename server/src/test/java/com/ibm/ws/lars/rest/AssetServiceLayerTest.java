@@ -87,7 +87,7 @@ public class AssetServiceLayerTest {
         AssetServiceLayerInjection.setPersistenceBean(service, memoryPersistor);
         AssetServiceLayerInjection.setPrincipal(service, testPrincipal);
 
-        dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/"));
+        dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/ma/v1/"));
 
     }
 

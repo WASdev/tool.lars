@@ -60,7 +60,7 @@ public class RepositoryRESTResourceLoggingTest {
 
     @Before
     public void setUp() throws URISyntaxException {
-        dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/"));
+        dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/ma/v1/"));
     }
 
     @Test

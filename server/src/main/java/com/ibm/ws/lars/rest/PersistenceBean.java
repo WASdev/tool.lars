@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.inject.Singleton;
+import javax.enterprise.context.ApplicationScoped;
 
 import org.bson.types.ObjectId;
 
@@ -65,7 +65,7 @@ import com.mongodb.gridfs.GridFSInputFile;
  * interface a bit nicer.
  *
  */
-@Singleton
+@ApplicationScoped
 public class PersistenceBean implements Persistor {
 
     private static final Logger logger = Logger.getLogger(PersistenceBean.class.getCanonicalName());
