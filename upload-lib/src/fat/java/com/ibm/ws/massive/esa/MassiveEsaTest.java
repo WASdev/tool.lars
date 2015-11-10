@@ -16,10 +16,11 @@
 
 package com.ibm.ws.massive.esa;
 
-import static com.ibm.ws.lars.testutils.ReflectionTricks.getAssetReflective;
+import static com.ibm.ws.lars.testutils.ReflectionTricks.getAsset;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.reflectiveCallNoPrimitives;
-import static com.ibm.ws.massive.resources.UploadStrategy.DEFAULT_STRATEGY;
+import static com.ibm.ws.repository.strategies.writeable.UploadStrategy.DEFAULT_STRATEGY;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,12 +28,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -55,39 +56,47 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.ibm.ws.lars.testutils.FatUtils;
-import com.ibm.ws.lars.testutils.RepositoryFixture;
-import com.ibm.ws.massive.RepositoryBackendException;
-import com.ibm.ws.massive.RepositoryException;
+import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.ibm.ws.massive.esa.internal.EsaManifest;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.EsaResource.InstallPolicy;
-import com.ibm.ws.massive.resources.Link;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentResource;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentType;
-import com.ibm.ws.massive.resources.MassiveResource.DisplayPolicy;
-import com.ibm.ws.massive.resources.MassiveResource.LicenseType;
-import com.ibm.ws.massive.resources.MassiveResource.MatchResult;
-import com.ibm.ws.massive.resources.MassiveResource.State;
-import com.ibm.ws.massive.resources.MassiveResource.Visibility;
-import com.ibm.ws.massive.resources.ProductDefinition;
-import com.ibm.ws.massive.resources.RepositoryResourceException;
-import com.ibm.ws.massive.resources.SimpleProductDefinition;
-import com.ibm.ws.massive.resources.UpdateInPlaceStrategy;
-import com.ibm.ws.massive.resources.UploadStrategy;
-import com.ibm.ws.massive.sa.client.DataModelSerializer;
-import com.ibm.ws.massive.sa.client.model.AppliesToFilterInfo;
-import com.ibm.ws.massive.sa.client.model.Asset;
-import com.ibm.ws.massive.sa.client.model.JavaSEVersionRequirements;
-import com.ibm.ws.massive.sa.client.model.WlpInformation;
 import com.ibm.ws.massive.upload.RepositoryArchiveEntryNotFoundException;
-import com.ibm.ws.massive.upload.RepositoryUploader;
+import com.ibm.ws.repository.common.enums.AttachmentType;
+import com.ibm.ws.repository.common.enums.DisplayPolicy;
+import com.ibm.ws.repository.common.enums.InstallPolicy;
+import com.ibm.ws.repository.common.enums.LicenseType;
+import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.common.enums.Visibility;
+import com.ibm.ws.repository.connections.ProductDefinition;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.connections.RepositoryConnectionList;
+import com.ibm.ws.repository.connections.SimpleProductDefinition;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.exceptions.RepositoryException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceException;
+import com.ibm.ws.repository.resources.AttachmentResource;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
+import com.ibm.ws.repository.resources.internal.Link;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.AttachmentResourceImpl;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.MatchResult;
+import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
+import com.ibm.ws.repository.strategies.writeable.UpdateInPlaceStrategy;
+import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
+import com.ibm.ws.repository.transport.client.DataModelSerializer;
+import com.ibm.ws.repository.transport.model.AppliesToFilterInfo;
+import com.ibm.ws.repository.transport.model.Asset;
+import com.ibm.ws.repository.transport.model.JavaSEVersionRequirements;
+import com.ibm.ws.repository.transport.model.WlpInformation;
 
 /**
  * Test class for {@link MassiveEsa} it requires having a testLogin.properties folder at the root of
  * the com.ibm.ws.massive.testsuite project
  */
 public class MassiveEsaTest {
+
+    private static final String EE_7_FEATURE_COMPATIBILITY = "Java SE 7, Java SE 8";
+    private static final String EE_6_FEATURE_COMPATIBILITY = "Java SE 6, Java SE 7, Java SE 8";
 
     private static final String ENABLES = "Features that this feature enables";
     private static final String ENABLED_BY = "Features that enable this feature";
@@ -96,25 +105,23 @@ public class MassiveEsaTest {
 
     private final static File esaDir = new File("resources");
 
-    private MassiveEsa _massiveEsa;
+    private MassiveEsa massiveEsa;
 
     @Rule
     public RepositoryFixture repo = FatUtils.FAT_REPO;
+    private RepositoryConnection repoConnection;
 
     @Before
     public void createMassiveEsa() throws RepositoryException {
-        _massiveEsa = new MassiveEsa(repo.getLoginInfoEntry());
+        repoConnection = repo.getAdminConnection();
+        massiveEsa = new MassiveEsa(repoConnection);
     }
 
-    public MassiveEsaTest() throws FileNotFoundException, IOException {
-        super();
+    private EsaResourceWritable uploadAsset(File blueprintESA) throws RepositoryException {
+        return massiveEsa.uploadFile(blueprintESA, new UpdateInPlaceStrategy(State.AWAITING_APPROVAL, State.AWAITING_APPROVAL, false), null);
     }
 
-    private EsaResource uploadAsset(File blueprintESA) throws RepositoryException {
-        return _massiveEsa.uploadFile(blueprintESA, new UpdateInPlaceStrategy(State.AWAITING_APPROVAL, State.AWAITING_APPROVAL, false), null);
-    }
-
-    private void checkAttachment(MassiveResource res) throws RepositoryBackendException, RepositoryResourceException {
+    private void checkAttachment(RepositoryResource res) throws RepositoryBackendException, RepositoryResourceException {
         assertNotNull("No main attachment", res.getMainAttachment());
         assertEquals("Wrong attachment size", res.getMainAttachment().getSize(), res.getMainAttachmentSize());
     }
@@ -152,20 +159,18 @@ public class MassiveEsaTest {
                 .getLicenseInformation(Locale.ENGLISH);
         assertEquals("LI should be null!", null, li);
 
-        AttachmentResource la = blueprintFeature
-                .getLicenseAgreement(Locale.ENGLISH);
+        AttachmentResourceImpl la = (AttachmentResourceImpl) blueprintFeature.getLicenseAgreement(Locale.ENGLISH);
         File downloadLA = new File(esaDir, "download_LA");
         la.downloadToFile(downloadLA);
         assertEquals("LA wrong size", (long) esaSizes.get("wlp/lafiles/LA_en"), downloadLA.length());
 
-        AttachmentResource license = blueprintFeature
-                .getLicense(Locale.ENGLISH);
+        AttachmentResourceImpl licenseImpl = (AttachmentResourceImpl) blueprintFeature.getLicense(Locale.ENGLISH);
         File downloadLicenseHTML = new File(esaDir, "download_en.html");
-        license.downloadToFile(downloadLicenseHTML);
+        licenseImpl.downloadToFile(downloadLicenseHTML);
         assertEquals("licenseHtml wrong size", (long) metadataSizes.get("lafiles/en.html"),
                      downloadLicenseHTML.length());
 
-        license = blueprintFeature.getLicense(Locale.TAIWAN);
+        AttachmentResource license = blueprintFeature.getLicense(Locale.TAIWAN);
         assertEquals("Missing license", Locale.TAIWAN, license.getLocale());
         assertEquals("Wrong attachment size", (long) metadataSizes.get("lafiles/zh_TW.html"), license.getSize());
 
@@ -181,39 +186,40 @@ public class MassiveEsaTest {
     @Test
     public void testJava6Feature() throws Throwable {
         File java6_esa = new File(esaDir, "requires_java6.esa");
-        EsaResource java6Feature = uploadAsset(java6_esa);
+        EsaResourceImpl java6Feature = (EsaResourceImpl) uploadAsset(java6_esa);
 
         JavaSEVersionRequirements reqs = java6Feature.getJavaSEVersionRequirements();
         assertEquals("Incorrect minimum version", "1.6.0", reqs.getMinVersion());
         assertNull("Max version should be null, actually was: " + reqs.getMaxVersion(), reqs.getMaxVersion());
-        assertEquals("Display version was incorrect", "Java SE 6, Java SE 7", reqs.getVersionDisplayString());
+        assertEquals("Display version was incorrect", EE_6_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
     }
 
     @Test
     public void testJava7Feature() throws Throwable {
         File java7_esa = new File(esaDir, "requires_java7.esa");
-        EsaResource java7Feature = uploadAsset(java7_esa);
+        EsaResourceImpl java7Feature = (EsaResourceImpl) uploadAsset(java7_esa);
 
         JavaSEVersionRequirements reqs = java7Feature.getJavaSEVersionRequirements();
         assertEquals("Incorrect minimum version", "1.7.0", reqs.getMinVersion());
         assertNull("Max version should be null, actually was: " + reqs.getMaxVersion(), reqs.getMaxVersion());
-        assertEquals("Display version was incorrect", "Java SE 7", reqs.getVersionDisplayString());
+        assertEquals("Display version was incorrect", EE_7_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
     }
 
     /**
      * Test an esa where a bundle has an '=' requirement for the java version, rather than an
      * implied exact version from a combination of intersecting ranges of the various bundles.
+     * Should still just end up with a minimum required, as maximums don't need to be specified
      *
      * @throws Throwable
      */
     @Test
     public void testExactJavaRequirementFeature() throws Throwable {
         File broken_esa = new File(esaDir, "requires_java7_exact.esa");
-        EsaResource java7Feature = uploadAsset(broken_esa);
+        EsaResourceImpl java7Feature = (EsaResourceImpl) uploadAsset(broken_esa);
         JavaSEVersionRequirements reqs = java7Feature.getJavaSEVersionRequirements();
         assertEquals("Incorrect minimum version", "1.7.0", reqs.getMinVersion());
         assertEquals("Incorrect maximum version", "1.7.0", reqs.getMaxVersion());
-        assertEquals("Display version was incorrect", "Java SE 7", reqs.getVersionDisplayString());
+        assertEquals("Display version was incorrect", EE_7_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
 
     }
 
@@ -234,12 +240,12 @@ public class MassiveEsaTest {
     @Test
     public void testMultipleVersionFeature() throws Throwable {
         File java7_esa = new File(esaDir, "requires_multiple_versions.esa");
-        EsaResource java7Feature = uploadAsset(java7_esa);
+        EsaResourceImpl java7Feature = (EsaResourceImpl) uploadAsset(java7_esa);
 
         JavaSEVersionRequirements reqs = java7Feature.getJavaSEVersionRequirements();
         assertEquals("Incorrect minimum version", "1.7.0", reqs.getMinVersion());
         assertNull("Incorrect maxmimum version, should have been null", reqs.getMaxVersion());
-        assertEquals("Incorrect minimum version", "Java SE 7", reqs.getVersionDisplayString());
+        assertEquals("Incorrect minimum version", EE_7_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
     }
 
     /**
@@ -267,7 +273,7 @@ public class MassiveEsaTest {
     @Test
     public void testMainAttachment() throws Throwable {
         File simpleESA = new File(esaDir, "simple.esa");
-        MassiveResource mr = uploadAsset(simpleESA);
+        EsaResourceWritable mr = uploadAsset(simpleESA);
         checkAttachment(mr);
     }
 
@@ -280,7 +286,7 @@ public class MassiveEsaTest {
     public void testOverriddenDownloadUrl() throws RepositoryException {
         String expectedUrl = "http://whatever";
         File file = new File(esaDir, "simple.esa");
-        EsaResource esa = _massiveEsa.uploadFile(file, DEFAULT_STRATEGY, expectedUrl);
+        EsaResource esa = massiveEsa.uploadFile(file, DEFAULT_STRATEGY, expectedUrl);
         assertEquals("Supplied download URL not used", expectedUrl, esa.getMainAttachment().getURL());
     }
 
@@ -324,10 +330,10 @@ public class MassiveEsaTest {
     public void testMatches() throws Throwable {
         // IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.1;
         File esa = new File(esaDir, "com.ibm.websphere.appserver.servlet-3.0.esa");
-        EsaResource resource = uploadAsset(esa);
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(esa);
 
         // We don't support install type yet so add it via reflection
-        Field f = MassiveResource.class.getDeclaredField("_asset");
+        Field f = RepositoryResourceImpl.class.getDeclaredField("_asset");
         f.setAccessible(true);
         Asset ass = (Asset) f.get(resource);
         WlpInformation wlpInfo = ass.getWlpInformation();
@@ -354,7 +360,7 @@ public class MassiveEsaTest {
 
         // IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=2014.3.0.0; productInstallType=Archive
         File esa2 = new File(esaDir, "com.ibm.websphere.appserver.blueprint-1.0.esa");
-        EsaResource resource2 = uploadAsset(esa2);
+        EsaResourceImpl resource2 = (EsaResourceImpl) uploadAsset(esa2);
 
         def = new SimpleProductDefinition("com.ibm.websphere.appserver", "2014.3.0.0", "Archive", null, "BASE");
         assertEquals("Matcher should have returned MATCHED", MatchResult.MATCHED, resource2.matches(def));
@@ -362,8 +368,7 @@ public class MassiveEsaTest {
     }
 
     @Test
-    @Ignore
-    // needs decision on whether MOP needs to match Massive behaviour for filters with blank constraints
+    // This relies in blank fields...
     public void testFindAllMatches() throws Throwable {
         // IBM-AppliesTo: com.ibm.websphere.appserver; productVersion=8.5.5.1;
         File esa8552 = new File(esaDir, "com.ibm.websphere.appserver.servlet-3.0.esa");
@@ -382,29 +387,32 @@ public class MassiveEsaTest {
         EsaResource versionRangeResource = uploadAsset(versionRangeEsa);
 
         ProductDefinition def = new SimpleProductDefinition("com.ibm.websphere.appserver", "8.5.5.1", "Archive", null, "BASE");
-        Collection<EsaResource> results = EsaResource.getMatchingEsas(repo.getLoginInfo(), def);
+        Collection<EsaResource> results = new RepositoryConnectionList(repoConnection).getMatchingEsas(def);
         assertEquals("There should be 3 hits", 3, results.size());
         for (EsaResource e : results) {
-            assertTrue("Unexpected resource found in hits " + e.getName(),
-                       e.equivalentWithoutAttachments(resource8552) || e.equivalentWithoutAttachments(noVersionResource)
-                               || e.equivalentWithoutAttachments(versionRangeResource));
+            EsaResourceImpl res = (EsaResourceImpl) e;
+            assertTrue("Unexpected resource found in hits " + res.getName(),
+                       res.equivalentWithoutAttachments(resource8552) || res.equivalentWithoutAttachments(noVersionResource)
+                               || res.equivalentWithoutAttachments(versionRangeResource));
         }
 
-        def = new SimpleProductDefinition("com.ibm.websphere.appserver", "", "Archive", null, "BASE");
-        results = EsaResource.getMatchingEsas(repo.getLoginInfo(), def);
+        def = new SimpleProductDefinition("com.ibm.websphere.appserver", null, "Archive", null, "BASE");
+        results = new RepositoryConnectionList(repoConnection).getMatchingEsas(def);
         assertEquals("There should be 4 hits", 4, results.size());
         for (EsaResource e : results) {
+            EsaResourceImpl res = (EsaResourceImpl) e;
             assertTrue("Unexpected resource found in hits " + e.getName(),
-                       e.equivalentWithoutAttachments(resource8552) || e.equivalentWithoutAttachments(betaResource) ||
-                               e.equivalentWithoutAttachments(noVersionResource) || e.equivalentWithoutAttachments(versionRangeResource));
+                       res.equivalentWithoutAttachments(resource8552) || res.equivalentWithoutAttachments(betaResource) ||
+                               res.equivalentWithoutAttachments(noVersionResource) || res.equivalentWithoutAttachments(versionRangeResource));
         }
 
         def = new SimpleProductDefinition("com.ibm.websphere.appserver", "2014.4.0.0", "Archive", null, "BASE");
-        results = EsaResource.getMatchingEsas(repo.getLoginInfo(), def);
+        results = new RepositoryConnectionList(repoConnection).getMatchingEsas(def);
         assertEquals("There should be 1 hit", 2, results.size());
         for (EsaResource e : results) {
-            assertTrue("Unexpected resource found in hits " + e.getName(),
-                       e.equivalentWithoutAttachments(noVersionResource) || e.equivalentWithoutAttachments(versionRangeResource));
+            EsaResourceImpl res = (EsaResourceImpl) e;
+            assertTrue("Unexpected resource found in hits " + res.getName(),
+                       res.equivalentWithoutAttachments(noVersionResource) || res.equivalentWithoutAttachments(versionRangeResource));
         }
     }
 
@@ -420,11 +428,11 @@ public class MassiveEsaTest {
         EsaResource resourcePriv = uploadAsset(esaPriv);
 
         ProductDefinition def = new SimpleProductDefinition("com.ibm.websphere.appserver", null, "Archive", null, "BASE");
-        Collection<EsaResource> result = EsaResource.getMatchingEsas(repo.getLoginInfo(), def, Visibility.PRIVATE);
+        Collection<EsaResource> result = new RepositoryConnectionList(repoConnection).getMatchingEsas(def, Visibility.PRIVATE);
         assertEquals("There should be 1 private ESA", 1, result.size());
         assertEquals("The hidden one should be the private esa", result.iterator().next().getName(), resourcePriv.getName());
 
-        result = EsaResource.getMatchingEsas(repo.getLoginInfo(), def, Visibility.PUBLIC);
+        result = new RepositoryConnectionList(repoConnection).getMatchingEsas(def, Visibility.PUBLIC);
         assertEquals("There should be 2 public ESAs", 2, result.size());
         for (EsaResource r : result) {
             assertTrue("Unexpected name for public esa " + r.getName(),
@@ -443,8 +451,7 @@ public class MassiveEsaTest {
         uploadAsset(simpleESA);
 
         EsaResource featureInMassive = null;
-        Collection<EsaResource> allEsas = EsaResource
-                .getAllFeatures(repo.getLoginInfo());
+        Collection<EsaResource> allEsas = new RepositoryConnectionList(repoConnection).getAllFeatures();
         for (EsaResource esa : allEsas) {
             if ("com.ibm.ws.test.simple".equals(esa.getProvideFeature())) {
                 featureInMassive = esa;
@@ -477,8 +484,7 @@ public class MassiveEsaTest {
         uploadAsset(esaFile);
 
         EsaResource featureInMassive = null;
-        Collection<EsaResource> allEsas = EsaResource
-                .getAllFeatures(repo.getLoginInfo());
+        Collection<EsaResource> allEsas = new RepositoryConnectionList(repoConnection).getAllFeatures();
         for (EsaResource esa : allEsas) {
             if ("com.ibm.websphere.appserver.json-1.0".equals(esa
                     .getProvideFeature())) {
@@ -547,7 +553,7 @@ public class MassiveEsaTest {
     @Test
     public void testAddPrivateFeature() throws Throwable {
         File simpleEsa = new File(esaDir, "simple.hidden.esa");
-        EsaResource featureInMassive = uploadAsset(simpleEsa);
+        EsaResourceWritable featureInMassive = uploadAsset(simpleEsa);
         assertEquals(
                      "The symbolic name should have been set to the value in the ESA file",
                      "com.ibm.ws.test.simple.hidden",
@@ -557,14 +563,14 @@ public class MassiveEsaTest {
         assertEquals("The feature web display policy should be hidden", DisplayPolicy.HIDDEN,
                      reflectiveCallNoPrimitives(featureInMassive, "getWebDisplayPolicy", (Object[]) null));
         assertNotNull("The ID should have been set by Massive",
-                      featureInMassive.get_id());
+                      featureInMassive.getId());
         assertEquals("State should be awaiting approval.",
                      State.AWAITING_APPROVAL, featureInMassive.getState());
 
         // Make sure there is an attachment
         assertEquals(
                      "One attachment for the ESA should have been added to the feature in Massive",
-                     1, featureInMassive.getAttachmentCount());
+                     1, featureInMassive.getAttachments().size());
         assertEquals(
                      "The attachment name should be the ESA name and set to the symbolic name of the feature",
                      "com.ibm.ws.test.simple.hidden.esa", featureInMassive
@@ -582,7 +588,7 @@ public class MassiveEsaTest {
     @Test
     public void testAddPublicFeature() throws Throwable {
         File simpleEsa = new File(esaDir, "simple.esa");
-        EsaResource featureInMassive = uploadAsset(simpleEsa);
+        EsaResourceWritable featureInMassive = uploadAsset(simpleEsa);
         assertEquals(
                      "The symbolic name should have been set to the value in the ESA file",
                      "com.ibm.ws.test.simple", featureInMassive.getProvideFeature());
@@ -591,7 +597,7 @@ public class MassiveEsaTest {
         assertEquals("The feature web display policy should be visible", DisplayPolicy.VISIBLE,
                      reflectiveCallNoPrimitives(featureInMassive, "getWebDisplayPolicy", (Object[]) null));
         assertNotNull("The ID should have been set by Massive",
-                      featureInMassive.get_id());
+                      featureInMassive.getId());
         assertEquals(
                      "The feature should be created in awaiting_approval state",
                      State.AWAITING_APPROVAL, featureInMassive.getState());
@@ -606,7 +612,7 @@ public class MassiveEsaTest {
     @Test
     public void testAddPublicFeatureByShortName() throws Throwable {
         File simpleEsa = new File(esaDir, "simple.with.short.name.esa");
-        EsaResource featureInMassive = uploadAsset(simpleEsa);
+        EsaResourceWritable featureInMassive = uploadAsset(simpleEsa);
         assertEquals(
                      "The symbolic name should have been set to the value in the ESA file",
                      "com.ibm.ws.test.simple.with.short.name",
@@ -616,7 +622,7 @@ public class MassiveEsaTest {
         assertEquals("The feature webdisplay policy should be visible", DisplayPolicy.VISIBLE,
                      reflectiveCallNoPrimitives(featureInMassive, "getWebDisplayPolicy", (Object[]) null));
         assertNotNull("The ID should have been set by Massive",
-                      featureInMassive.get_id());
+                      featureInMassive.getId());
         assertEquals(
                      "The feature should be created in awaiting_approval state",
                      State.AWAITING_APPROVAL, featureInMassive.getState());
@@ -644,15 +650,15 @@ public class MassiveEsaTest {
         File simpleEsa = new File(esaDir, "simple.esa");
         // Don't use the uploadAsset util as we are going to delete the feature
         // ourself
-        _massiveEsa.addEsasToMassive(Collections
+        massiveEsa.addEsasToMassive(Collections
                 .singleton(simpleEsa), UploadStrategy.DEFAULT_STRATEGY);
-        EsaResource featureInMassive = _massiveEsa
+        EsaResource featureInMassive = massiveEsa
                 .getFeature("com.ibm.ws.test.simple");
         assertNotNull("The asset should have been created to start with!",
                       featureInMassive);
-        _massiveEsa.deleteFeatures(Collections
+        massiveEsa.deleteFeatures(Collections
                 .singleton("com.ibm.ws.test.simple"));
-        featureInMassive = _massiveEsa
+        featureInMassive = massiveEsa
                 .getFeature("com.ibm.ws.test.simple");
         assertNull("The asset should have been deleted", featureInMassive);
     }
@@ -667,14 +673,14 @@ public class MassiveEsaTest {
         File simpleEsa = new File(esaDir, "simple.with.short.name.esa");
         // Don't use the uploadAsset util as we are going to delete the feature
         // ourself
-        _massiveEsa.uploadFile(simpleEsa, UploadStrategy.DEFAULT_STRATEGY, null);
-        EsaResource featureInMassive = _massiveEsa
+        massiveEsa.uploadFile(simpleEsa, UploadStrategy.DEFAULT_STRATEGY, null);
+        EsaResource featureInMassive = massiveEsa
                 .getFeature("com.ibm.ws.test.simple.with.short.name");
         assertNotNull("The asset should have been created to start with!",
                       featureInMassive);
-        _massiveEsa.deleteFeatures(Collections
+        massiveEsa.deleteFeatures(Collections
                 .singleton("simple.with.short.name"));
-        featureInMassive = _massiveEsa
+        featureInMassive = massiveEsa
                 .getFeature("com.ibm.ws.test.simple.with.short.name");
         assertNull("The asset should have been deleted", featureInMassive);
     }
@@ -685,25 +691,25 @@ public class MassiveEsaTest {
      * @throws Throwable
      */
     @Test
-    @Ignore
-    // Update is not supported
     public void testUpdate() throws Throwable {
+        assumeThat(repo.isUpdateSupported(), is(true));
+
         File simpleEsa = new File(esaDir, "simple.esa");
-        EsaResource featureInMassive = uploadAsset(simpleEsa);
+        EsaResourceWritable featureInMassive = uploadAsset(simpleEsa);
         assertEquals("Check state is in awaiting approval state.",
                      State.AWAITING_APPROVAL, featureInMassive.getState());
         assertEquals(
                      "The asset should have been created with the initial visibility value!",
                      Visibility.PUBLIC, featureInMassive.getVisibility());
-        String originalAssetId = featureInMassive.get_id();
+        String originalAssetId = featureInMassive.getId();
         File updatedEsa = new File(esaDir, "simple.with.new.visibility.esa");
         featureInMassive = uploadAsset(updatedEsa);
         assertEquals("The asset visibility should have been updated",
                      Visibility.PRIVATE, featureInMassive.getVisibility());
         assertEquals("The asset ID should not have changed", originalAssetId,
-                     featureInMassive.get_id());
+                     featureInMassive.getId());
         assertEquals("The asset should only have one attachment", 1,
-                     featureInMassive.getAttachmentCount());
+                     featureInMassive.getAttachments().size());
         assertEquals("Feature should still be in awaiting approval state.",
                      State.AWAITING_APPROVAL, featureInMassive.getState());
 
@@ -717,7 +723,7 @@ public class MassiveEsaTest {
     @Test
     public void testEnablingInfo() throws Throwable {
         File enablingEsa = new File(esaDir, "enabling2.esa");
-        EsaResource autoFeatureInMassive = uploadAsset(enablingEsa);
+        EsaResourceImpl autoFeatureInMassive = (EsaResourceImpl) uploadAsset(enablingEsa);
         Collection<Link> links = autoFeatureInMassive.getLinks();
         Collection<String> expectedEnablesQuery = new ArrayList<String>();
         expectedEnablesQuery.add("wlpInformation.provideFeature=com.ibm.websphere.appserver.appLifecycle-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.2&type=com.ibm.websphere.Feature");
@@ -754,7 +760,7 @@ public class MassiveEsaTest {
     @Test
     public void testEnablingInfo2() throws Throwable {
         File enablingEsa = new File(esaDir, "enabling4.esa");
-        EsaResource autoFeatureInMassive = uploadAsset(enablingEsa);
+        EsaResourceImpl autoFeatureInMassive = (EsaResourceImpl) uploadAsset(enablingEsa);
         Collection<Link> links = autoFeatureInMassive.getLinks();
         Collection<String> expectedQuery = new ArrayList<String>();
         expectedQuery.add("wlpInformation.requireFeature=com.ibm.websphere.appserver.contextService-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.2&type=com.ibm.websphere.Feature");
@@ -790,7 +796,7 @@ public class MassiveEsaTest {
     @Test
     public void testEnablingInfo3() throws Throwable {
         File enablingEsa = new File(esaDir, "enabling5.esa");
-        EsaResource autoFeatureInMassive = uploadAsset(enablingEsa);
+        EsaResourceImpl autoFeatureInMassive = (EsaResourceImpl) uploadAsset(enablingEsa);
         Collection<Link> links = autoFeatureInMassive.getLinks();
         Collection<String> expectedQuery = new ArrayList<String>();
         expectedQuery.add("wlpInformation.requireFeature=com.ibm.websphere.appserver.contextService-1.0&type=com.ibm.websphere.Feature");
@@ -822,7 +828,7 @@ public class MassiveEsaTest {
     @Test
     public void testEnablingInfo4() throws Throwable {
         File enablingEsa = new File(esaDir, "enabling3.esa");
-        EsaResource autoFeatureInMassive = uploadAsset(enablingEsa);
+        EsaResourceImpl autoFeatureInMassive = (EsaResourceImpl) uploadAsset(enablingEsa);
         Collection<Link> links = autoFeatureInMassive.getLinks();
         Collection<String> expectedEnablesQuery = new HashSet<String>();
         expectedEnablesQuery.add("wlpInformation.provideFeature=com.ibm.websphere.appserver.appLifecycle-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.2&type=com.ibm.websphere.Feature");
@@ -924,23 +930,23 @@ public class MassiveEsaTest {
                      "The version of the resource should match the one in the ESA",
                      "1.0.0", featureInMassiveV100.getVersion());
 
-        String originalAssetId = featureInMassiveV100.get_id();
+        String originalAssetId = featureInMassiveV100.getId();
         File updatedEsa = new File(esaDir, "simple.with.new.version.esa");
         EsaResource featureInMassiveV101 = uploadAsset(updatedEsa);
         assertFalse("The asset ID should be new",
-                    originalAssetId.equals(featureInMassiveV101.get_id()));
+                    originalAssetId.equals(featureInMassiveV101.getId()));
         assertEquals("The asset should only have one attachment", 1,
-                     featureInMassiveV101.getAttachmentCount());
+                     featureInMassiveV101.getAttachments().size());
         assertEquals(
                      "The version of the resource should match the one in the ESA",
                      "1.0.1", featureInMassiveV101.getVersion());
 
         // Also make sure nothing changed on the v100 feature
-        featureInMassiveV100 = EsaResource.getEsa(repo.getLoginInfoEntry(), originalAssetId);
+        featureInMassiveV100 = (EsaResource) repoConnection.getResource(originalAssetId);
         assertNotNull("There should still be a v1.0.0 asset in massive",
                       featureInMassiveV100);
         assertEquals("The ID of the v1.0.0 feature should not of changed",
-                     originalAssetId, featureInMassiveV100.get_id());
+                     originalAssetId, featureInMassiveV100.getId());
         assertEquals("The version of the v1.0.0 feature should not of changed",
                      "1.0.0", featureInMassiveV100.getVersion());
     }
@@ -956,17 +962,17 @@ public class MassiveEsaTest {
         File updatedEsa = new File(esaDir, "simple.updatedAppliesTo8551.esa");
         uploadAsset(updatedEsa);
 
-        assertEquals("There should be 2 features now", 2, EsaResource.getAllFeatures(repo.getLoginInfo()).size());
+        assertEquals("There should be 2 features now", 2, repoConnection.getAllResources().size());
 
         updatedEsa = new File(esaDir, "simple.updatedAppliesTo8552.esa");
         uploadAsset(updatedEsa);
 
-        assertEquals("There should be 3 features now", 3, EsaResource.getAllFeatures(repo.getLoginInfo()).size());
+        assertEquals("There should be 3 features now", 3, repoConnection.getAllResources().size());
 
         updatedEsa = new File(esaDir, "simple.updatedAppliesTo8552.esa");
         uploadAsset(updatedEsa);
 
-        assertEquals("There should still be 3 features", 3, EsaResource.getAllFeatures(repo.getLoginInfo()).size());
+        assertEquals("There should still be 3 features", 3, repoConnection.getAllResources().size());
     }
 
     // Counts the number of icon files within an attachment list, and checks
@@ -1140,48 +1146,6 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test uploading an asset on DHE, relies on the 8552 content still being up on DHE
-     *
-     * @throws Throwable
-     */
-    @Test
-    @Ignore
-    public void testDheFeature() throws Throwable {
-        File dheFeatureEsa = new File(esaDir, "com.ibm.websphere.appserver.appLifecycle-1.0.esa");
-
-        EsaResource dheFeatureInMassive = uploadAsset(dheFeatureEsa);
-
-        // Make sure we can read the feature from DHE
-        File tmp = File.createTempFile("testDheFeature_subsytemManifest",
-                                       ".esa");
-        tmp.deleteOnExit();
-        dheFeatureInMassive.getMainAttachment().downloadToFile(tmp);
-
-        EsaManifest feature = EsaManifest.constructInstance(tmp);
-        assertNotNull("Unable to load feature from input stream", feature);
-        assertEquals("The wrong feature was returned",
-                     "com.ibm.websphere.appserver.appLifecycle-1.0",
-                     feature.getSymbolicName());
-
-        /*
-         * As DHE was created pre-term acceptance license the one on DHE doesn't have the new
-         * license type but the zip and therefore asset in Massive was created with the new term
-         * acceptance license so we can use this as an eye catcher that we definitely got the one
-         * from DHE and not the one in the zip
-         */
-        assertEquals("The wrong license ID was uploaded to massive",
-                     "http://www.example.com/testLicense",
-                     dheFeatureInMassive.getLicenseId());
-        assertEquals(
-                     "We should have read in the ESA from DHE so it should have the 8552 license ID",
-                     "http://www.ibm.com/licenses/wlp-featureterms-v1",
-                     feature.getHeader("Subsystem-License"));
-
-        // It is marked for delete on exit but might as well tidy up anyway...
-        tmp.delete();
-    }
-
-    /**
      * Test uploading an asset with an invalid download URL.
      *
      * @throws Throwable
@@ -1195,7 +1159,7 @@ public class MassiveEsaTest {
         File tmp = File.createTempFile(
                                        "testInvalidDownloadUrl_subsytemManifest", ".esa");
         tmp.deleteOnExit();
-        downloadUrlBlankEsaResource.getMainAttachment().downloadToFile(tmp);
+        ((AttachmentResourceImpl) downloadUrlBlankEsaResource.getMainAttachment()).downloadToFile(tmp);
 
         EsaManifest feature = EsaManifest.constructInstance(tmp);
 
@@ -1241,20 +1205,22 @@ public class MassiveEsaTest {
         files.add(ilanZip);
         files.add(unspecZip);
 
-        MassiveEsa client = new MassiveEsa(repo.getLoginInfoEntry());
+        MassiveEsa client = new MassiveEsa(repoConnection);
         Collection<EsaResource> allResources = client.addEsasToMassive(files, UploadStrategy.DEFAULT_STRATEGY);
 
         // Test assets uploaded: tests follow.
 
-        Collection<EsaResource> ilanESAs = EsaResource.getAllFeatures(LicenseType.ILAN, repo.getLoginInfo());
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
+
+        Collection<EsaResource> ilanESAs = connectionList.getAllFeatures(LicenseType.ILAN);
         assertEquals("Wrong number of ILAN-licensed features", 1, ilanESAs.size());
         assertEquals("Wrong ILAN-licensed asset name", "Translated Name", ilanESAs.iterator().next().getName());
 
-        Collection<EsaResource> iplaESAs = EsaResource.getAllFeatures(LicenseType.IPLA, repo.getLoginInfo());
+        Collection<EsaResource> iplaESAs = connectionList.getAllFeatures(LicenseType.IPLA);
         assertEquals("Wrong number of IPLA licensed features", 1, iplaESAs.size());
         assertEquals("Wrong IPLA-licensed asset name", "com.ibm.ws.test.simple", iplaESAs.iterator().next().getName());
 
-        Collection<EsaResource> unspecESAs = EsaResource.getAllFeatures(LicenseType.UNSPECIFIED, repo.getLoginInfo());
+        Collection<EsaResource> unspecESAs = connectionList.getAllFeatures(LicenseType.UNSPECIFIED);
         assertEquals("Wrong number of IPLA licensed features", 1, unspecESAs.size());
         assertEquals("Wrong UNSPECIFIED licensed asset name", "com.ibm.ws.test.with.required.fix", unspecESAs.iterator().next().getName());
 
@@ -1263,15 +1229,15 @@ public class MassiveEsaTest {
     @Test
     public void testTestLA_LI_andLicenseId() throws Exception {
 
-        MassiveEsa client = new MassiveEsa(repo.getLoginInfoEntry());
+        MassiveEsa client = new MassiveEsa(repoConnection);
 
         Collection<File> files = Collections.singletonList(new File(esaDir, "massiveEsaResourceTest1.esa"));
         Collection<EsaResource> esas = client.addEsasToMassive(files, UploadStrategy.DEFAULT_STRATEGY);
         for (EsaResource r : esas) {
-            System.out.println("Uploaded esa with id " + r.get_id());
+            System.out.println("Uploaded esa with id " + r.getId());
         }
 
-        EsaResource feature = EsaResource.getEsa(repo.getLoginInfoEntry(), esas.iterator().next().get_id());
+        EsaResource feature = (EsaResource) repoConnection.getResource(esas.iterator().next().getId());
         AttachmentResource res = feature.getLicenseAgreement(Locale.UK); // ie en_GB - not an exact match
         String enLAText = slurp(res);
         System.out.println("Slurped " + enLAText);
@@ -1290,7 +1256,7 @@ public class MassiveEsaTest {
     @Test
     public void testSupersededBy() throws Throwable {
         File f = new File(esaDir, "com.ibm.websphere.appserver.appSecurity-1.0.esa");
-        EsaResource resource = uploadAsset(f);
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(f);
 
         // Note this depends on a knowledge of the implementation of resource.getLinks() returning a list.
         // Which it currently does.
@@ -1325,7 +1291,7 @@ public class MassiveEsaTest {
     @Test
     public void testSupersedes() throws Throwable {
         File f = new File(esaDir, "com.ibm.websphere.appserver.appSecurity-2.0.esa");
-        EsaResource resource = uploadAsset(f);
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(f);
 
         // Note this depends on a knowledge of the implementation of resource.getLinks() returning a list.
         // Which it currently does.
@@ -1358,7 +1324,7 @@ public class MassiveEsaTest {
     @Test
     public void testSupersededByMultiple() throws Throwable {
         File f = new File(esaDir, "com.ibm.websphere.appserver.osgi.jpa-1.0.esa");
-        EsaResource resource = uploadAsset(f);
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(f);
 
         // Note this depends on a knowledge of the implementation of resource.getLinks() returning a list.
         // Which it currently does.
@@ -1394,7 +1360,7 @@ public class MassiveEsaTest {
     @Test
     public void testNoSupersedesOrSuperseded() throws RepositoryException {
         File enablingEsa = new File(esaDir, "enabling4.esa");
-        EsaResource resource = uploadAsset(enablingEsa);
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(enablingEsa);
 
         // Note this depends on a knowledge of the implementation of resource.getLinks() returning a list.
         // Which it currently does.
@@ -1444,26 +1410,6 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Implements a total order on possibly null Strings so that we can sort things that might be
-     * null
-     */
-    private int comparePossiblyNullStrings(String lhs, String rhs) {
-        if (lhs == null) {
-            if (rhs == null) {
-                return 0;
-            } else {
-                return -1;
-            }
-        } else {
-            if (rhs == null) {
-                return 1;
-            } else {
-                return lhs.compareTo(rhs);
-            }
-        }
-    }
-
-    /**
      * Tests that the uploader won't try to upload something that isn't an ESA
      *
      * @throws Exception
@@ -1471,7 +1417,7 @@ public class MassiveEsaTest {
     @Test
     public void testNonEsa() throws Exception {
         File zip = new File(esaDir, "simple.zip");
-        assertFalse("Should only be able to upload ESAs", ((RepositoryUploader<EsaResource>) _massiveEsa).canUploadFile(zip));
+        assertFalse("Should only be able to upload ESAs", massiveEsa.canUploadFile(zip));
     }
 
     /**
@@ -1550,7 +1496,7 @@ public class MassiveEsaTest {
             fail("Whoa ! Where'd the file go ? " + sourceEsa.getAbsolutePath());
         }
 
-        MassiveEsa client = new MassiveEsa(repo.getLoginInfoEntry());
+        MassiveEsa client = new MassiveEsa(repoConnection);
 
         Collection<File> files = new ArrayList<File>();
         files.add(sourceEsa);
@@ -1559,14 +1505,14 @@ public class MassiveEsaTest {
         assertEquals("Expected 1 asset to have been uploaded", 1, esas.size());
 
         for (EsaResource esa : esas) {
-            System.out.println("Uploaded esa with id " + esa.get_id());
+            System.out.println("Uploaded esa with id " + esa.getId());
 
-            Asset ass = getAssetReflective(esa);
-            WlpInformation.DisplayPolicy dp1 = ass.getWlpInformation().getWebDisplayPolicy();
-            assertEquals("webDisplayPolicy on a beta feature should be HIDDEN", WlpInformation.DisplayPolicy.HIDDEN, dp1);
+            Asset ass = getAsset(esa);
+            DisplayPolicy dp1 = ass.getWlpInformation().getWebDisplayPolicy();
+            assertEquals("webDisplayPolicy on a beta feature should be HIDDEN", DisplayPolicy.HIDDEN, dp1);
 
-            WlpInformation.DisplayPolicy dp2 = ass.getWlpInformation().getDisplayPolicy();
-            assertEquals("displayPolicy on a beta feature should be VISIBLE", WlpInformation.DisplayPolicy.VISIBLE, dp2);
+            DisplayPolicy dp2 = ass.getWlpInformation().getDisplayPolicy();
+            assertEquals("displayPolicy on a beta feature should be VISIBLE", DisplayPolicy.VISIBLE, dp2);
         }
 
     }
@@ -1586,9 +1532,6 @@ public class MassiveEsaTest {
     }
 
     @Test
-    @Ignore
-    // LARS needs to support search before the tests @Ignore can be removed
-    // TODO: check whether the current mongo based search implementation is sufficient
     /**
      * Based on a small set of features make searches to see whether the correct results match each query
      * @throws Throwable
@@ -1600,69 +1543,69 @@ public class MassiveEsaTest {
         System.out.println("dir8554=" + dir8554);
 
         // 8553 uploads
-        MassiveResource mr = uploadAsset(new File(dir8553, "com.ibm.websphere.appserver.jsp-2.2.esa"));
-        mr.approve();
-        mr = uploadAsset(new File(dir8553, "com.ibm.websphere.appserver.appSecurity-1.0.esa"));
-        mr.approve();
-        mr = uploadAsset(new File(dir8553, "com.ibm.websphere.appserver.appSecurity-2.0.esa"));
-        mr.approve();
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(new File(dir8553, "com.ibm.websphere.appserver.jsp-2.2.esa"));
+        resource.approve();
+        resource = (EsaResourceImpl) uploadAsset(new File(dir8553, "com.ibm.websphere.appserver.appSecurity-1.0.esa"));
+        resource.approve();
+        resource = (EsaResourceImpl) uploadAsset(new File(dir8553, "com.ibm.websphere.appserver.appSecurity-2.0.esa"));
+        resource.approve();
 
         // 8554 uploads
-        mr = uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.adminCenter-1.0.esa"));
-        mr.approve();
-        mr = uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.jsp-2.2.esa"));
-        mr.approve();
-        mr = uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.appSecurity-1.0.esa"));
-        mr.approve();
-        mr = uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.appSecurity-2.0.esa"));
-        mr.approve();
+        resource = (EsaResourceImpl) uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.adminCenter-1.0.esa"));
+        resource.approve();
+        resource = (EsaResourceImpl) uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.jsp-2.2.esa"));
+        resource.approve();
+        resource = (EsaResourceImpl) uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.appSecurity-1.0.esa"));
+        resource.approve();
+        resource = (EsaResourceImpl) uploadAsset(new File(dir8554, "com.ibm.websphere.appserver.appSecurity-2.0.esa"));
+        resource.approve();
 
-        // Sleep 10 seconds to allow indexing to work
+        repo.refreshTextIndex(resource.getId());
+
         String nl = System.getProperty("line.separator");
-        System.out.println(nl + "Sleeping 10 seconds for indexing to complete");
-        Thread.sleep(10000);
 
         //Create ProductDefinition to match against using: productId, version, installType, licenseType, edition
         ProductDefinition prod = new SimpleProductDefinition("com.ibm.websphere.appserver", "8.5.5.4", "Archive", "ILAN", "BASE");
 
         // Check how many hits we get for Admin
         System.out.println(nl + "Looking for Admin should get 1 matches");
-        Collection<EsaResource> esas = EsaResource.findMatchingEsas("Admin", repo.getLoginInfo(), prod, Visibility.PUBLIC);
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
+        Collection<EsaResource> esas = connectionList.findMatchingEsas("Admin", prod, Visibility.PUBLIC);
         for (EsaResource esa : esas) {
-            System.out.println("found feature: " + esa.getName() + ", id=" + esa.get_id());
+            System.out.println("found feature: " + esa.getName() + ", id=" + esa.getId());
         }
         assertEquals("Admin Matches", 1, esas.size());
 
         // Check how many hits we get for adminCenter-1.0 (the search term is split by the minus and
         // is interpreted as adminCenter and not 1.0).  Not very useful but that what it gives.
         System.out.println(nl + "Looking for adminCenter-1.0 should get 3 matches");
-        esas = EsaResource.findMatchingEsas("adminCenter-1.0", repo.getLoginInfo(), prod, Visibility.PUBLIC);
+        esas = connectionList.findMatchingEsas("adminCenter-1.0", prod, Visibility.PUBLIC);
         for (EsaResource esa : esas) {
-            System.out.println("found feature: " + esa.getName() + ", id=" + esa.get_id());
+            System.out.println("found feature: " + esa.getName() + ", id=" + esa.getId());
         }
         assertEquals("adminCenter-1.0 matches", 3, esas.size());
 
         // Check how many hits we get for security
         System.out.println(nl + "Looking for security should get 2 matches");
-        esas = EsaResource.findMatchingEsas("security", repo.getLoginInfo(), prod, Visibility.PUBLIC);
+        esas = connectionList.findMatchingEsas("security", prod, Visibility.PUBLIC);
         for (EsaResource esa : esas) {
-            System.out.println("found feature: " + esa.getName() + ", id=" + esa.get_id());
+            System.out.println("found feature: " + esa.getName() + ", id=" + esa.getId());
         }
         assertEquals("Security Matches", 2, esas.size());
 
         // Check how many hits we get for "security-1.0"
         System.out.println(nl + "Looking for \"security-1.0\" should get 1 matches");
-        esas = EsaResource.findMatchingEsas("\"security-1.0\"", repo.getLoginInfo(), prod, Visibility.PUBLIC);
+        esas = connectionList.findMatchingEsas("\"security-1.0\"", prod, Visibility.PUBLIC);
         for (EsaResource esa : esas) {
-            System.out.println("found feature: " + esa.getName() + ", id=" + esa.get_id());
+            System.out.println("found feature: " + esa.getName() + ", id=" + esa.getId());
         }
         assertEquals("\"Security-1.0\" matches", 1, esas.size());
 
         // Check how many hits we get for "jsp-2.2"
         System.out.println(nl + "Looking for \"jsp-2.2\" should get 1 matches");
-        esas = EsaResource.findMatchingEsas("\"jsp-2.2\"", repo.getLoginInfo(), prod, Visibility.PUBLIC);
+        esas = connectionList.findMatchingEsas("\"jsp-2.2\"", prod, Visibility.PUBLIC);
         for (EsaResource esa : esas) {
-            System.out.println("found feature: " + esa.getName() + ", id=" + esa.get_id());
+            System.out.println("found feature: " + esa.getName() + ", id=" + esa.getId());
         }
         assertEquals("\"jsp-2.2\" matches", 1, esas.size());
     }
@@ -1675,7 +1618,7 @@ public class MassiveEsaTest {
     public void testFeatureWithNoLI() throws Throwable {
         File featureFile = new File(esaDir, "com.ibm.websphere.appserver.blueprint-1.0.esa");
 
-        EsaResource featureResource = uploadAsset(featureFile);
+        EsaResourceImpl featureResource = (EsaResourceImpl) uploadAsset(featureFile);
         featureResource.approve();
     }
 
@@ -1683,7 +1626,7 @@ public class MassiveEsaTest {
     public void testFeatureWithNoSymbolicNameAttributes() throws Throwable {
         File featureFile = new File(esaDir, "no-symbolic-name-attributes.esa");
 
-        EsaResource featureResource = uploadAsset(featureFile);
+        EsaResourceImpl featureResource = (EsaResourceImpl) uploadAsset(featureFile);
         featureResource.approve();
     }
 

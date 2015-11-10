@@ -1,3 +1,5 @@
+import com.sun.jmx.snmp.tasks.TaskServer;
+
 /*******************************************************************************
 * Copyright (c) 2015 IBM Corp.
 *
@@ -21,5 +23,22 @@ dependencies {
     testCompile project(':client-lib')
     testCompile project(':test-utils')
 }
+
+ext {
+    // Indicate that we'd like a file hosted by the test server
+    serverHostedTestFiles = [file('src/fat/testResources/testfile.txt')];
+}
+
+// Create the zip repo for FileClientLicenseTest
+task createLicenseRepoZip (type:Zip) {
+    destinationDir = file('build/test-working/resources')
+    archiveName = 'licenseTestRepo.zip'
+    from file('build/test-working/resources/licenseTestRepo')
+    
+    // This needs to be done after all the test resource archives have been created
+    dependsOn prepareTestResources
+}
+
+prepareTestWorkingDir.dependsOn createLicenseRepoZip
 
 // vim: set si:

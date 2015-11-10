@@ -30,13 +30,14 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.ibm.ws.lars.testutils.FatUtils;
-import com.ibm.ws.lars.testutils.RepositoryFixture;
 import com.ibm.ws.lars.testutils.TestProcess;
-import com.ibm.ws.massive.LoginInfo;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.MassiveResource.LicenseType;
-import com.ibm.ws.massive.resources.MassiveResource.State;
+import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
+import com.ibm.ws.repository.common.enums.LicenseType;
+import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.connections.RepositoryConnectionList;
+import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 
 /**
  * Test the upload action of the command line client
@@ -48,23 +49,24 @@ public class UploadFatTest {
 
     @Test
     public void testRealEsa() throws Exception {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
         String esaPath = "resources/com.ibm.websphere.appserver.adminCenter-1.0.esa";
         File esaFile = new File(esaPath);
 
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        esaPath));
         tp.run();
 
         tp.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 1, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 1, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 1, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 1, connectionList.getAllFeatures().size());
 
-        EsaResource resource = EsaResource.getAllFeatures(loginInfo).iterator().next();
+        EsaResourceWritable resource = (EsaResourceWritable) connectionList.getAllFeatures().iterator().next();
         assertEquals("Incorrect state", State.PUBLISHED, resource.getState());
         assertEquals("Incorrect license type", LicenseType.UNSPECIFIED, resource.getLicenseType());
         assertEquals("Incorrect size", esaFile.length(), resource.getMainAttachmentSize());
@@ -74,23 +76,24 @@ public class UploadFatTest {
 
     @Test
     public void testUserEsa() throws Exception {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
         String esaPath = "resources/userFeature.esa";
         File esaFile = new File(esaPath);
 
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        esaPath));
         tp.run();
 
         tp.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 1, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 1, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 1, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 1, connectionList.getAllFeatures().size());
 
-        EsaResource resource = EsaResource.getAllFeatures(loginInfo).iterator().next();
+        EsaResourceWritable resource = (EsaResourceWritable) connectionList.getAllFeatures().iterator().next();
         assertEquals("Incorrect state", State.PUBLISHED, resource.getState());
         assertEquals("Incorrect license type", null, resource.getLicenseType());
         assertEquals("Incorrect size", esaFile.length(), resource.getMainAttachmentSize());
@@ -100,31 +103,33 @@ public class UploadFatTest {
 
     @Test
     public void testMultipleEsas() throws Exception {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
 
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        "resources/com.ibm.websphere.appserver.adminCenter-1.0.esa",
                                                        "resources/userFeature.esa"));
         tp.run();
 
         tp.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 2, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 2, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 2, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 2, connectionList.getAllFeatures().size());
     }
 
     @Test
     public void testMissingEsa() throws Exception {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
 
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        "resources/userFeature.esa",
                                                        "resources/somethingInvalid"));
         tp.run();
@@ -136,29 +141,30 @@ public class UploadFatTest {
 
         tp.assertOutputContains("File " + fileName + " can't be read");
 
-        assertEquals("Incorrect resource count", 0, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 0, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 0, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 0, connectionList.getAllFeatures().size());
     }
 
     @Test
     public void testAbsolutePath() throws Exception {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
 
         File esaFile = new File("resources/userFeature.esa");
 
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        esaFile.getAbsolutePath()));
         tp.run();
 
         tp.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 1, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 1, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 1, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 1, connectionList.getAllFeatures().size());
 
-        EsaResource resource = EsaResource.getAllFeatures(loginInfo).iterator().next();
+        EsaResourceWritable resource = (EsaResourceWritable) connectionList.getAllFeatures().iterator().next();
         assertEquals("Incorrect state", State.PUBLISHED, resource.getState());
         assertEquals("Incorrect license type", null, resource.getLicenseType());
         assertEquals("Incorrect size", esaFile.length(), resource.getMainAttachmentSize());
@@ -170,7 +176,8 @@ public class UploadFatTest {
     // needed to call generic varagrs method :-/
     @Test
     public void shouldUploadDirectory() throws Exception {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
 
         // Note: at the time of writing, dirWith3ESAs has a subdirectory that contains
         // ESAs. We do *not* expect the contents of the subdirectory to be uploaded
@@ -178,14 +185,14 @@ public class UploadFatTest {
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        "resources/dirWith3ESAs"));
         tp.run();
 
         tp.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 3, MassiveResource.getAllResources(loginInfo).size());
-        Collection<EsaResource> features = EsaResource.getAllFeatures(loginInfo);
+        assertEquals("Incorrect resource count", 3, connectionList.getAllResources().size());
+        Collection<EsaResource> features = connectionList.getAllFeatures();
         assertEquals("Incorrect feature count", 3, features.size());
 
         assertThat("Should upload directory contents",

@@ -1,0 +1,140 @@
+/*******************************************************************************
+ * Copyright (c) 2015 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+package com.ibm.ws.repository.resources.internal;
+
+import java.util.Collection;
+
+import com.ibm.ws.repository.common.enums.DisplayPolicy;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.resources.writeable.ProductRelatedResourceWritable;
+import com.ibm.ws.repository.transport.model.Asset;
+
+public abstract class ProductRelatedResourceImpl extends RepositoryResourceImpl implements ProductRelatedResourceWritable {
+
+    public ProductRelatedResourceImpl(RepositoryConnection repoConnection) {
+        this(repoConnection, null);
+    }
+
+    public ProductRelatedResourceImpl(RepositoryConnection repoConnection, Asset ass) {
+        super(repoConnection, ass);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setProductId(String productId) {
+        _asset.getWlpInformation().setProductId(productId);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getProductId() {
+        return _asset.getWlpInformation().getProductId();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setProductEdition(String edition) {
+        _asset.getWlpInformation().setProductEdition(edition);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getProductEdition() {
+        return _asset.getWlpInformation().getProductEdition();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setProductInstallType(String productInstallType) {
+        _asset.getWlpInformation().setProductInstallType(productInstallType);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getProductInstallType() {
+        return _asset.getWlpInformation().getProductInstallType();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setProductVersion(String version) {
+        _asset.getWlpInformation().setProductVersion(version);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getProductVersion() {
+        return _asset.getWlpInformation().getProductVersion();
+    }
+
+    /**
+     * The {@link DisplayPolicy} to use
+     */
+    @Override
+    public void setWebDisplayPolicy(DisplayPolicy policy) {
+        _asset.getWlpInformation().setWebDisplayPolicy(policy);
+    }
+
+    /**
+     * Get the {@link DisplayPolicy}
+     * 
+     * @return {@link DisplayPolicy} in use
+     */
+    @Override
+    public DisplayPolicy getWebDisplayPolicy() {
+        if (_asset.getWlpInformation() == null) {
+            return null;
+        }
+        return _asset.getWlpInformation().getWebDisplayPolicy();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setProvideFeature(Collection<String> provideFeature) {
+        _asset.getWlpInformation().setProvideFeature(provideFeature);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Collection<String> getProvideFeature() {
+        return _asset.getWlpInformation().getProvideFeature();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setRequireFeature(Collection<String> requireFeature) {
+        _asset.getWlpInformation().setRequireFeature(requireFeature);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Collection<String> getRequireFeature() {
+        return _asset.getWlpInformation().getRequireFeature();
+    }
+
+    @Override
+    protected void copyFieldsFrom(RepositoryResourceImpl fromResource, boolean includeAttachmentInfo) {
+        super.copyFieldsFrom(fromResource, includeAttachmentInfo);
+        ProductRelatedResourceImpl prodRes = (ProductRelatedResourceImpl) fromResource;
+        setProductId(prodRes.getProductId());
+        setProductEdition(prodRes.getProductEdition());
+        setProductInstallType(prodRes.getProductInstallType());
+        setProductVersion(prodRes.getProductVersion());
+        setWebDisplayPolicy(prodRes.getWebDisplayPolicy());
+        setProvideFeature(prodRes.getProvideFeature());
+        setRequireFeature(prodRes.getRequireFeature());
+    }
+}

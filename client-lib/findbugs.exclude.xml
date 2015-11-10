@@ -5,35 +5,23 @@
     <!-- Equals on model classes first use isEquivalent which checks type -->
     <Match>
         <Bug pattern="BC_EQUALS_METHOD_SHOULD_WORK_FOR_ALL_OBJECTS" />
-        <Class name="com.ibm.ws.massive.sa.client.model.Asset" />
+        <Class name="com.ibm.ws.repository.transport.model.Asset" />
     </Match>
 
     <Match>
         <Bug pattern="BC_EQUALS_METHOD_SHOULD_WORK_FOR_ALL_OBJECTS" />
-        <Class name="com.ibm.ws.massive.sa.client.model.Attachment" />
+        <Class name="com.ibm.ws.repository.transport.model.Attachment" />
     </Match>
 
     <Match>
         <Bug pattern="BC_EQUALS_METHOD_SHOULD_WORK_FOR_ALL_OBJECTS" />
-        <Class name="com.ibm.ws.massive.sa.client.model.AttachmentInfo" />
-    </Match>
-
-    <Match>
-        <Bug pattern="BC_EQUALS_METHOD_SHOULD_WORK_FOR_ALL_OBJECTS" />
-        <Class name="com.ibm.ws.massive.sa.client.model.WlpInformation" />
-    </Match>
-
-    <!-- Inherits Serializable interface but won't be serialized -->
-    <Match>
-        <Bug pattern="SE_BAD_FIELD" />
-        <Class name="com.ibm.ws.massive.resources.ResourceList" />
-        <Field type="java.util.HashSet" />
+        <Class name="com.ibm.ws.repository.transport.model.WlpInformation" />
     </Match>
 
     <!-- This is just in an internal debug method printing a stack trace -->
     <Match>
         <Bug pattern="DM_DEFAULT_ENCODING" />
-        <Class name="com.ibm.ws.massive.sa.client.model.AbstractJSON" />
+        <Class name="com.ibm.ws.repository.transport.model.AbstractJSON" />
         <Method name="dump" />
     </Match>
 
@@ -41,7 +29,7 @@
         case -->
     <Match>
         <Bug pattern="SF_SWITCH_FALLTHROUGH" />
-        <Class name="com.ibm.ws.massive.resources.AddThenDeleteStrategy" />
+        <Class name="com.ibm.ws.repository.strategies.writeable.AddThenDeleteStrategy" />
         <Method name="uploadAsset" />
     </Match>
 

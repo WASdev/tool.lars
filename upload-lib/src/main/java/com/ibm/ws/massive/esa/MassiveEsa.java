@@ -51,38 +51,38 @@ import java.util.zip.ZipException;
 import org.apache.aries.util.VersionRange;
 import org.osgi.framework.Version;
 
-import com.ibm.ws.massive.LoginInfo;
-import com.ibm.ws.massive.LoginInfoEntry;
-import com.ibm.ws.massive.RepositoryException;
 import com.ibm.ws.massive.esa.ManifestHeaderProcessor.GenericMetadata;
 import com.ibm.ws.massive.esa.internal.EsaManifest;
-import com.ibm.ws.massive.resources.AppliesToProcessor;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.EsaResource.InstallPolicy;
-import com.ibm.ws.massive.resources.ImageDetails;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentResource;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentType;
-import com.ibm.ws.massive.resources.MassiveResource.DisplayPolicy;
-import com.ibm.ws.massive.resources.MassiveResource.LicenseType;
-import com.ibm.ws.massive.resources.MassiveResource.Visibility;
-import com.ibm.ws.massive.resources.Provider;
-import com.ibm.ws.massive.resources.RepositoryResourceCreationException;
-import com.ibm.ws.massive.resources.RepositoryResourceException;
-import com.ibm.ws.massive.resources.RepositoryResourceUpdateException;
-import com.ibm.ws.massive.resources.UploadStrategy;
-import com.ibm.ws.massive.sa.client.model.Asset;
 import com.ibm.ws.massive.upload.RepositoryArchiveEntryNotFoundException;
 import com.ibm.ws.massive.upload.RepositoryArchiveIOException;
 import com.ibm.ws.massive.upload.RepositoryArchiveInvalidEntryException;
 import com.ibm.ws.massive.upload.RepositoryUploader;
 import com.ibm.ws.massive.upload.internal.MassiveUploader;
+import com.ibm.ws.repository.common.enums.AttachmentType;
+import com.ibm.ws.repository.common.enums.DisplayPolicy;
+import com.ibm.ws.repository.common.enums.InstallPolicy;
+import com.ibm.ws.repository.common.enums.LicenseType;
+import com.ibm.ws.repository.common.enums.Visibility;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.connections.RepositoryConnectionList;
+import com.ibm.ws.repository.exceptions.RepositoryException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.internal.AppliesToProcessor;
+import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
+import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
+import com.ibm.ws.repository.resources.writeable.WritableResourceFactory;
+import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
+import com.ibm.ws.repository.transport.model.Asset;
 
 /**
  * <p>
  * This class contains methods for working with ESAs inside MaaSive.
  * </p>
  */
-public class MassiveEsa extends MassiveUploader implements RepositoryUploader<EsaResource> {
+public class MassiveEsa extends MassiveUploader implements RepositoryUploader<EsaResourceWritable> {
 
     /**  */
     private static final String JAVA_FILTER_KEY = "JavaSE";
@@ -109,16 +109,16 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
      * @param apiKey The API key to use to connect to Massive
      * @throws RepositoryException
      */
-    public MassiveEsa(LoginInfoEntry loginInfo)
+    public MassiveEsa(RepositoryConnection repoConnection)
         throws RepositoryException {
-        super(loginInfo);
+        super(repoConnection);
 
         /*
          * Find all of the features that are already in MaaSive so we can set the enabled
          * information for them
          */
-        Collection<EsaResource> allEsas = EsaResource.getAllFeatures(new LoginInfo(_loginInfoResource));
-        this.allFeatures = new HashMap<EsaIdentifier, EsaResource>();
+        Collection<EsaResource> allEsas = new RepositoryConnectionList(repoConnection).getAllFeatures();
+        this.allFeatures = new HashMap<>();
         for (EsaResource res : allEsas) {
             // All features must provide a single symbolic name so no
             // null/size check
@@ -150,7 +150,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see com.ibm.ws.massive.upload.RepositoryUploader#canUploadFile(java.io.File)
      */
     @Override
@@ -160,12 +160,12 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see com.ibm.ws.massive.upload.RepositoryUploader#uploadFile(java.io.File,
      * com.ibm.ws.massive.resources.UploadStrategy)
      */
     @Override
-    public EsaResource uploadFile(File esa, UploadStrategy strategy, String contentUrl) throws RepositoryException {
+    public EsaResourceWritable uploadFile(File esa, UploadStrategy strategy, String contentUrl) throws RepositoryException {
 
         ArtifactMetadata artifactMetadata = explodeArtifact(esa);
 
@@ -182,7 +182,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
          * First see if we already have this feature in MaaSive, note this means we can only have
          * one version of the asset in MaaSive at a time
          */
-        EsaResource resource = new EsaResource(_loginInfoResource);
+        EsaResourceWritable resource = WritableResourceFactory.createEsa(repoConnection);
         String symbolicName = feature.getSymbolicName();
         String version = feature.getVersion().toString();
         String appliesTo = feature.getHeader("IBM-AppliesTo");
@@ -228,12 +228,11 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         String provider = feature.getHeader("Subsystem-Vendor");
         if (provider != null && !provider.isEmpty()) {
-            Provider massiveProvider = new Provider();
-            massiveProvider.setName(provider);
+            resource.setProviderName(provider);
             if ("IBM".equals(provider)) {
-                massiveProvider.setUrl("http://www.ibm.com");
+                resource.setProviderUrl("http://www.ibm.com");
             }
-            resource.setProvider(massiveProvider);
+
         } else {
             // Massive breaks completely if the provider is not filled in so
             // make sure it is!
@@ -374,13 +373,12 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         }
     }
 
-    private void processIcons(File esa, EsaManifest feature, EsaResource resource) throws RepositoryException {
+    private void processIcons(File esa, EsaManifest feature, EsaResourceWritable resource) throws RepositoryException {
         //checking icon file
         int size = 0;
         String current = "";
         String sizeString = "";
         String iconName = "";
-        ImageDetails details = null;
         String subsystemIcon = feature.getHeader("Subsystem-Icon");
 
         if (subsystemIcon != null) {
@@ -398,9 +396,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
                         if (sizeString.contains("size=")) {
                             String sizes[] = sizeString.split("size=");
                             size = Integer.parseInt(sizes[sizes.length - 1]);
-                            details = new ImageDetails();
-                            details.setWidth(size);
-                            details.setHeight(size);
                         } else {
                             iconName = sizeString;
                         }
@@ -412,14 +407,13 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
                 File icon = this.extractFileFromArchive(esa.getAbsolutePath(), iconName).getExtractedFile();
                 if (icon.exists()) {
-                    AttachmentResource at = resource.addAttachment(icon, AttachmentType.THUMBNAIL);
-                    if (details != null) {
-                        at.setImageDetails(details);
+                    AttachmentResourceWritable at = resource.addAttachment(icon, AttachmentType.THUMBNAIL);
+                    if (size != 0) {
+                        at.setImageDimensions(size, size);
                     }
                 } else {
                     throw new RepositoryArchiveEntryNotFoundException("Icon does not exist", esa, iconName);
                 }
-                details = null;
             }
         }
     }
@@ -433,8 +427,8 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         Iterator<EsaResource> featureIterator = this.allFeatures
                 .values().iterator();
         while (featureIterator.hasNext()) {
-            EsaResource featureResource = featureIterator.next();
-            logger.log(Level.INFO, "Deleting " + featureResource.get_id());
+            EsaResourceWritable featureResource = (EsaResourceWritable) featureIterator.next();
+            logger.log(Level.INFO, "Deleting " + featureResource.getId());
             featureResource.delete();
             featureIterator.remove();
         }
@@ -459,7 +453,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
          */
         //Collection<EsaResource> assetsForUpdating = new HashSet<EsaResource>();
         while (featureIterator.hasNext()) {
-            EsaResource featureResource = featureIterator.next();
+            EsaResourceWritable featureResource = (EsaResourceWritable) featureIterator.next();
             String symbolicName = featureResource.getProvideFeature();
             if (featureNames.contains(symbolicName)
                 || featureNames.contains(featureResource.getShortName())) {
@@ -493,7 +487,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
     public EsaResource getFeature(String symbolicName) throws IOException, RepositoryException {
         EsaResource summaryResource = findFeature(symbolicName);
         if (summaryResource != null) {
-            return EsaResource.getEsa(_loginInfoResource, summaryResource.get_id());
+            return (EsaResource) repoConnection.getResource(summaryResource.getId());
         } else {
             return null;
         }
@@ -513,7 +507,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
     public EsaResource getFeature(String symbolicName, String version, String appliesTo) throws IOException, RepositoryException {
         EsaResource summaryResource = this.allFeatures.get(new EsaIdentifier(symbolicName, version, appliesTo));
         if (summaryResource != null) {
-            return EsaResource.getEsa(_loginInfoResource, summaryResource.get_id());
+            return (EsaResource) repoConnection.getResource(summaryResource.getId());
         } else {
             return null;
         }
@@ -579,7 +573,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see java.lang.Object#hashCode()
          */
         @Override
@@ -594,7 +588,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         *
+         * 
          * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
@@ -635,7 +629,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
      * @throws RepositoryException If there are any IOExceptions reading the esa, or if the the
      *             bundles have conflicting Java version requirements.
      */
-    private static void setJavaRequirements(File esa, EsaResource resource) throws RepositoryException {
+    private static void setJavaRequirements(File esa, EsaResourceWritable resource) throws RepositoryException {
 
         Map<String, String> bundleRequirements = new HashMap<String, String>();
         Path zipfile = esa.toPath();

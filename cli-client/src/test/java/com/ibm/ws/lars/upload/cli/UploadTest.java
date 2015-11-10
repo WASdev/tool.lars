@@ -40,12 +40,16 @@ import mockit.MockUp;
 import org.junit.Test;
 
 import com.ibm.ws.lars.upload.cli.ClientException.HelpDisplay;
-import com.ibm.ws.massive.LoginInfoEntry;
 import com.ibm.ws.massive.esa.MassiveEsa;
-import com.ibm.ws.massive.resources.AddThenDeleteStrategy;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.UploadStrategy;
+import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
+import com.ibm.ws.repository.strategies.writeable.AddThenDeleteStrategy;
+import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
 
 /**
  * Test the upload action
@@ -56,12 +60,12 @@ public class UploadTest {
      * Mock uploader which captures the login info and the names of files which are uploaded.
      */
     public static class MockUploader extends MockUp<MassiveEsa> {
-        private LoginInfoEntry loginInfoEntry = null;
+        private RepositoryConnection repoConnection = null;
         private final List<String> filesUploaded = new ArrayList<>();
 
         @Mock
-        public void $init(LoginInfoEntry loginInfo) {
-            this.loginInfoEntry = loginInfo;
+        public void $init(RepositoryConnection repoConnection) {
+            this.repoConnection = repoConnection;
         }
 
         @Mock
@@ -72,8 +76,8 @@ public class UploadTest {
             return null;
         }
 
-        public LoginInfoEntry getLoginInfoEntry() {
-            return loginInfoEntry;
+        public RepositoryConnection getLoginInfoEntry() {
+            return repoConnection;
         }
 
         public List<String> getFilesUploaded() {
@@ -174,14 +178,16 @@ public class UploadTest {
         }
 
         @Mock
-        public List<MassiveResource> getDeletedResources() {
-            ArrayList<MassiveResource> result = new ArrayList<>();
-            MockEsaResource mockESA = new MockEsaResource();
-            for (int i = 0; i < numDeletedResources; i++) {
-                result.add(mockESA.getMockInstance());
+        public void $init(State desiredStateIfMatchingFound, State desiredStateIfNoMatchingFound, boolean forceReplace,
+                          RepositoryResourceImpl matchingResource, List<RepositoryResource> deletedResources) {
+            if (deletedResources != null) {
+                MockEsaResource mockESA = new MockEsaResource();
+                for (int i = 0; i < numDeletedResources; i++) {
+                    deletedResources.add(mockESA.getMockInstance());
+                }
             }
-            return result;
         }
+
     }
 
     public static class MockEsaResource extends MockUp<EsaResource> {
@@ -191,8 +197,8 @@ public class UploadTest {
         }
 
         @Mock
-        public MassiveResource.Type getType() {
-            return MassiveResource.Type.FEATURE;
+        public ResourceType getType() {
+            return ResourceType.FEATURE;
         }
 
         @Mock
@@ -321,15 +327,17 @@ public class UploadTest {
         Main main = new Main(new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password=foobar", "TestFile.esa" });
 
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) uploader.getLoginInfoEntry();
+
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa"), uploader.getFilesUploaded());
         assertThat("Output incorrect", out.toString(), containsString("Uploading TestFile.esa ... done"));
-        assertEquals("Wrong username", "jbloggs", uploader.getLoginInfoEntry().getUserId());
-        assertEquals("Wrong password", "foobar", uploader.getLoginInfoEntry().getPassword());
-        assertNull("Softlayer username incorrectly set", uploader.getLoginInfoEntry().getSoftlayerUserId());
-        assertNull("Softlayer password incorrectly set", uploader.getLoginInfoEntry().getSoftlayerPassword());
-        assertNull("Attachment username incorrectly set", uploader.getLoginInfoEntry().getAttachmentBasicAuthUserId());
-        assertNull("Attachment password incorrectly set", uploader.getLoginInfoEntry().getAttachmentBasicAuthPassword());
-        assertNotNull("ApiKey is null", uploader.getLoginInfoEntry().getApiKey());
+        assertEquals("Wrong username", "jbloggs", repoConnection.getUserId());
+        assertEquals("Wrong password", "foobar", repoConnection.getPassword());
+        assertNull("Softlayer username incorrectly set", repoConnection.getSoftlayerUserId());
+        assertNull("Softlayer password incorrectly set", repoConnection.getSoftlayerPassword());
+        assertNull("Attachment username incorrectly set", repoConnection.getAttachmentBasicAuthUserId());
+        assertNull("Attachment password incorrectly set", repoConnection.getAttachmentBasicAuthPassword());
+        assertNotNull("ApiKey is null", repoConnection.getApiKey());
     }
 
     /**
@@ -365,16 +373,18 @@ public class UploadTest {
         Main main = new Main(new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password", "TestFile.esa" });
 
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) uploader.getLoginInfoEntry();
+
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa"), uploader.getFilesUploaded());
         assertThat("Output incorrect", out.toString(), containsString("Uploading TestFile.esa ... done"));
-        assertEquals("Wrong username", "jbloggs", uploader.getLoginInfoEntry().getUserId());
-        assertEquals("Wrong password", "thePassw0rd", uploader.getLoginInfoEntry().getPassword());
+        assertEquals("Wrong username", "jbloggs", repoConnection.getUserId());
+        assertEquals("Wrong password", "thePassw0rd", repoConnection.getPassword());
         assertEquals("Wrong number of calls to readPassword", 1, mockConsole.count);
-        assertNull("Softlayer username incorrectly set", uploader.getLoginInfoEntry().getSoftlayerUserId());
-        assertNull("Softlayer password incorrectly set", uploader.getLoginInfoEntry().getSoftlayerPassword());
-        assertNull("Attachment username incorrectly set", uploader.getLoginInfoEntry().getAttachmentBasicAuthUserId());
-        assertNull("Attachment password incorrectly set", uploader.getLoginInfoEntry().getAttachmentBasicAuthPassword());
-        assertNotNull("ApiKey is null", uploader.getLoginInfoEntry().getApiKey());
+        assertNull("Softlayer username incorrectly set", repoConnection.getSoftlayerUserId());
+        assertNull("Softlayer password incorrectly set", repoConnection.getSoftlayerPassword());
+        assertNull("Attachment username incorrectly set", repoConnection.getAttachmentBasicAuthUserId());
+        assertNull("Attachment password incorrectly set", repoConnection.getAttachmentBasicAuthPassword());
+        assertNotNull("ApiKey is null", repoConnection.getApiKey());
 
         // test that we don't prompt when the password is provided
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password=foobar", "TestFile.esa" });

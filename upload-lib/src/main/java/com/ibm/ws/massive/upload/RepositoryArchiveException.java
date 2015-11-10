@@ -18,7 +18,7 @@ package com.ibm.ws.massive.upload;
 
 import java.io.File;
 
-import com.ibm.ws.massive.RepositoryException;
+import com.ibm.ws.repository.exceptions.RepositoryException;
 
 public class RepositoryArchiveException extends RepositoryException {
 

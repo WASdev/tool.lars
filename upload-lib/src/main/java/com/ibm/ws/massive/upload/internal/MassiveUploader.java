@@ -46,27 +46,26 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-import com.ibm.ws.massive.LoginInfoEntry;
-import com.ibm.ws.massive.RepositoryException;
 import com.ibm.ws.massive.esa.internal.EsaManifest;
-import com.ibm.ws.massive.internal.AbstractMassive;
-import com.ibm.ws.massive.resources.ImageDetails;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentLinkType;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentResource;
-import com.ibm.ws.massive.resources.MassiveResource.AttachmentType;
-import com.ibm.ws.massive.resources.MassiveResource.DownloadPolicy;
-import com.ibm.ws.massive.resources.MassiveResource.LicenseType;
 import com.ibm.ws.massive.upload.RepositoryArchiveEntryNotFoundException;
 import com.ibm.ws.massive.upload.RepositoryArchiveException;
 import com.ibm.ws.massive.upload.RepositoryArchiveIOException;
 import com.ibm.ws.massive.upload.RepositoryArchiveInvalidEntryException;
-import com.ibm.ws.massive.utils.RepositoryUtils;
+import com.ibm.ws.repository.common.enums.AttachmentLinkType;
+import com.ibm.ws.repository.common.enums.AttachmentType;
+import com.ibm.ws.repository.common.enums.DownloadPolicy;
+import com.ibm.ws.repository.common.enums.LicenseType;
+import com.ibm.ws.repository.common.utils.internal.RepositoryCommonUtils;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryException;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.AttachmentResourceImpl;
+import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
+import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
 
 /**
  * Base class for upload utilities.
  */
-public abstract class MassiveUploader extends AbstractMassive {
+public abstract class MassiveUploader {
 
     /**
      * Key for a property stating what type of link this is (only relevant if the downloadUrl is
@@ -103,9 +102,12 @@ public abstract class MassiveUploader extends AbstractMassive {
     public final static String PROP_ICONS = "icons";
     public final static String PROP_DOWNLOAD_URL = "downloadURL";
     public final static String PROP_STAGED_URL = "stagedURL";
+    public final static String PROP_LICENSE_TYPE = "licenseType";
 
-    public MassiveUploader(LoginInfoEntry loginInfo) {
-        super(loginInfo);
+    protected final RepositoryConnection repoConnection;
+
+    public MassiveUploader(RepositoryConnection repoConnection) {
+        this.repoConnection = repoConnection;
     }
 
     /**
@@ -408,7 +410,7 @@ public abstract class MassiveUploader extends AbstractMassive {
     }
 
     public void attachLicenseData(ArtifactMetadata licensedArtifact,
-                                  MassiveResource resource) throws RepositoryException {
+                                  RepositoryResourceWritable resource) throws RepositoryException {
         for (File licenseFile : licensedArtifact.licenseFiles) {
             String licenseName = licenseFile.getName();
             licenseName = licenseName
@@ -417,7 +419,7 @@ public abstract class MassiveUploader extends AbstractMassive {
                 // You'd think there'd be a locale parser on Locale... there
                 // isn't, sigh
                 resource.addLicense(licenseFile,
-                                    RepositoryUtils.localeForString(licenseName));
+                                    RepositoryCommonUtils.localeForString(licenseName));
             } else {
                 // Don't throw an exception: it may be something like
                 // notices.html
@@ -451,7 +453,7 @@ public abstract class MassiveUploader extends AbstractMassive {
      * @param resource
      * @throws IOException
      */
-    protected void processLAandLI(File archive, MassiveResource resource,
+    protected void processLAandLI(File archive, RepositoryResourceWritable resource,
                                   EsaManifest feature) throws IOException,
             RepositoryException {
         String LAHeader = feature.getHeader(LA_HEADER_FEATURE);
@@ -466,7 +468,7 @@ public abstract class MassiveUploader extends AbstractMassive {
      * @param resource
      * @throws IOException
      */
-    protected void processLAandLI(File archive, MassiveResource resource,
+    protected void processLAandLI(File archive, RepositoryResourceWritable resource,
                                   Manifest manifest) throws RepositoryException, IOException {
         Attributes attribs = manifest.getMainAttributes();
         String LAHeader = attribs.getValue(LA_HEADER_PRODUCT);
@@ -477,13 +479,13 @@ public abstract class MassiveUploader extends AbstractMassive {
     /*
      * LAHeader typical value: "wlp/lafiles/LA" typical files names are of the form
      * "wlp/lafiles/LA_en"
-     * 
+     *
      * Both must be present unless GenerateEsas.specialFeatureTermsApply() which equates to
      * Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1 However by this point it's
      * very difficult to determine whether we're processing a resource that need only contain LA and
      * not LI files.
      */
-    protected void processLAandLI(File archive, MassiveResource resource,
+    protected void processLAandLI(File archive, RepositoryResourceWritable resource,
                                   String LAHeader, String LIHeader) throws IOException,
             RepositoryException {
         if (LAHeader == null && LIHeader == null) {
@@ -518,13 +520,13 @@ public abstract class MassiveUploader extends AbstractMassive {
                 String localeText = fileName.substring(liPrefix.length());
                 if (isLocale(localeText)) {
                     resource.addLicenseInformation(f,
-                                                   RepositoryUtils.localeForString(localeText));
+                                                   RepositoryCommonUtils.localeForString(localeText));
                 }
             } else if (laPrefix != null && shortPath.contains(LAHeader)) {
                 String localeText = fileName.substring(laPrefix.length());
                 if (isLocale(localeText)) {
                     resource.addLicenseAgreement(f,
-                                                 RepositoryUtils.localeForString(localeText));
+                                                 RepositoryCommonUtils.localeForString(localeText));
                 }
             }
         }
@@ -543,7 +545,7 @@ public abstract class MassiveUploader extends AbstractMassive {
      *
      * @throws RepositoryException
      */
-    protected void addContent(MassiveResource res, File assetFile, String name,
+    protected void addContent(RepositoryResourceWritable res, File assetFile, String name,
                               ArtifactMetadata metadata, String contentUrl) throws RepositoryException {
         String downloadUrl = contentUrl;
         String linkTypeString = null;
@@ -558,9 +560,9 @@ public abstract class MassiveUploader extends AbstractMassive {
          * You can only add content once, if this hasn't been uploaded you are not allowed to call
          * any of the getXXXAttachment methods
          */
-        String id = res.get_id();
+        String id = res.getId();
         if (id != null && !id.isEmpty()) {
-            AttachmentResource mainAttachmentResource = res.getMainAttachment();
+            AttachmentResourceImpl mainAttachmentResource = (AttachmentResourceImpl) res.getMainAttachment();
             if (mainAttachmentResource != null
                 && mainAttachmentResource.getType() == AttachmentType.CONTENT) {
                 mainAttachmentResource.deleteNow();
@@ -693,13 +695,12 @@ public abstract class MassiveUploader extends AbstractMassive {
      * @param res Resource to add icons to
      * @throws RepositoryException
      */
-    protected void processIcons(ArtifactMetadata amd, MassiveResource res)
+    protected void processIcons(ArtifactMetadata amd, RepositoryResourceWritable res)
             throws RepositoryException {
         int size = 0;
         String current = "";
         String sizeString = "";
         String iconName = "";
-        ImageDetails details = null;
         String iconNames = amd.getIcons();
 
         if (iconNames != null) {
@@ -718,9 +719,6 @@ public abstract class MassiveUploader extends AbstractMassive {
                         if (sizeString.contains("size=")) {
                             String sizes[] = sizeString.split("size=");
                             size = Integer.parseInt(sizes[sizes.length - 1]);
-                            details = new ImageDetails();
-                            details.setWidth(size);
-                            details.setHeight(size);
                         } else {
                             iconName = sizeString;
                         }
@@ -734,16 +732,15 @@ public abstract class MassiveUploader extends AbstractMassive {
                                                         amd.getArchive().getAbsolutePath(), iconName)
                         .getExtractedFile();
                 if (icon.exists()) {
-                    AttachmentResource at = res.addAttachment(icon,
-                                                              AttachmentType.THUMBNAIL);
-                    if (details != null) {
-                        at.setImageDetails(details);
+                    AttachmentResourceWritable at = res.addAttachment(icon,
+                                                                      AttachmentType.THUMBNAIL);
+                    if (size != 0) {
+                        at.setImageDimensions(size, size);
                     }
                 } else {
                     throw new RepositoryArchiveEntryNotFoundException(
                             "Icon does not exist", amd.getArchive(), iconName);
                 }
-                details = null;
             }
         }
     }
@@ -760,7 +757,7 @@ public abstract class MassiveUploader extends AbstractMassive {
      * @param resource
      */
     public void setCommonFieldsFromSideZip(ArtifactMetadata amd,
-                                           MassiveResource resource) {
+                                           RepositoryResourceWritable resource) {
         resource.setDescription(amd.getLongDescription());
         resource.setShortDescription(amd.getShortDescription());
         resource.setName(amd.getName());
@@ -886,7 +883,7 @@ public abstract class MassiveUploader extends AbstractMassive {
                 propertiesReader = new FileReader(propertiesFile);
                 properties.load(propertiesReader);
                 String licenseTypeInProps = properties
-                        .getProperty(MassiveResource.LICENSE_TYPE.toString());
+                        .getProperty(PROP_LICENSE_TYPE);
 
                 // Not all artifacts have licenses so be lenient
                 if (licenseTypeInProps != null) {

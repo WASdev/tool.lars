@@ -31,15 +31,15 @@ import mockit.MockUp;
 import org.junit.After;
 import org.junit.Test;
 
-import com.ibm.ws.massive.LoginInfoEntry;
-import com.ibm.ws.massive.RepositoryBackendException;
-import com.ibm.ws.massive.RepositoryBackendIOException;
-import com.ibm.ws.massive.RepositoryBackendRequestFailureException;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.RepositoryBadDataException;
-import com.ibm.ws.massive.resources.RepositoryResourceDeletionException;
-import com.ibm.ws.massive.sa.client.RequestFailureException;
+import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.exceptions.RepositoryBackendIOException;
+import com.ibm.ws.repository.exceptions.RepositoryBackendRequestFailureException;
+import com.ibm.ws.repository.exceptions.RepositoryBadDataException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceDeletionException;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
+import com.ibm.ws.repository.transport.exceptions.RequestFailureException;
 
 public class DeleteTest {
 
@@ -85,9 +85,9 @@ public class DeleteTest {
     @Test
     public void testDeleteNonExistent() throws ClientException {
 
-        new MockUp<MassiveResource>() {
+        new MockUp<RestRepositoryConnection>() {
             @Mock
-            public <T extends MassiveResource> T getResource(LoginInfoEntry loginInfo, String id) throws RepositoryBackendException, RepositoryBadDataException {
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
                 URL url = null;
                 try {
                     url = new URL("http://localhost");
@@ -95,7 +95,7 @@ public class DeleteTest {
                     // shouldn't happen
                 }
                 RequestFailureException e = new RequestFailureException(404, "not found", url, "not found");
-                throw new RepositoryBackendRequestFailureException(e);
+                throw new RepositoryBackendRequestFailureException(e, null);
             }
         };
 
@@ -109,11 +109,10 @@ public class DeleteTest {
     @Test
     public void testDelete() throws ClientException {
 
-        new MockUp<MassiveResource>() {
+        new MockUp<RestRepositoryConnection>() {
             @Mock
-            public <T extends MassiveResource> T getResource(LoginInfoEntry loginInfo, String id) throws RepositoryBackendException, RepositoryBadDataException {
-                @SuppressWarnings("unchecked")
-                T deleteable = (T) new EsaResource(null) {
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
                     @Override
                     public void delete() throws RepositoryResourceDeletionException {
                         return;
@@ -133,9 +132,9 @@ public class DeleteTest {
     @Test
     public void testMixedDelete() throws ClientException {
 
-        new MockUp<MassiveResource>() {
+        new MockUp<RestRepositoryConnection>() {
             @Mock
-            public <T extends MassiveResource> T getResource(LoginInfoEntry loginInfo, String id) throws RepositoryBackendException, RepositoryBadDataException {
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
                 if (id.equals("1234")) {
                     URL url = null;
                     try {
@@ -144,10 +143,9 @@ public class DeleteTest {
                         // shouldn't happen
                     }
                     RequestFailureException e = new RequestFailureException(404, "not found", url, "not found");
-                    throw new RepositoryBackendRequestFailureException(e);
+                    throw new RepositoryBackendRequestFailureException(e, null);
                 }
-                @SuppressWarnings("unchecked")
-                T deleteable = (T) new EsaResource(null) {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
                     @Override
                     public void delete() throws RepositoryResourceDeletionException {
                         return;
@@ -169,10 +167,10 @@ public class DeleteTest {
 
     @Test
     public void testDeleteNetworkErrorOnRetrieve() {
-        new MockUp<MassiveResource>() {
+        new MockUp<RestRepositoryConnection>() {
             @Mock
-            public <T extends MassiveResource> T getResource(LoginInfoEntry loginInfo, String id) throws RepositoryBackendException, RepositoryBadDataException {
-                throw new RepositoryBackendIOException("The network isn't there!");
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                throw new RepositoryBackendIOException("The network isn't there!", null);
             }
         };
 
@@ -193,9 +191,9 @@ public class DeleteTest {
 
     @Test
     public void testDeleteServerErrorOnRetrieve() {
-        new MockUp<MassiveResource>() {
+        new MockUp<RestRepositoryConnection>() {
             @Mock
-            public <T extends MassiveResource> T getResource(LoginInfoEntry loginInfo, String id) throws RepositoryBackendException, RepositoryBadDataException {
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
                 URL url = null;
                 try {
                     url = new URL("http://localhost");
@@ -203,7 +201,7 @@ public class DeleteTest {
                     // shouldn't happen
                 }
                 RequestFailureException e = new RequestFailureException(500, "Internal Server error", url, "Internal Server error");
-                throw new RepositoryBackendRequestFailureException(e);
+                throw new RepositoryBackendRequestFailureException(e, null);
             }
         };
 
@@ -225,14 +223,13 @@ public class DeleteTest {
     @Test
     public void testDeleteServerErrorOnDelete() {
 
-        new MockUp<MassiveResource>() {
+        new MockUp<RestRepositoryConnection>() {
             @Mock
-            public <T extends MassiveResource> T getResource(LoginInfoEntry loginInfo, String id) throws RepositoryBackendException, RepositoryBadDataException {
-                @SuppressWarnings("unchecked")
-                T deleteable = (T) new EsaResource(null) {
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
                     @Override
                     public void delete() throws RepositoryResourceDeletionException {
-                        throw new RepositoryResourceDeletionException("The network is gone!", get_id());
+                        throw new RepositoryResourceDeletionException("The network is gone!", getId());
                     }
                 };
                 return deleteable;

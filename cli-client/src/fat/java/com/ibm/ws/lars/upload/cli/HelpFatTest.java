@@ -27,8 +27,8 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.ibm.ws.lars.testutils.FatUtils;
-import com.ibm.ws.lars.testutils.RepositoryFixture;
 import com.ibm.ws.lars.testutils.TestProcess;
+import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 
 /**
  * Basic test of the 'help' action of the command line client
