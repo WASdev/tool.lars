@@ -16,7 +16,6 @@
 package com.ibm.ws.lars.rest.injection;
 
 import java.lang.reflect.Field;
-import java.security.Principal;
 
 import com.ibm.ws.lars.rest.AssetServiceLayer;
 import com.ibm.ws.lars.rest.Configuration;
@@ -29,7 +28,6 @@ public class AssetServiceLayerInjection {
 
     private static final String CONFIGURATION_FIELD = "configuration";
     private static final String PERSISTENCE_BEAN_FIELD = "persistenceBean";
-    private static final String PRINCIPAL_FIELD = "principal";
 
     public static void setConfiguration(AssetServiceLayer serviceLayer, Configuration configuration) {
         try {
@@ -48,16 +46,6 @@ public class AssetServiceLayerInjection {
             field.set(serviceLayer, persistor);
         } catch (Exception e) {
             throw new RuntimeException("Failed to inject persistence bean", e);
-        }
-    }
-
-    public static void setPrincipal(AssetServiceLayer serviceLayer, Principal principal) {
-        try {
-            Field field = AssetServiceLayer.class.getDeclaredField(PRINCIPAL_FIELD);
-            field.setAccessible(true);
-            field.set(serviceLayer, principal);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to inject principal", e);
         }
     }
 

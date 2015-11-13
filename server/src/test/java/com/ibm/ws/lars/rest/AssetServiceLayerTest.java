@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.Principal;
 import java.util.Arrays;
 
 import javax.ws.rs.core.UriInfo;
@@ -76,16 +75,8 @@ public class AssetServiceLayerTest {
 
         service = new AssetServiceLayer();
 
-        Principal testPrincipal = new Principal() {
-            @Override
-            public String getName() {
-                return TEST_USERNAME;
-            }
-        };
-
         AssetServiceLayerInjection.setConfiguration(service, new Configuration());
         AssetServiceLayerInjection.setPersistenceBean(service, memoryPersistor);
-        AssetServiceLayerInjection.setPrincipal(service, testPrincipal);
 
         dummyUriInfo = new DummyUriInfo(new URI("http://localhost:9080/ma/v1/"));
 
@@ -95,13 +86,13 @@ public class AssetServiceLayerTest {
     public void badStateTransitionTest() throws InvalidJsonAssetException, NonExistentArtefactException, RepositoryResourceLifecycleException {
         thrown.expect(RepositoryResourceLifecycleException.class);
         thrown.expectMessage("Invalid action approve performed on the asset with state draft");
-        Asset simpleAsset = service.createAsset(simpleObject);
+        Asset simpleAsset = service.createAsset(simpleObject, TEST_USERNAME);
         service.updateAssetState(Asset.StateAction.APPROVE, simpleAsset.get_id());
     }
 
     @Test
     public void lifeCycleTest() throws Exception {
-        Asset asset = service.createAsset(assetWithState);
+        Asset asset = service.createAsset(assetWithState, TEST_USERNAME);
         assertEquals("State should have been overwritten with draft", "draft", asset.getProperty("state"));
         // TODO: Is it possible to check the actual date is correct?
         assertNotNull("created date should not be null", asset.getCreatedOn());
@@ -127,7 +118,7 @@ public class AssetServiceLayerTest {
         String newUpdatedDate = updatedAsset.getLastUpdatedOn();
         assertFalse("The last updated date should have been updated", lastUpdated.equals(newUpdatedDate));
 
-        Asset simpleAsset = service.createAsset(simpleObject);
+        Asset simpleAsset = service.createAsset(simpleObject, TEST_USERNAME);
         Asset simpleGotAsset = service.retrieveAsset(simpleAsset.get_id(), dummyUriInfo);
         assertEquals("Wrong state", Asset.State.DRAFT, simpleGotAsset.getState());
 
@@ -150,7 +141,7 @@ public class AssetServiceLayerTest {
         String attachmentJSON = "{\"url\":\"http://example.com\", \"linkType\":\"direct\"}";
 
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
-        Asset returnedAsset = service.createAsset(asset);
+        Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment unalteredAttachment = Attachment.jsonToAttachment(attachmentJSON);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
 
@@ -182,7 +173,7 @@ public class AssetServiceLayerTest {
         thrown.expectMessage("The URL of the supplied attachment was null");
         String attachmentJSON = "{\"foo\":\"bar\"}";
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
-        Asset returnedAsset = service.createAsset(asset);
+        Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
         service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
     }
@@ -197,7 +188,7 @@ public class AssetServiceLayerTest {
         thrown.expectMessage("The link type for the attachment was not set.");
         String attachmentJSON = "{\"url\":\"http://example.com\"}";
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
-        Asset returnedAsset = service.createAsset(asset);
+        Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
         service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
     }
@@ -212,7 +203,7 @@ public class AssetServiceLayerTest {
         thrown.expectMessage("The link type for the attachment was set to an invalid value: Foobar");
         String attachmentJSON = "{\"url\":\"http://example.com\"}";
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
-        Asset returnedAsset = service.createAsset(asset);
+        Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
         attachment.setLinkType("Foobar");
         service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
@@ -224,7 +215,7 @@ public class AssetServiceLayerTest {
     @Test
     public void testAddAttachmentWithContent() throws Exception {
         Asset assetToCreate = new Asset(simpleObject);
-        Asset returnedAsset = service.createAsset(assetToCreate);
+        Asset returnedAsset = service.createAsset(assetToCreate, TEST_USERNAME);
 
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
 
@@ -287,7 +278,7 @@ public class AssetServiceLayerTest {
         thrown.expectMessage("An attachment should not have the URL set if it is created with content");
 
         Asset assetToCreate = new Asset(simpleObject);
-        Asset returnedAsset = service.createAsset(assetToCreate);
+        Asset returnedAsset = service.createAsset(assetToCreate, TEST_USERNAME);
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
         attachmentToCreate.setUrl("foobar");
         service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
@@ -305,7 +296,7 @@ public class AssetServiceLayerTest {
         thrown.expectMessage("The link type must not be set for an attachment with content");
 
         Asset assetToCreate = new Asset(simpleObject);
-        Asset returnedAsset = service.createAsset(assetToCreate);
+        Asset returnedAsset = service.createAsset(assetToCreate, TEST_USERNAME);
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
         attachmentToCreate.setLinkType("foobar");
         service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
