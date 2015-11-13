@@ -19,7 +19,6 @@ package com.ibm.ws.lars.rest;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -58,12 +57,6 @@ public class AssetServiceLayer {
 
     @Inject
     private Configuration configuration;
-
-    /**
-     * Current user, can only guarantee this is available for admin actions.
-     */
-    @Inject
-    private Principal principal;
 
     /**
      * @see Persistor#retrieveAllAssets()
@@ -125,17 +118,18 @@ public class AssetServiceLayer {
 
     /**
      * @param asset
+     * @param creatorName The name of the user who is creating the asset. Must not be null.
      * @return
      * @throws InvalidJsonAssetException
      */
-    public Asset createAsset(Asset asset) throws InvalidJsonAssetException {
+    public Asset createAsset(Asset asset, String creatorName) throws InvalidJsonAssetException {
         Asset newAsset = new Asset(asset);
 
         verifyNewAsset(newAsset);
         String now = IsoDate.format(new Date());
         newAsset.setCreatedOn(now);
         newAsset.setLastUpdatedOn(now);
-        newAsset.setCreatedBy(principal.getName());
+        newAsset.setCreatedBy(creatorName);
         newAsset.getProperties().put("state", Asset.State.DRAFT.getValue());
 
         return persistenceBean.createAsset(newAsset);

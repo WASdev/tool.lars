@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import mockit.Deencapsulation;
@@ -118,7 +119,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testPostAssets(@Mocked final Logger logger) {
+    public void testPostAssets(@Mocked final Logger logger, @Mocked SecurityContext context) {
 
         final String json = "{\"name\":\"myname\"}";
 
@@ -131,7 +132,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().postAssets(json);
+        getRestResource().postAssets(json, context);
     }
 
     @Test

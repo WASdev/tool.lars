@@ -19,6 +19,7 @@ package com.ibm.ws.lars.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
@@ -147,14 +149,20 @@ public class RepositoryRESTResource {
     @Path("/assets")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(ADMIN_ROLE)
-    public Response postAssets(String assetJSON) {
+    public Response postAssets(String assetJSON, @Context SecurityContext context) {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("postAssets called with json content:\n" + assetJSON);
         }
 
+        String name = "";
+        Principal principal = context.getUserPrincipal();
+        if (principal != null) {
+            name = principal.getName();
+        }
+
         Asset asset = null;
         try {
-            asset = assetService.createAsset(Asset.deserializeAssetFromJson(assetJSON));
+            asset = assetService.createAsset(Asset.deserializeAssetFromJson(assetJSON), name);
         } catch (InvalidJsonAssetException e) {
             String body = getErrorJson(Response.Status.BAD_REQUEST, "Invalid asset definition");
             return Response.status(Response.Status.BAD_REQUEST).entity(body).build();

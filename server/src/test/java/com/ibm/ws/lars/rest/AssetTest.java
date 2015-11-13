@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,16 +58,8 @@ public class AssetTest {
     public void setup() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         service = new AssetServiceLayer();
 
-        Principal testPrincipal = new Principal() {
-            @Override
-            public String getName() {
-                return TEST_USERNAME;
-            }
-        };
-
         AssetServiceLayerInjection.setConfiguration(service, new Configuration());
         AssetServiceLayerInjection.setPersistenceBean(service, memoryPersistor);
-        AssetServiceLayerInjection.setPrincipal(service, testPrincipal);
     }
 
     /**
@@ -137,7 +128,7 @@ public class AssetTest {
     @Test
     public void testStateChange() throws InvalidJsonAssetException {
         Asset asset = Asset.deserializeAssetFromJson(simpleObject);
-        asset = service.createAsset(asset);
+        asset = service.createAsset(asset, TEST_USERNAME);
         try {
             Asset.StateAction.PUBLISH.performAction(asset);
             assertEquals("", Asset.State.AWAITING_APPROVAL, asset.getState());
@@ -167,14 +158,14 @@ public class AssetTest {
     @Test(expected = RepositoryResourceLifecycleException.class)
     public void testBadStateChange() throws InvalidJsonAssetException, RepositoryResourceLifecycleException {
         Asset asset = Asset.deserializeAssetFromJson(simpleObject);
-        asset = service.createAsset(asset);
+        asset = service.createAsset(asset, TEST_USERNAME);
         Asset.StateAction.NEED_MORE_INFO.performAction(asset);
     }
 
     @Test(expected = RepositoryResourceLifecycleException.class)
     public void testBadStateChange2() throws InvalidJsonAssetException, RepositoryResourceLifecycleException {
         Asset asset = Asset.deserializeAssetFromJson(simpleObject);
-        asset = service.createAsset(asset);
+        asset = service.createAsset(asset, TEST_USERNAME);
         Asset.StateAction.PUBLISH.performAction(asset);
         Asset.StateAction.PUBLISH.performAction(asset);
     }
@@ -182,7 +173,7 @@ public class AssetTest {
     @Test(expected = RepositoryResourceLifecycleException.class)
     public void testBadStateChange3() throws InvalidJsonAssetException, RepositoryResourceLifecycleException {
         Asset asset = Asset.deserializeAssetFromJson(simpleObject);
-        asset = service.createAsset(asset);
+        asset = service.createAsset(asset, TEST_USERNAME);
         Asset.StateAction.PUBLISH.performAction(asset);
         Asset.StateAction.UNPUBLISH.performAction(asset);
     }
