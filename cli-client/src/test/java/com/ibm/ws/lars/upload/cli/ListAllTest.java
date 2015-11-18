@@ -116,6 +116,7 @@ public class ListAllTest {
         final List<MassiveResource> getAllList = new ArrayList<MassiveResource>();
         getAllList.add(getTestEsa("1", "A name", "A short description", "productVersion=8.5.5.4;"));
         getAllList.add(getTestEsa("2", "A name", null, null));
+        getAllList.add(getTestEsa("3", "A quoted version", "A shortish description", "productVersion=\"8.5.5.7\";"));
 
         new MockUp<MassiveResource>() {
             @Mock
@@ -134,6 +135,11 @@ public class ListAllTest {
         Pattern pat2 = Pattern.compile("2\\s+\\|\\s+Feature\\s+\\|\\s+\\|\\s+A name");
         Matcher match2 = pat2.matcher(output);
         assertTrue("The output didn't contain the expected asset description:\n" + output, match2.find());
+
+        Pattern pat3 = Pattern.compile("1\\s\\+|\\s+Feature\\s+\\|\\s+8\\.5\\.5\\.7\\s+\\|\\s+A quoted version\\s+\\(A shortish description\\)");
+        Matcher match3 = pat3.matcher(output);
+        assertTrue("The output didn't contain the expected asset description:\n" + output, match3.find());
+
         assertEquals("The error output wasn't empty", "", ebaos.toString());
     }
 
