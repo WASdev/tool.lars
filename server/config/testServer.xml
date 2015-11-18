@@ -49,8 +49,8 @@ limitations under the License.
 
     <httpEndpoint httpPort="@HTTP_PORT@" httpsPort="@HTTPS_PORT@" id="defaultHttpEndpoint"/>
 
-    <!-- Use slightly safer write concern than the default -->
-    <mongo id="mongo" libraryRef="mongo-lib" writeConcern="JOURNAL_SAFE">
+    <!-- Test with 'MAJORITY' as this is likely what a production deployment with a replica set would use -->
+    <mongo id="mongo" libraryRef="mongo-lib" writeConcern="MAJORITY">
         <hostNames>localhost</hostNames>
         <ports>@MONGO_PORT@</ports>
     </mongo>
@@ -72,6 +72,19 @@ limitations under the License.
     <!-- An additional deployment on a different context root with the User role mapped to EVERYONE -->
     <!-- This doesn't quite work properly as both instances share the DB connection and base URL but it works well enough to test permissions. -->
     <webApplication id="lars.noauth" location="larsServer.war" name="lars.noauth" contextRoot="/unrestricted">
+        <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>
+        <application-bnd>
+        <security-role name="User">
+            <special-subject type="EVERYONE"/>
+        </security-role>
+        <security-role name="Administrator">
+            <group name="Administrators"/>
+        </security-role>
+        </application-bnd>
+    </webApplication>
+    
+    <!-- Deploy the bluemix war to a different context root so that the https redirect can be tested -->
+    <webApplication id="lars.bluemix" location="larsBluemix.war" name="lars.bluemix" contextRoot="/bluemix">
         <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>
         <application-bnd>
         <security-role name="User">

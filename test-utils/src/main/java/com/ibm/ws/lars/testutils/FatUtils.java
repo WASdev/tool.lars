@@ -70,6 +70,12 @@ public class FatUtils {
 
     public static final String BASEURL_SERVER_URL = "http://localhost:" + BASEURL_LIBERTY_PORT_HTTP + LARS_APPLICATION_ROOT;
 
+    public static final String BLUEMIX_HTTP_URL =
+            "http://localhost:" + LIBERTY_PORT_HTTP + "/bluemix" + LARS_APPLICATION_ROOT;
+
+    public static final String BLUEMIX_HTTPS_URL =
+            "https://localhost:" + LIBERTY_PORT_HTTPS + "/bluemix" + LARS_APPLICATION_ROOT;
+
     public static final RepositoryFixture FAT_REPO = new RepositoryFixture(SERVER_URL,
             DEFAULT_HOST_AND_PORT,
             TEST_DB_NAME,

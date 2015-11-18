@@ -104,6 +104,8 @@ public class RepositoryContext extends ExternalResource {
     private final String password;
     private UsernamePasswordCredentials credentials;
 
+    private final boolean followRedirects;
+
     private HttpHost targetHost;
     private HttpClientContext context;
 
@@ -136,6 +138,9 @@ public class RepositoryContext extends ExternalResource {
 
         /* Create the HTTPClient that we use to make all HTTP calls */
         HttpClientBuilder b = HttpClientBuilder.create();
+        if (!this.followRedirects) {
+            b.disableRedirectHandling();
+        }
 
         // Trust all certificates
         SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
@@ -197,8 +202,7 @@ public class RepositoryContext extends ExternalResource {
         }
     }
 
-    public RepositoryContext(String url, String user, String password, boolean cleanRepository) {
-
+    public RepositoryContext(String url, String user, String password, boolean cleanRepository, boolean followRedirects) {
         this.cleanRepository = cleanRepository;
 
         URI uri;
@@ -216,8 +220,13 @@ public class RepositoryContext extends ExternalResource {
         this.portNumber = uri.getPort();
         this.user = user;
         this.password = password;
+        this.followRedirects = followRedirects;
 
         fullURL = uri.toString();
+    }
+
+    public RepositoryContext(String url, String user, String password, boolean cleanRepository) {
+        this(url, user, password, cleanRepository, true);
     }
 
     protected static RepositoryContext createAsAdmin(String url, boolean cleanRepository) {
@@ -267,6 +276,11 @@ public class RepositoryContext extends ExternalResource {
             throws ClientProtocolException, IOException {
         HttpGet get = new HttpGet(fullURL + url);
         return doRequest(get, expectedStatusCode);
+    }
+
+    public HttpResponse doRawGet(String url) throws ClientProtocolException, IOException {
+        HttpGet get = new HttpGet(fullURL + url);
+        return httpClient.execute(targetHost, get, context);
     }
 
     public String doDelete(String url, int expectedStatusCode)
