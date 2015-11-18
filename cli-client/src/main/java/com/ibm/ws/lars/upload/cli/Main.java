@@ -60,7 +60,7 @@ public class Main {
     static final String SERVER_ERROR = "The repository server returned an error.";
     static final String NO_FILES = "No files to upload. The files to upload must be provided as arguments.";
 
-    private static Pattern versionPattern = Pattern.compile("productVersion=([0-9\\.+]+)");
+    private static Pattern versionPattern = Pattern.compile("productVersion=\"?([0-9\\.+]+)");
 
     private Map<Option, String> options;
     private Action action;
