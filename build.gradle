@@ -108,6 +108,10 @@ subprojects {
             }
         }
         
+        if (project.hasProperty('massiveServer')) {
+            systemProperty 'massiveServer', massiveServer
+        }
+        
         workingDir file('build/test-working')
     }
     

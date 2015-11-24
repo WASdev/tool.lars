@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.lars.testutils.fixtures;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.junit.rules.TestRule;
@@ -91,7 +92,7 @@ public abstract class RepositoryFixture implements TestRule {
         return userClient;
     }
 
-    public void refreshTextIndex(String assetId) {}
+    public void refreshTextIndex(String assetId) throws IOException {}
 
     /**
      * Returns true if this repository supports updating assets in place

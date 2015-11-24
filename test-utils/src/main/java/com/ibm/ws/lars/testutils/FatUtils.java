@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Properties;
 
 import com.ibm.ws.lars.testutils.fixtures.LarsRepositoryFixture;
+import com.ibm.ws.lars.testutils.fixtures.MassiveRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 
 public class FatUtils {
@@ -103,7 +104,29 @@ public class FatUtils {
 
     public static Object[][] getRestFixtureParameters() {
         List<Object[]> objectList = new ArrayList<Object[]>();
+
         objectList.add(new Object[] { FAT_REPO });
+
+        MassiveRepositoryFixture massiveRepo = getMassiveFixture();
+        if (massiveRepo != null) {
+            objectList.add(new Object[] { massiveRepo });
+        }
+
         return objectList.toArray(new Object[objectList.size()][]);
+    }
+
+    public static MassiveRepositoryFixture getMassiveFixture() {
+        String massiveServerString = System.getProperty("massiveServer");
+        if (massiveServerString == null) {
+            return null;
+        }
+
+        String[] parts = massiveServerString.split(",", -1);
+        if (parts.length != 4) {
+            throw new RuntimeException("Invalid massiveServer property set");
+        }
+
+        MassiveRepositoryFixture fixture = MassiveRepositoryFixture.createFixture(parts[0], parts[1], parts[2], parts[3]);
+        return fixture;
     }
 }
