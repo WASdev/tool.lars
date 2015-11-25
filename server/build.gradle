@@ -36,6 +36,7 @@ ext {
     serverName = archivesBaseName
     testServerName = 'testServer'
     baseUrlServerName = 'baseUrlServer'
+    bluemixServerName = 'bluemixServer'
 }
 
 configurations {
@@ -91,6 +92,14 @@ clean {
         }
     }
 }
+
+task bluemixWar(type: War) {
+    description 'Assemble the war for the bluemix server, which has a custom web.xml'
+    baseName='larsBluemix'
+    exclude('WEB-INF/web.xml')
+    webXml = file('config/bluemixWeb.xml')   
+}
+assemble.dependsOn bluemixWar
 
 test {
     dependsOn 'startTestMongod'
@@ -155,6 +164,12 @@ task createTestUsrDir (type: Copy) {
                                       'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':libertyTraceSpec])
     }
+
+    // Add the bluemix war as a separate app, so that the https redirection
+    // in the web.xml can be tested    
+    from(bluemixWar) {
+        into "servers/${testServerName}/apps"
+    }
     
     from('config/baseUrlServer.xml') {
         into "servers/${baseUrlServerName}"
@@ -164,6 +179,7 @@ task createTestUsrDir (type: Copy) {
                                       'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':libertyTraceSpec])
     }
+    
 }
 
 task startTestServer {
@@ -356,6 +372,24 @@ task testJarContents {
     }
 }
 
+task createBluemixPackage(type: Zip) {
+	
+    description 'Create a liberty packaged server zip of LARS ready for pushing to bluemix'
+
+    from(configurations.sharedLibs) {
+        into 'wlp/usr/shared/resources/libs'
+    }
+    
+    into("wlp/usr/servers/${bluemixServerName}") {
+        from(bluemixWar) {
+            into 'apps'
+        }
+        from "config/${bluemixServerName}.xml"
+        rename("${bluemixServerName}.xml", 'server.xml');
+    }
+    baseName bluemixServerName    
+}
+
 
 task dist {
     dependsOn 'distZip'
@@ -368,6 +402,7 @@ task packageLars {
     dependsOn 'createLarsPackage'
     dependsOn 'testLarsPackage'
     dependsOn 'testJarContents'
+    dependsOn 'createBluemixPackage'
 }
 
 // Searches a server.xml file for feature definitions, turns them
