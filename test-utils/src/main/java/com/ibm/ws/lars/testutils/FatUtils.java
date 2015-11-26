@@ -18,7 +18,12 @@ package com.ibm.ws.lars.testutils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
+import com.ibm.ws.lars.testutils.fixtures.LarsRepositoryFixture;
+import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 
 public class FatUtils {
 
@@ -76,13 +81,7 @@ public class FatUtils {
     public static final String BLUEMIX_HTTPS_URL =
             "https://localhost:" + LIBERTY_PORT_HTTPS + "/bluemix" + LARS_APPLICATION_ROOT;
 
-    public static final RepositoryFixture FAT_REPO = new RepositoryFixture(SERVER_URL,
-            DEFAULT_HOST_AND_PORT,
-            TEST_DB_NAME,
-            ADMIN_USERNAME,
-            ADMIN_PASSWORD,
-            USER_ROLE_USERNAME,
-            USER_ROLE_PASSWORD);
+    public static final RepositoryFixture FAT_REPO = LarsRepositoryFixture.createFixture(SERVER_URL, "1", ADMIN_USERNAME, ADMIN_PASSWORD, USER_ROLE_USERNAME, USER_ROLE_PASSWORD);
 
     public static int countLines(String input) {
         int lines = 0;
@@ -102,4 +101,9 @@ public class FatUtils {
         return lines;
     }
 
+    public static Object[][] getRestFixtureParameters() {
+        List<Object[]> objectList = new ArrayList<Object[]>();
+        objectList.add(new Object[] { FAT_REPO });
+        return objectList.toArray(new Object[objectList.size()][]);
+    }
 }

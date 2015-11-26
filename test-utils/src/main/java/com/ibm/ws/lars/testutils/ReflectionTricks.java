@@ -18,12 +18,10 @@ package com.ibm.ws.lars.testutils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
 
-import com.ibm.ws.massive.LoginInfo;
-import com.ibm.ws.massive.LoginInfoEntry;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.sa.client.model.Asset;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
+import com.ibm.ws.repository.transport.model.Asset;
 
 public class ReflectionTricks {
 
@@ -119,25 +117,10 @@ public class ReflectionTricks {
         return method.invoke(targetObject, values);
     }
 
-    public static Asset getAssetReflective(MassiveResource mr) throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-
-        // Get MassiveResource
-        Class<?> c = Class
-                .forName("com.ibm.ws.massive.resources.MassiveResource");
-
-        // Get MassiveResource.getAsset()
-        Method method = c.getDeclaredMethod("getAsset");
-
-        // Invoke MassiveResource.getAsset()
-        method.setAccessible(true);
-        Asset asset = (Asset) method.invoke(mr);
-
-        return asset;
+    public static Asset getAsset(RepositoryResource resource) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        Method getAssetMethod = RepositoryResourceImpl.class.getDeclaredMethod("getAsset");
+        getAssetMethod.setAccessible(true);
+        return (Asset) getAssetMethod.invoke(resource);
     }
 
-    @SuppressWarnings("unchecked")
-    public static Collection<MassiveResource> getAllResourcesWithDupes(LoginInfoEntry loginInfoEntry) throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, InstantiationException, IllegalArgumentException, InvocationTargetException {
-        return (Collection<MassiveResource>) reflectiveCallAnyTypes(MassiveResource.class, "getAllResourcesWithDupes", new Class[] { LoginInfo.class },
-                                                                    new Object[] { new LoginInfo(loginInfoEntry) });
-    }
 }

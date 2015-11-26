@@ -18,9 +18,9 @@ package com.ibm.ws.massive.upload;
 
 import java.io.File;
 
-import com.ibm.ws.massive.RepositoryException;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.UploadStrategy;
+import com.ibm.ws.repository.exceptions.RepositoryException;
+import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
+import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
 
 /**
  * Instances of this interface are responsible for uploading artifacts into the Liberty Repository.
@@ -30,7 +30,7 @@ import com.ibm.ws.massive.resources.UploadStrategy;
  *
  * @param <T>
  */
-public interface RepositoryUploader<T extends MassiveResource> {
+public interface RepositoryUploader<T extends RepositoryResourceWritable> {
 
     /**
      * Returns <code>true</code> if this uploader is capable of uploading the supplied

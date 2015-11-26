@@ -37,18 +37,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.ibm.ws.lars.upload.cli.ClientException.HelpDisplay;
-import com.ibm.ws.massive.LoginInfo;
-import com.ibm.ws.massive.LoginInfoEntry;
-import com.ibm.ws.massive.RepositoryBackendException;
-import com.ibm.ws.massive.RepositoryBackendRequestFailureException;
-import com.ibm.ws.massive.RepositoryException;
 import com.ibm.ws.massive.esa.MassiveEsa;
-import com.ibm.ws.massive.resources.AddThenDeleteStrategy;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.MassiveResource.State;
-import com.ibm.ws.massive.resources.RepositoryBadDataException;
-import com.ibm.ws.massive.resources.RepositoryResourceDeletionException;
+import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.exceptions.RepositoryBackendRequestFailureException;
+import com.ibm.ws.repository.exceptions.RepositoryBadDataException;
+import com.ibm.ws.repository.exceptions.RepositoryException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceDeletionException;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
+import com.ibm.ws.repository.strategies.writeable.AddThenDeleteStrategy;
 
 public class Main {
 
@@ -256,7 +257,7 @@ public class Main {
      * @param remainingArgs a list of file paths to ESAs which should be uploaded.
      */
     private void doUpload(List<String> remainingArgs) throws ClientException {
-        LoginInfoEntry loginInfoEntry = createLoginInfoEntry();
+        RepositoryConnection repoConnection = createRepoConnection();
         List<File> files = new ArrayList<File>();
         for (String arg : remainingArgs) {
 
@@ -291,7 +292,7 @@ public class Main {
         MassiveEsa uploader;
 
         try {
-            uploader = new MassiveEsa(loginInfoEntry);
+            uploader = new MassiveEsa(repoConnection);
         } catch (RepositoryException ex) {
             throw new ClientException("An error occurred while connecting to the repository: " + ex.getMessage(),
                     1, HelpDisplay.NO_HELP, ex);
@@ -302,15 +303,15 @@ public class Main {
             File file = files.get(i);
             try {
                 output.print((i + 1) + " of " + size + ": Uploading " + file.toString() + " ... ");
-                AddThenDeleteStrategy uploadStrategy = new AddThenDeleteStrategy(State.PUBLISHED, State.PUBLISHED, true);
+                List<RepositoryResource> deletedResources = new ArrayList<>();
+                AddThenDeleteStrategy uploadStrategy = new AddThenDeleteStrategy(State.PUBLISHED, State.PUBLISHED, true, null, deletedResources);
                 uploader.addEsasToMassive(Collections.singleton(file), uploadStrategy);
 
                 // Did this upload operation cause us to delete one or more existing assets?
-                List<MassiveResource> deletedResources = uploadStrategy.getDeletedResources();
                 if (deletedResources.size() > 1) {
                     // This is an unusual case: we replaced more than one existing (duplicate) assets
                     output.println("done, replacing multiple duplicate assets:");
-                    for (MassiveResource deletedResource : deletedResources) {
+                    for (RepositoryResource deletedResource : deletedResources) {
                         output.println(resourceToString(deletedResource));
                     }
                 } else if (deletedResources.size() == 1) {
@@ -330,10 +331,10 @@ public class Main {
 
     private void doListAll(List<String> params) throws ClientException {
 
-        LoginInfoEntry loginInfoEntry = createLoginInfoEntry();
-        Collection<MassiveResource> assets = null;
+        RepositoryConnection repoConnection = createRepoConnection();
+        Collection<? extends RepositoryResource> assets = null;
         try {
-            assets = MassiveResource.getAllResources(new LoginInfo(loginInfoEntry));
+            assets = repoConnection.getAllResources();
         } catch (RepositoryBackendException e) {
             throw new ClientException("An error was recieved from the repository: " + e.getMessage(), 1, HelpDisplay.NO_HELP, e);
         }
@@ -347,7 +348,7 @@ public class Main {
 
         printTabbed("Asset ID", "Asset Type", "Liberty Version", "Asset Name");
 
-        for (MassiveResource resource : assets) {
+        for (RepositoryResource resource : assets) {
             String type = resource.getType().getValue();
             if (type.startsWith("com.ibm.websphere")) {
                 type = type.substring(18);
@@ -374,7 +375,7 @@ public class Main {
                 }
             }
 
-            printTabbed(resource.get_id(), type, appliesTo, name);
+            printTabbed(resource.getId(), type, appliesTo, name);
         }
 
     }
@@ -384,16 +385,16 @@ public class Main {
     }
 
     private void doDelete(List<String> remainingArgs) throws ClientException {
-        LoginInfoEntry loginInfoEntry = createLoginInfoEntry();
+        RepositoryConnection repoConnection = createRepoConnection();
 
         if (remainingArgs.size() == 0) {
             throw new ClientException(NO_IDS_FOR_DELETE, 1, HelpDisplay.SHOW_HELP);
         }
 
         for (String id : remainingArgs) {
-            MassiveResource toDelete = null;
+            RepositoryResourceWritable toDelete = null;
             try {
-                toDelete = MassiveResource.getResource(loginInfoEntry, id);
+                toDelete = (RepositoryResourceWritable) repoConnection.getResource(id);
             } catch (RepositoryBadDataException e) {
                 // This shouldn't happen unless there is client lib bug
                 throw new ClientException("Asset " + id + " not deleted. " + e.getMessage(), 1, HelpDisplay.NO_HELP, e);
@@ -438,11 +439,11 @@ public class Main {
     }
 
     /**
-     * Creates a logininfo object from the options on the command line
+     * Creates a RepositoryConnection object from the options on the command line
      *
      * @return
      */
-    private LoginInfoEntry createLoginInfoEntry() throws ClientException {
+    private RepositoryConnection createRepoConnection() throws ClientException {
         String urlString = null;
         String username = null;
         String password = null;
@@ -508,8 +509,8 @@ public class Main {
             throw new ClientException(INVALID_URL + urlString, 1, HelpDisplay.NO_HELP, e);
         }
 
-        LoginInfoEntry loginInfoEntry = new LoginInfoEntry(username, password, "0", urlString);
-        return loginInfoEntry;
+        RestRepositoryConnection connection = new RestRepositoryConnection(username, password, "0", urlString);
+        return connection;
     }
 
     /**
@@ -529,7 +530,7 @@ public class Main {
      * Converts this resource into a string that can be displayed to the user and which should be
      * useful when presented in the context of "this resource replaced that one when uploaded."
      */
-    private String resourceToString(MassiveResource resource) {
+    private String resourceToString(RepositoryResource resource) {
 
         // At present, we only support features. This code will need to be
         // revisited in order to upload other types of resources

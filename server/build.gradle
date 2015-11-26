@@ -145,6 +145,10 @@ distributions {
     }
 }
 
+def crossProjectTestFiles = {
+    rootProject.allprojects.grep({p -> p.hasProperty("serverHostedTestFiles")}).collect({p -> p.serverHostedTestFiles}).flatten()
+}
+
 task createTestUsrDir (type: Copy) {
     description 'Create the /usr directory for a test server'
     // This is the same as the /usr directory for a production server but uses the testConfig.xml
@@ -178,6 +182,12 @@ task createTestUsrDir (type: Copy) {
                                       'TEST_DB_NAME':testDbName,
                                       'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':libertyTraceSpec])
+    }
+    
+    // Some tests need files served over http
+    // Collect these and put them in a war directory in dropins
+    from(crossProjectTestFiles) {
+        into "servers/${testServerName}/dropins/testFiles.war"
     }
     
 }

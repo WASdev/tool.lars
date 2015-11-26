@@ -26,10 +26,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.ibm.ws.massive.RepositoryBackendException;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.Provider;
-import com.ibm.ws.massive.resources.RepositoryResourceException;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceException;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.AttachmentResourceImpl;
+import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
 
 /**
  * This class includes several static methods for doing various checks within tests.
@@ -44,7 +46,7 @@ public class BasicChecks {
      * @throws RepositoryBackendException
      * @throws RepositoryResourceException
      */
-    public void checkAttachment(MassiveResource res)
+    public void checkAttachment(RepositoryResource res)
             throws RepositoryBackendException, RepositoryResourceException {
         assertNotNull("No main attachment", res.getMainAttachment());
         assertEquals("Wrong file size", res.getMainAttachmentSize(), res
@@ -68,13 +70,13 @@ public class BasicChecks {
      * @throws SecurityException
      * @throws InvocationTargetException
      */
-    public static void checkCopyFields(MassiveResource left, MassiveResource right)
+    public static void checkCopyFields(RepositoryResourceImpl left, RepositoryResourceImpl right)
             throws IllegalArgumentException, IllegalAccessException, InstantiationException, IOException, NoSuchMethodException, SecurityException, InvocationTargetException {
 
         ArrayList<String> methodsToIgnore = new ArrayList<String>();
         methodsToIgnore.add("setState");
         methodsToIgnore.add("setType");
-        methodsToIgnore.add("setLoginInfoEntry");
+        methodsToIgnore.add("setRepositoryConnection");
         for (Method m : left.getClass().getMethods()) {
             if (m.getName().startsWith("set")) {
                 Class<?>[] parameterss = m.getParameterTypes();
@@ -114,11 +116,11 @@ public class BasicChecks {
 
         try {
             m = left.getClass().getDeclaredMethod("copyFieldsFrom",
-                                                  MassiveResource.class, boolean.class);
+                                                  RepositoryResourceImpl.class, boolean.class);
         } catch (Exception e) {
             m = left.getClass()
                     .getSuperclass()
-                    .getDeclaredMethod("copyFieldsFrom", MassiveResource.class,
+                    .getDeclaredMethod("copyFieldsFrom", RepositoryResourceImpl.class,
                                        boolean.class);
         }
         m.setAccessible(true);
@@ -146,18 +148,37 @@ public class BasicChecks {
      *
      * @param res the resource to populate
      */
-    public static void populateResource(MassiveResource res) {
+    public static void populateResource(RepositoryResourceWritable res) {
         res.setName("test resource");
 
-        Provider prov = new Provider();
-        prov.setName("test provider");
-        prov.setUrl("http://testhost/testfile");
-        prov.dump(System.out);
-
-        res.setProvider(prov);
+        res.setProviderName("test provider");
+        res.setProviderUrl("http://testhost/testfile");
 
         res.setVersion("version 1");
         res.setDescription("This is a test resource");
+    }
+
+    /**
+     * A simple upload method which does not do any kind of replacement or state processing.
+     * Suitable for using with test directory based repositories.
+     *
+     * @param resource the resource to upload
+     * @throws RepositoryBackendException
+     * @throws RepositoryResourceException
+     */
+    public static void simpleUpload(RepositoryResource resource) throws RepositoryBackendException, RepositoryResourceException {
+        RepositoryResourceImpl resourceImpl = (RepositoryResourceImpl) resource;
+
+        // Add the asset
+        resourceImpl.addAsset();
+
+        // ... and the attachments
+        for (AttachmentResourceImpl attachment : resourceImpl.getAttachmentImpls()) {
+            resourceImpl.addAttachment(attachment);
+        }
+
+        // read back any fields massive added during upload
+        resourceImpl.refreshFromMassive();
     }
 
 }

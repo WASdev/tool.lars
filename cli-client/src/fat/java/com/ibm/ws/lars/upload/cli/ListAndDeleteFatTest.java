@@ -25,18 +25,20 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import com.ibm.ws.lars.testutils.FatUtils;
-import com.ibm.ws.lars.testutils.RepositoryFixture;
 import com.ibm.ws.lars.testutils.TestProcess;
-import com.ibm.ws.massive.LoginInfo;
-import com.ibm.ws.massive.RepositoryBackendException;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.resources.MassiveResource.LicenseType;
-import com.ibm.ws.massive.resources.MassiveResource.State;
+import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
+import com.ibm.ws.repository.common.enums.LicenseType;
+import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.connections.RepositoryConnectionList;
+import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 
 /**
  * Test the list and delete actions of the command line client
@@ -46,26 +48,33 @@ public class ListAndDeleteFatTest {
     @Rule
     public RepositoryFixture repoServer = FatUtils.FAT_REPO;
 
+    private RestRepositoryConnection repoConnection;
+
+    @Before
+    public void setUp() {
+        repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+    }
+
     @Test
     public void testDelete() throws IOException, RepositoryBackendException {
-        LoginInfo loginInfo = repoServer.getLoginInfo();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
 
         String esaPath = "resources/com.ibm.websphere.appserver.adminCenter-1.0.esa";
         File esaFile = new File(esaPath);
         TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                        "upload",
                                                        "--url=" + FatUtils.SERVER_URL,
-                                                       "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                       "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
                                                        esaPath));
         tp.run();
         tp.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 1, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 1, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 1, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 1, connectionList.getAllFeatures().size());
         tp.assertOutputContains("done");
 
-        EsaResource resource = EsaResource.getAllFeatures(loginInfo).iterator().next();
-        assertEquals("Incorrect state", State.PUBLISHED, resource.getState());
+        EsaResource resource = connectionList.getAllFeatures().iterator().next();
+        assertEquals("Incorrect state", State.PUBLISHED, ((EsaResourceWritable) resource).getState());
         assertEquals("Incorrect license type", LicenseType.UNSPECIFIED, resource.getLicenseType());
         assertEquals("Incorrect size", esaFile.length(), resource.getMainAttachmentSize());
 
@@ -73,8 +82,8 @@ public class ListAndDeleteFatTest {
         TestProcess listProcess = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                 "listAll",
                                                                 "--url=" + FatUtils.SERVER_URL,
-                                                                "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                                "--password=" + repoServer.getLoginInfoEntry().getPassword()));
+                                                                "--username=" + repoConnection.getUserId(),
+                                                                "--password=" + repoConnection.getPassword()));
         listProcess.run();
         String output = listProcess.getOutput();
         assertTrue("More than one feature found: " + output, (output.indexOf("Feature") == output.lastIndexOf("Feature") && output.indexOf("Feature") != -1));
@@ -88,20 +97,20 @@ public class ListAndDeleteFatTest {
         TestProcess upload2 = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                             "upload",
                                                             "--url=" + FatUtils.SERVER_URL, esa2Path,
-                                                            "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                            "--password=" + repoServer.getLoginInfoEntry().getPassword()));
+                                                            "--username=" + repoConnection.getUserId(),
+                                                            "--password=" + repoConnection.getPassword()));
         upload2.run();
         upload2.assertReturnCode(0);
-        assertEquals("Incorrect resource count", 2, MassiveResource.getAllResources(loginInfo).size());
-        assertEquals("Incorrect feature count", 2, EsaResource.getAllFeatures(loginInfo).size());
+        assertEquals("Incorrect resource count", 2, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 2, connectionList.getAllFeatures().size());
         upload2.assertOutputContains("done");
 
         // List assets, should now show 2 assets
         TestProcess list2Process = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                  "listAll",
                                                                  "--url=" + FatUtils.SERVER_URL,
-                                                                 "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                                 "--password=" + repoServer.getLoginInfoEntry().getPassword()));
+                                                                 "--username=" + repoConnection.getUserId(),
+                                                                 "--password=" + repoConnection.getPassword()));
         list2Process.run();
         String list2output = list2Process.getOutput();
         int lineCount2 = FatUtils.countLines(list2output);
@@ -114,8 +123,8 @@ public class ListAndDeleteFatTest {
         TestProcess deleteProcess = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                   "delete",
                                                                   "--url=" + FatUtils.SERVER_URL,
-                                                                  "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                                  "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                                  "--username=" + repoConnection.getUserId(),
+                                                                  "--password=" + repoConnection.getPassword(),
                                                                   id,
                                                                   id2));
         deleteProcess.run();
@@ -127,8 +136,8 @@ public class ListAndDeleteFatTest {
         TestProcess deleteAgain = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                 "delete",
                                                                 "--url=" + FatUtils.SERVER_URL,
-                                                                "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                                "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                                "--username=" + repoConnection.getUserId(),
+                                                                "--password=" + repoConnection.getPassword(),
                                                                 id));
         deleteAgain.run();
         deleteAgain.assertOutputContains("Asset " + id + " not deleted. Asset not found in repository.");
@@ -141,8 +150,8 @@ public class ListAndDeleteFatTest {
         TestProcess deleteProcess = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                   "delete",
                                                                   "--url=" + "invalidurl",
-                                                                  "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                                  "--password=" + repoServer.getLoginInfoEntry().getPassword(),
+                                                                  "--username=" + repoConnection.getUserId(),
+                                                                  "--password=" + repoConnection.getPassword(),
                                                                   "abc123"));
         deleteProcess.run();
         deleteProcess.assertReturnCode(1);
@@ -154,8 +163,8 @@ public class ListAndDeleteFatTest {
         TestProcess listProcess = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                 "list",
                                                                 "--url=" + "invalidurl",
-                                                                "--username=" + repoServer.getLoginInfoEntry().getUserId(),
-                                                                "--password=" + repoServer.getLoginInfoEntry().getPassword()));
+                                                                "--username=" + repoConnection.getUserId(),
+                                                                "--password=" + repoConnection.getPassword()));
         listProcess.run();
         listProcess.assertReturnCode(1);
     }

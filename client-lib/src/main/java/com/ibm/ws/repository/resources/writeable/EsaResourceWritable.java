@@ -1,0 +1,136 @@
+/*******************************************************************************
+ * Copyright (c) 2015 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+package com.ibm.ws.repository.resources.writeable;
+
+import java.util.Collection;
+
+import com.ibm.ws.repository.common.enums.InstallPolicy;
+import com.ibm.ws.repository.common.enums.Visibility;
+import com.ibm.ws.repository.resources.EsaResource;
+
+/**
+ * Represents a Feature Resource which may be uploaded to a repository.
+ * 
+ * @see RepositoryResourceWritable
+ */
+public interface EsaResourceWritable extends WebDisplayable, ApplicableToProductWritable, EsaResource, RepositoryResourceWritable {
+
+    /**
+     * Set the provide feature field for this feature
+     * 
+     * @param feature The name this feature should use.
+     */
+    public void setProvideFeature(String feature);
+
+    /**
+     * Add the supplied feature to the list of required features
+     * 
+     * @param requiredFeatureSymbolicName The symbolic name of the feature to add
+     */
+    public void addRequireFeature(String requiredFeatureSymbolicName);
+
+    /**
+     * Add the supplied fix to the list of required fixes
+     * 
+     * @param fix The ID of the fix to add
+     */
+    public void addRequireFix(String fix);
+
+    /**
+     * Sets the list of required features to the supplied list of features
+     * 
+     * @param feats The list of symbolic names of features
+     */
+    public void setRequireFeature(Collection<String> feats);
+
+    /**
+     * Adds the supplied feature to the list of features which supersede this feature
+     * 
+     * @param feature the symbolic name of the feature to add
+     */
+    public void addSupersededBy(String feature);
+
+    /**
+     * Gets the collection of features which supersede this feature
+     * 
+     * @return a collection of symbolic names of features which supersede this feature
+     */
+    public Collection<String> getSupersededBy();
+
+    /**
+     * Adds the supplied feature to the list of features which may also be required by an application if this feature is replaced with the features which supersede it.
+     * <p>
+     * E.g. applicationSecurity-1.0 depends on servlet-3.0 but applicationSecurity-2.0 does not.
+     * <p>
+     * If a server config is changed to use applicationSecurity-2.0 instead of applicationSecurity-1.0, the server admin may also need to add servlet-3.0 if it was not explicitly
+     * required before and applications
+     * depend on it.
+     * 
+     * @param feature the symbolic name of the feature to add
+     */
+    public void addSupersededByOptional(String feature);
+
+    /**
+     * Gets the list of features which may also be required by an application if this feature is replaced by the features which supersede it.
+     * 
+     * @return collection of symbolic names of features which may be required if this feature is replaced by the features which supersede it.
+     */
+    public Collection<String> getSupersededByOptional();
+
+    /**
+     * Set the Visibility to the supplied {@link Visibility}
+     * 
+     * @param vis The {@link Visibility} to use for this feature
+     */
+    public void setVisibility(Visibility vis);
+
+    /**
+     * Sets the ibm short name to use for this feature
+     * 
+     * @param shortName The ibm short name to use
+     */
+    public void setShortName(String shortName);
+
+    /**
+     * Sets the ibmProvisionCapability field.
+     * 
+     * @param ibmProvisionCapability
+     *            The new ibmProvisionCapability to be used
+     */
+    public void setProvisionCapability(String provisionCapability);
+
+    /**
+     * Sets the install policy for the feature
+     * 
+     * An install policy of {@link InstallPolicy#WHEN_SATISFIED} should only be used if {@link #getIbmProvisionCapability()} returns a non-<code>null</code> value. This indicates
+     * that the feature should be automatically installed if all of its provision capability requirements are met.
+     * 
+     * @param policy the new value for installPolicy
+     */
+    public void setInstallPolicy(InstallPolicy policy);
+
+    /**
+     * Specify the minimum/maximum Java version needed by this ESA, and the Require-Capability headers from each contained bundle which have led to the requirement. All fields are
+     * allowed to be null.
+     * 
+     * @param minimum an OSGI version string representing the minimum Java version required.
+     * @param maximum an OSGI version string representing the minimum Java version required.
+     * @param displayMinimum An alternative representation of the minimum version for display purposes
+     * @param displayMaximum An alternative representation of the maximum version for display purposes
+     * @param rawBundleRequirements The Require-Capability headers from all the bundles contained in this ESA
+     */
+    public void setJavaSEVersionRequirements(String minimum, String maximum, Collection<String> rawBundleRequirements);
+}

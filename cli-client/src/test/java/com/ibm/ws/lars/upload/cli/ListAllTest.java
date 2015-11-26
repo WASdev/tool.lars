@@ -36,12 +36,15 @@ import mockit.MockUp;
 import org.junit.After;
 import org.junit.Test;
 
-import com.ibm.ws.massive.LoginInfo;
-import com.ibm.ws.massive.RepositoryBackendException;
-import com.ibm.ws.massive.resources.EsaResource;
-import com.ibm.ws.massive.resources.MassiveResource;
-import com.ibm.ws.massive.sa.client.model.Asset;
-import com.ibm.ws.massive.sa.client.model.WlpInformation;
+import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
+import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
+import com.ibm.ws.repository.transport.model.Asset;
+import com.ibm.ws.repository.transport.model.WlpInformation;
 
 public class ListAllTest {
 
@@ -95,11 +98,11 @@ public class ListAllTest {
     }
 
     @Test
-    public void testEmptyRepository() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, ClientException {
+    public <RC extends RepositoryConnection> void testEmptyRepository() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, ClientException {
 
-        new MockUp<MassiveResource>() {
+        new MockUp<RC>() {
             @Mock
-            public Collection<MassiveResource> getAllResources(LoginInfo info) throws RepositoryBackendException {
+            public Collection<RepositoryResource> getAllResources() throws RepositoryBackendException {
                 return Collections.emptySet();
             }
         };
@@ -112,15 +115,15 @@ public class ListAllTest {
     }
 
     @Test
-    public void testResultsFormat() throws ClientException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        final List<MassiveResource> getAllList = new ArrayList<MassiveResource>();
+    public <RC extends RepositoryConnection> void testResultsFormat() throws ClientException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        final List<RepositoryResource> getAllList = new ArrayList<>();
         getAllList.add(getTestEsa("1", "A name", "A short description", "productVersion=8.5.5.4;"));
         getAllList.add(getTestEsa("2", "A name", null, null));
         getAllList.add(getTestEsa("3", "A quoted version", "A shortish description", "productVersion=\"8.5.5.7\";"));
 
-        new MockUp<MassiveResource>() {
+        new MockUp<RC>() {
             @Mock
-            public Collection<MassiveResource> getAllResources(LoginInfo info) throws RepositoryBackendException {
+            public Collection<RepositoryResource> getAllResources() throws RepositoryBackendException {
                 return getAllList;
             }
         };
@@ -151,7 +154,7 @@ public class ListAllTest {
         Asset asset = new Asset();
         asset.set_id(id);
         asset.setName(name);
-        asset.setType(Asset.Type.FEATURE);
+        asset.setType(ResourceType.FEATURE);
         WlpInformation info = new WlpInformation();
         if (shortName != null) {
             info.setShortName(shortName);
@@ -159,8 +162,8 @@ public class ListAllTest {
         info.setAppliesTo(appliesTo);
         asset.setWlpInformation(info);
 
-        EsaResource er = new EsaResource(null);
-        Field assetField = MassiveResource.class.getDeclaredField("_asset");
+        EsaResource er = new EsaResourceImpl(null);
+        Field assetField = RepositoryResourceImpl.class.getDeclaredField("_asset");
         assetField.setAccessible(true);
         assetField.set(er, asset);
 
