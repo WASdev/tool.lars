@@ -15,6 +15,10 @@
  *******************************************************************************/
 package com.ibm.ws.lars.testutils.fixtures;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assume.assumeThat;
+
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.junit.rules.TestRule;
@@ -55,16 +59,34 @@ public abstract class RepositoryFixture implements TestRule {
     }
 
     @Override
-    public Statement apply(final Statement base, Description description) {
+    public Statement apply(final Statement base, final Description description) {
         return new Statement() {
 
             @Override
             public void evaluate() throws Throwable {
+                assumeFatFilterMatches(description);
                 createCleanRepository();
                 base.evaluate();
                 cleanupRepository();
             }
         };
+    }
+
+    /**
+     * Assume (in the JUnit sense) that the testDescription is matched by the fatFilter
+     * <p>
+     * <ul>
+     * <li>If the "fatFilter" property is set, the test will be skipped if its name does not contain
+     * the fatFilter string</li>
+     * <li>If the "fatFilter" property is not set, this method does nothing and the test is run as
+     * normal</li>
+     * </ul>
+     */
+    protected void assumeFatFilterMatches(Description testDescription) {
+        String fatFilter = System.getProperty("fatFilter");
+        if (fatFilter != null) {
+            assumeThat(testDescription.getDisplayName(), containsString(fatFilter));
+        }
     }
 
     protected abstract void createCleanRepository() throws Exception;
@@ -91,7 +113,7 @@ public abstract class RepositoryFixture implements TestRule {
         return userClient;
     }
 
-    public void refreshTextIndex(String assetId) {}
+    public void refreshTextIndex(String assetId) throws IOException {}
 
     /**
      * Returns true if this repository supports updating assets in place

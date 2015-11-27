@@ -108,6 +108,14 @@ subprojects {
             }
         }
         
+        if (project.hasProperty('massiveServer')) {
+            systemProperty 'massiveServer', massiveServer
+        }
+        
+        if (project.hasProperty('fatFilter')) {
+            systemProperty 'fatFilter', fatFilter
+        }
+        
         workingDir file('build/test-working')
     }
     

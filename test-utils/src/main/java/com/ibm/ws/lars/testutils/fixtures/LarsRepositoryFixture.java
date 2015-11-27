@@ -31,7 +31,7 @@ import com.ibm.ws.repository.transport.model.Asset;
  */
 public class LarsRepositoryFixture extends RepositoryFixture {
 
-    private final String repositoryUrl;
+    protected final String repositoryUrl;
 
     public static LarsRepositoryFixture createFixture(String repositoryUrl, String apiKey, String adminId, String adminPassword, String userId, String userPassword) {
         RestRepositoryConnection adminConnection = new RestRepositoryConnection(adminId, adminPassword, apiKey, repositoryUrl);
@@ -43,8 +43,8 @@ public class LarsRepositoryFixture extends RepositoryFixture {
         return new LarsRepositoryFixture(adminConnection, userConnection, adminClient, writableClient, userClient, repositoryUrl);
     }
 
-    private LarsRepositoryFixture(RepositoryConnection adminConnection, RepositoryConnection userConnection, RepositoryReadableClient adminClient,
-                                  RepositoryWriteableClient writableClient, RepositoryReadableClient userClient, String repositoryUrl) {
+    protected LarsRepositoryFixture(RepositoryConnection adminConnection, RepositoryConnection userConnection, RepositoryReadableClient adminClient,
+                                    RepositoryWriteableClient writableClient, RepositoryReadableClient userClient, String repositoryUrl) {
         super(adminConnection, userConnection, adminClient, writableClient, userClient);
         this.repositoryUrl = repositoryUrl;
     }
