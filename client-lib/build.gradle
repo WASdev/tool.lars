@@ -23,5 +23,11 @@ dependencies {
     compile group:'org.apache.wink', name:'wink-json4j', version:wink_json4j_version
 }
 
+task srcJar(type: Jar) {
+    classifier = 'src'
+    from sourceSets.main.java
+}
+assemble.dependsOn srcJar
+
 
 // vim: set si:
