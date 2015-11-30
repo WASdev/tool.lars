@@ -382,7 +382,7 @@ task testJarContents {
     }
 }
 
-task createBluemixPackage(type: Zip) {
+task packageBluemixLars(type: Zip) {
 	
     description 'Create a liberty packaged server zip of LARS ready for pushing to bluemix'
 
@@ -400,20 +400,24 @@ task createBluemixPackage(type: Zip) {
     baseName bluemixServerName    
 }
 
-
-task dist {
-    dependsOn 'distZip'
-    dependsOn 'packageLars'
-    outputs.files(createLarsPackage.getOutputs().getFiles())
-    outputs.files(distZip.getOutputs().getFiles())
-}
-
 task packageLars {
     dependsOn 'createLarsPackage'
     dependsOn 'testLarsPackage'
     dependsOn 'testJarContents'
-    dependsOn 'createBluemixPackage'
+    outputs.files(createLarsPackage.getOutputs().getFiles())
 }
+
+
+
+task dist {    
+    // This task is essentially an aggregate of the other packaging/distribution tasks
+    List aggregates = ['distZip', 'packageLars', 'packageBluemixLars']
+    aggregates.each { taskname -> 
+        dependsOn taskname
+        outputs.files(tasks[taskname].getOutputs().getFiles())
+    }
+}
+
 
 // Searches a server.xml file for feature definitions, turns them
 // into a single string for sticking in the manifest.
