@@ -56,6 +56,22 @@ public enum Action implements HelpMessage {
                    + "Note that subdirectories are not recursively searched.";
         }
     },
+    FIND("find") {
+        @Override
+        public String getHelpSummary() {
+            return "Find assets in the repository.";
+        }
+
+        @Override
+        public String getUsage() {
+            return "find [--name=] searchString";
+        }
+
+        @Override
+        public String getHelpDetail() {
+            return "Finds all the assets in the repository that match the values of the name and searchString arguments.";
+        }
+    },
     DELETE("delete") {
         @Override
         public String getHelpSummary() {
@@ -70,6 +86,23 @@ public enum Action implements HelpMessage {
         @Override
         public String getHelpDetail() {
             return "Delete one or more assets from the repository, specified by id.";
+        }
+    },
+    FIND_AND_DELETE("findAndDelete") {
+        @Override
+        public String getHelpSummary() {
+            return "Find and delete assets in the repository.";
+        }
+
+        @Override
+        public String getUsage() {
+            return "findAndDelete [--noPrompts] [--name=<assetName>] searchString";
+        }
+
+        @Override
+        public String getHelpDetail() {
+            return "Finds and deletes all the assets in the repository that match the values of the name and searchString arguments. The --name must be an exact match. "
+                   + "Unless the noPrompts option is specified each asset deletion will prompt for confirmation before being deleted.";
         }
     },
     LISTALL("listAll") {

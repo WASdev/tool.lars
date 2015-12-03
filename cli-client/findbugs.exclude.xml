@@ -1,0 +1,11 @@
+<FindBugsFilter>
+    <!-- See http://findbugs.sourceforge.net/manual/filter.html for details 
+        of the syntax of this file -->
+
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING" />
+        <Class name="com.ibm.ws.lars.upload.cli.Main" />
+    </Match>
+
+
+</FindBugsFilter>

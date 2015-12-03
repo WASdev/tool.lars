@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Console;
 import java.io.File;
@@ -41,8 +42,8 @@ import org.junit.Test;
 
 import com.ibm.ws.lars.upload.cli.ClientException.HelpDisplay;
 import com.ibm.ws.massive.esa.MassiveEsa;
-import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.connections.RestRepositoryConnection;
 import com.ibm.ws.repository.resources.EsaResource;
@@ -223,7 +224,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "--url=http://example.org/" });
             fail("ClientException not thrown");
@@ -241,7 +242,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa" });
             fail("ClientException not thrown");
@@ -258,7 +259,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "TestFile.esa" });
             fail("ClientException not thrown");
@@ -276,7 +277,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         try {
             main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa", "InvalidFile.esa" });
             fail("ClientException not thrown");
@@ -294,7 +295,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa"), uploader.getFilesUploaded());
@@ -308,7 +309,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "TestFile.esa", "TestFile2.esa", "TestFile3.esa" });
 
         assertEquals("Wrong files uploaded", Arrays.asList("TestFile.esa", "TestFile2.esa", "TestFile3.esa"), uploader.getFilesUploaded());
@@ -324,7 +325,7 @@ public class UploadTest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password=foobar", "TestFile.esa" });
 
         RestRepositoryConnection repoConnection = (RestRepositoryConnection) uploader.getLoginInfoEntry();
@@ -370,7 +371,7 @@ public class UploadTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         // test with a password prompt
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
         main.run(new String[] { "--upload", "--url=http://example.org", "--username=jbloggs", "--password", "TestFile.esa" });
 
         RestRepositoryConnection repoConnection = (RestRepositoryConnection) uploader.getLoginInfoEntry();
@@ -403,7 +404,7 @@ public class UploadTest {
         new MockDirectoryWithFiles();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(out));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(out));
 
         main.run(new String[] { "--upload", "--url=http://example.org", "superDirectory" });
 
@@ -418,7 +419,7 @@ public class UploadTest {
         new MockDirectoryWithFiles();
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
-        Main main = new Main(new PrintStream(outStream));
+        Main main = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(outStream));
 
         main.run(new String[] { "--upload", "--url=http://example.org", "superDirectory", "i-am-a-feature.esa" });
 
@@ -443,7 +444,7 @@ public class UploadTest {
         // has been deleted when we upload our new resource.
         // We verify that we get a message telling us that the pre-existing file was deleted
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        Main main2 = new Main(new PrintStream(outStream));
+        Main main2 = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(outStream));
         main2.run(new String[] { "--upload", "--url=http://example.org", "superDirectory/cheese.esa" });
 
         assertThat("Output incorrect", outStream.toString(),
@@ -466,7 +467,7 @@ public class UploadTest {
         // have been deleted when we upload our new resource.
         // We verify that we get a message telling us that the pre-existing files were deleted
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        Main main2 = new Main(new PrintStream(outStream));
+        Main main2 = new Main(new ByteArrayInputStream(new byte[0]), new PrintStream(outStream));
         main2.run(new String[] { "--upload", "--url=http://example.org", "superDirectory/cheese.esa" });
 
         assertEquals("Output incorrect",

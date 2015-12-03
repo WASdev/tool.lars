@@ -122,6 +122,7 @@ public class ListAndDeleteFatTest {
         // Delete both assets
         TestProcess deleteProcess = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                   "delete",
+                                                                  "--noPrompts",
                                                                   "--url=" + FatUtils.SERVER_URL,
                                                                   "--username=" + repoConnection.getUserId(),
                                                                   "--password=" + repoConnection.getPassword(),
@@ -135,6 +136,7 @@ public class ListAndDeleteFatTest {
         // Delete again and check that it fails
         TestProcess deleteAgain = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                 "delete",
+                                                                "--noPrompts",
                                                                 "--url=" + FatUtils.SERVER_URL,
                                                                 "--username=" + repoConnection.getUserId(),
                                                                 "--password=" + repoConnection.getPassword(),
@@ -149,6 +151,7 @@ public class ListAndDeleteFatTest {
     public void testDeleteInvalidUrl() throws IOException {
         TestProcess deleteProcess = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
                                                                   "delete",
+                                                                  "--noPrompts",
                                                                   "--url=" + "invalidurl",
                                                                   "--username=" + repoConnection.getUserId(),
                                                                   "--password=" + repoConnection.getPassword(),

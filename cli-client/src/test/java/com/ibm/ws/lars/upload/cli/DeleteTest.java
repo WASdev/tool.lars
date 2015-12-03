@@ -17,20 +17,26 @@
 package com.ibm.ws.lars.upload.cli;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import mockit.Mock;
-import mockit.MockUp;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Test;
 
+import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.Visibility;
+import com.ibm.ws.repository.connections.ProductDefinition;
 import com.ibm.ws.repository.connections.RestRepositoryConnection;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryBackendIOException;
@@ -41,11 +47,15 @@ import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
 import com.ibm.ws.repository.transport.exceptions.RequestFailureException;
 
+import mockit.Mock;
+import mockit.MockUp;
+
 public class DeleteTest {
 
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     private final PrintStream output = new PrintStream(baos);
-    private final Main tested = new Main(output);
+    private InputStream input = new ByteArrayInputStream(new byte[0]);
+    private Main tested = new Main(input, output);
 
     @After
     public void tearDown() {
@@ -175,7 +185,7 @@ public class DeleteTest {
         };
 
         try {
-            tested.run(new String[] { "--delete", "--url=http://localhost:9080", "9999" });
+            tested.run(new String[] { "--delete", "--noPrompts", "--url=http://localhost:9080", "9999" });
         } catch (ClientException e) {
 
             String output = baos.toString();
@@ -237,7 +247,7 @@ public class DeleteTest {
         };
 
         try {
-            tested.run(new String[] { "--delete", "--url=http://localhost:9080", "9999" });
+            tested.run(new String[] { "--delete", "--noPrompts", "--url=http://localhost:9080", "9999" });
         } catch (ClientException e) {
 
             String output = baos.toString();
@@ -250,4 +260,222 @@ public class DeleteTest {
 
     }
 
+    @Test
+    public void testFindAndDelete() throws ClientException {
+
+        new MockUp<RestRepositoryConnection>() {
+            @Mock
+            public Collection<? extends RepositoryResource> findResources(String searchTerm, Collection<ProductDefinition> productDefinitions,
+                                                                          Collection<ResourceType> types,
+                                                                          Visibility visibility) throws RepositoryBackendException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        return;
+                    }
+                };
+                List<RepositoryResource> rs = Arrays.asList(new RepositoryResource[] { deleteable });
+                return rs;
+            }
+
+            @Mock
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                return deleteable;
+            }
+        };
+
+        DeleteTest.this.deleteCalled = false;
+        tested.run(new String[] { "--findAndDelete", "--noPrompts", "--url=http://localhost:9080", "admin" });
+
+        String output = baos.toString();
+
+        assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Deleted asset null"));
+        assertTrue("Delete not called", deleteCalled);
+    }
+
+    @Test
+    public void testFindAndDeletePromptN() throws ClientException {
+
+        new MockUp<RestRepositoryConnection>() {
+            @Mock
+            public Collection<? extends RepositoryResource> findResources(String searchTerm, Collection<ProductDefinition> productDefinitions,
+                                                                          Collection<ResourceType> types,
+                                                                          Visibility visibility) throws RepositoryBackendException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                List<RepositoryResource> rs = Arrays.asList(new RepositoryResource[] { deleteable });
+                return rs;
+            }
+
+            @Mock
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                return deleteable;
+            }
+        };
+
+        String sysIn = "n" + System.lineSeparator();
+        input = new ByteArrayInputStream(sysIn.getBytes());
+        tested = new Main(input, output);
+
+        DeleteTest.this.deleteCalled = false;
+        tested.run(new String[] { "--findAndDelete", "--url=http://localhost:9080", "admin" });
+
+        String output = baos.toString();
+
+        assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Delete asset null null (y/N)?"));
+        assertFalse("Delete called", deleteCalled);
+    }
+
+    Boolean deleteCalled = false;
+
+    @Test
+    public void testFindAndDeletePromptY() throws ClientException {
+        deleteCalled = false;
+        new MockUp<RestRepositoryConnection>() {
+            @Mock
+            public Collection<? extends RepositoryResource> findResources(String searchTerm, Collection<ProductDefinition> productDefinitions,
+                                                                          Collection<ResourceType> types,
+                                                                          Visibility visibility) throws RepositoryBackendException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                List<RepositoryResource> rs = Arrays.asList(new RepositoryResource[] { deleteable });
+                return rs;
+            }
+
+            @Mock
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                return deleteable;
+            }
+        };
+
+        String sysIn = "y" + System.lineSeparator();
+        input = new ByteArrayInputStream(sysIn.getBytes());
+        tested = new Main(input, output);
+
+        tested.run(new String[] { "--findAndDelete", "--url=http://localhost:9080", "admin" });
+
+        String output = baos.toString();
+
+        assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Delete asset null null (y/N)?"));
+        assertTrue("Delete not called", deleteCalled);
+    }
+
+    @Test
+    public void testFindAndDeletePromptNull() throws ClientException {
+        new MockUp<RestRepositoryConnection>() {
+            @Mock
+            public Collection<? extends RepositoryResource> findResources(String searchTerm, Collection<ProductDefinition> productDefinitions,
+                                                                          Collection<ResourceType> types,
+                                                                          Visibility visibility) throws RepositoryBackendException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                List<RepositoryResource> rs = Arrays.asList(new RepositoryResource[] { deleteable });
+                return rs;
+            }
+
+            @Mock
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                return deleteable;
+            }
+        };
+
+        deleteCalled = false;
+        String sysIn = System.lineSeparator(); // No input, just hit enter
+        input = new ByteArrayInputStream(sysIn.getBytes());
+        tested = new Main(input, output);
+
+        tested.run(new String[] { "--findAndDelete", "--url=http://localhost:9080", "admin" });
+
+        String output = baos.toString();
+
+        assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Delete asset null null (y/N)?"));
+        assertFalse("Delete called", deleteCalled);
+    }
+
+    @Test
+    public void testFindAndDeletePromptRandom() throws ClientException {
+        new MockUp<RestRepositoryConnection>() {
+            @Mock
+            public Collection<? extends RepositoryResource> findResources(String searchTerm, Collection<ProductDefinition> productDefinitions,
+                                                                          Collection<ResourceType> types,
+                                                                          Visibility visibility) throws RepositoryBackendException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                List<RepositoryResource> rs = Arrays.asList(new RepositoryResource[] { deleteable });
+                return rs;
+            }
+
+            @Mock
+            public RepositoryResource getResource(String id) throws RepositoryBackendException, RepositoryBadDataException {
+                RepositoryResource deleteable = new EsaResourceImpl(null) {
+                    @Override
+                    public void delete() throws RepositoryResourceDeletionException {
+                        DeleteTest.this.deleteCalled = true;
+                        return;
+                    }
+                };
+                return deleteable;
+            }
+        };
+
+        deleteCalled = false;
+        String sysIn = "xyz" + System.lineSeparator();
+        input = new ByteArrayInputStream(sysIn.getBytes());
+        tested = new Main(input, output);
+
+        tested.run(new String[] { "--findAndDelete", "--url=http://localhost:9080", "admin" });
+
+        String output = baos.toString();
+
+        assertTrue("Expected message was missing. Output was:\n" + output, output.contains("Delete asset null null (y/N)?"));
+        assertFalse("Delete called", deleteCalled);
+    }
 }
