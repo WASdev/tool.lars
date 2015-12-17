@@ -44,6 +44,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
+import com.ibm.ws.repository.common.enums.FilterPredicate;
+import com.ibm.ws.repository.common.enums.FilterableAttribute;
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.Visibility;
@@ -87,16 +89,16 @@ public class ResourceFilteringTest {
 
     /*
      * The setup for this test is a little complex.
-     *
+     * 
      * The tests in this class expect to run against a repository loaded with assets in setupRepoForFilterTests()
-     *
+     * 
      * As in the other test classes, we need to run these tests against multiple repositories.
-     *
+     * 
      * getClassRule() returns a set of rules which ensure we have the repositories we want set up at the start
      * of the test and cleaned up at the end.
-     *
+     * 
      * getParameters() ensures we actually run the tests against each of the repositories
-     *
+     * 
      * setupClass() loads each of the repositories with the initial test data
      */
 
@@ -160,6 +162,58 @@ public class ResourceFilteringTest {
 
         Collection<? extends RepositoryResource> addons = result.get(ResourceType.ADDON);
         filterResources.validateReturnedResources(addons, EnumSet.of(FilterResources.Resources.ADDON));
+    }
+
+    @Test
+    public void testResourceFiltering() throws RepositoryBackendException {
+
+        // This test should test all the possible attributes, so assert that the number
+        // of values hasn't changed. If it does, add a new test!
+        assertTrue("An attribute has been added/or removed, so a new test is needed (or one removed)",
+                   FilterableAttribute.values().length == 9);
+
+        RepositoryConnectionList connection = new RepositoryConnectionList(repoConnection);
+
+        // Test filtering on all attributes individually
+        Collection<RepositoryResource> result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, ResourceType.PRODUCTSAMPLE));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.SAMPLE));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.PRODUCT_ID, "com.ibm.ws.plw"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.FEATURE_TWO_PRODUCTS,
+                                                                     FilterResources.Resources.FEATURE_OTHER_PRODUCT_SAME_VERSION,
+                                                                     FilterResources.Resources.FEATURE_OTHER_PRODUCT));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.VISIBILITY, Visibility.INSTALL));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.FEATURE_WITH_INSTALL_TYPE));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.PRODUCT_MIN_VERSION, "1.0.0.0"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.FEATURE_OTHER_PRODUCT,
+                                                                     FilterResources.Resources.FEATURE_TWO_PRODUCTS));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.PRODUCT_HAS_MAX_VERSION, Boolean.FALSE));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.FEATURE_WITH_NO_VERSION,
+                                                                     FilterResources.Resources.SAMPLE));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.SYMBOLIC_NAME, "com.ibm.ws.simpleFeature-1.0"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.SHORT_NAME, "simpleFeature-1.0"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.LOWER_CASE_SHORT_NAME, "simplefeature-1.0"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE));
+
+        result = connection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.VANITY_URL, "features-com.ibm.ws.simpleFeature-1.0"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE));
+
+        // test a combination of filters
+        result = connection.getMatchingResources(
+                                                 FilterPredicate.areEqual(FilterableAttribute.VISIBILITY, Visibility.PUBLIC),
+                                                 FilterPredicate.areEqual(FilterableAttribute.PRODUCT_ID, "com.ibm.ws.plw"),
+                                                 FilterPredicate.areEqual(FilterableAttribute.PRODUCT_MIN_VERSION, "8.5.5.0"));
+        filterResources.validateReturnedResources(result, EnumSet.of(FilterResources.Resources.FEATURE_TWO_PRODUCTS,
+                                                                     FilterResources.Resources.FEATURE_OTHER_PRODUCT_SAME_VERSION));
+
     }
 
     /**
@@ -780,6 +834,8 @@ public class ResourceFilteringTest {
         simpleFeature.setDescription("keyword1");
         simpleFeature.setAppliesTo("com.ibm.ws.wlp; productVersion=8.5.5.0");
         simpleFeature.setVisibility(Visibility.PUBLIC);
+        simpleFeature.setProvideFeature("com.ibm.ws.simpleFeature-1.0");
+        simpleFeature.setShortName("simpleFeature-1.0");
         simpleFeature.uploadToMassive(uploader);
 
         EsaResourceImpl featureWithNoVersion = new EsaResourceImpl(repoConnection);
@@ -787,6 +843,8 @@ public class ResourceFilteringTest {
         featureWithNoVersion.setDescription("keyword1 keyword2 keyword3");
         featureWithNoVersion.setAppliesTo("com.ibm.ws.wlp");
         featureWithNoVersion.setVisibility(Visibility.PRIVATE);
+        featureWithNoVersion.setProvideFeature("com.ibm.ws.noVersionFeature-1.0");
+        featureWithNoVersion.setShortName("noVersionFeature-1.0");
         featureWithNoVersion.uploadToMassive(uploader);
 
         EsaResourceImpl featureWithLaterVersion = new EsaResourceImpl(repoConnection);
@@ -804,7 +862,7 @@ public class ResourceFilteringTest {
         featureOtherProduct.uploadToMassive(uploader);
 
         EsaResourceImpl featureOtherProductSameVersion = new EsaResourceImpl(repoConnection);
-        featureOtherProductSameVersion.setName("Feature other product");
+        featureOtherProductSameVersion.setName("Feature other product same version");
         featureOtherProductSameVersion.setDescription("keyword1");
         featureOtherProductSameVersion.setAppliesTo("com.ibm.ws.plw; productVersion=8.5.5.0");
         featureOtherProductSameVersion.setVisibility(Visibility.PUBLIC);
@@ -843,6 +901,7 @@ public class ResourceFilteringTest {
         addon.setDescription("keyword1");
         addon.setType(ResourceType.ADDON);
         addon.setAppliesTo("com.ibm.ws.wlp; productVersion=8.5.5.0");
+        addon.setProductId("com.ibm.websphere.appserver");
         addon.uploadToMassive(uploader);
 
         logger.log(Level.INFO, "Refreshing elastic search and checking for whether the Addon entry (the last added) is indexed");

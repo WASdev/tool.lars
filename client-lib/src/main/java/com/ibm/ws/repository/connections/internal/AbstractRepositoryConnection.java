@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import com.ibm.ws.repository.common.enums.FilterPredicate;
 import com.ibm.ws.repository.common.enums.FilterableAttribute;
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.common.enums.Visibility;
@@ -41,9 +42,9 @@ import com.ibm.ws.repository.resources.SampleResource;
 import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 import com.ibm.ws.repository.resources.internal.ResourceCollector;
+import com.ibm.ws.repository.resources.internal.ResourceCollector.DuplicatePolicy;
 import com.ibm.ws.repository.resources.internal.ResourceFactory;
 import com.ibm.ws.repository.resources.internal.SampleResourceImpl;
-import com.ibm.ws.repository.resources.internal.ResourceCollector.DuplicatePolicy;
 import com.ibm.ws.repository.transport.client.RepositoryReadableClient;
 import com.ibm.ws.repository.transport.exceptions.BadVersionException;
 import com.ibm.ws.repository.transport.exceptions.RequestFailureException;
@@ -123,18 +124,18 @@ public abstract class AbstractRepositoryConnection implements RepositoryConnecti
          * -- Product ID
          * -- Version (see comment below)
          * -- Visibility (see other comment below)
-         *
+         * 
          * The fields we can't filter on are:
          * -- Edition: no edition = all editions and you can't search for a missing field
          * -- InstallType: not install type = all install types and you can't search for a missing field
-         *
+         * 
          * Version is special as there are two ways we version content in the repository. It may have a specific version (minVersion=maxVersion) or a just a specific version (no
          * maxVersion). As we can't search for a missing field there is an additional field stored on the applies to filter info to allow us to search for the absence of a max
          * version. All massive queries use AND so we first search for the specific version then for the absence of the max version.
-         *
+         * 
          * Visibility is also special as it only applies to features. If you are getting anything other than features and put the visibility on the URL then it will come back with
          * zero hits (or only hits for features) so we can only do this efficiently in Massive if only searching for features, otherwise have to do it here.
-         *
+         * 
          * Once we have all the results back then feed it into the matches method to a) ensure that the content that just has a min version is in the right range b) also filter out
          * anything from fields that we can't filter on the server.
          */
@@ -242,6 +243,32 @@ public abstract class AbstractRepositoryConnection implements RepositoryConnecti
             throw new RepositoryBackendRequestFailureException(e, this);
         }
         return resources.getResourceCollection();
+    }
+
+    @Override
+    public Collection<RepositoryResource> getMatchingResources(FilterPredicate... predicates) throws RepositoryBackendException {
+
+        List<RepositoryResource> resources = new ArrayList<RepositoryResource>();
+
+        Map<FilterableAttribute, Collection<String>> filters = new HashMap<FilterableAttribute, Collection<String>>();
+        for (FilterPredicate predicate : predicates) {
+            filters.put(predicate.getAttribute(), predicate.getValues());
+        }
+
+        RepositoryReadableClient client = createClient();
+        try {
+            Collection<Asset> assets = client.getFilteredAssets(filters);
+            for (Asset ass : assets) {
+                RepositoryResource res = ResourceFactory.getInstance().createResourceFromAsset(ass, this);
+                resources.add(res);
+            }
+        } catch (IOException ioe) {
+            throw new RepositoryBackendIOException("Failed to obtain the assets from massive", ioe, this);
+        } catch (RequestFailureException e) {
+            throw new RepositoryBackendRequestFailureException(e, this);
+        }
+        return resources;
+
     }
 
     @Override

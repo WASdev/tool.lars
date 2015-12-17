@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.ibm.ws.repository.common.enums.FilterPredicate;
 import com.ibm.ws.repository.common.enums.FilterableAttribute;
 import com.ibm.ws.repository.common.enums.LicenseType;
 import com.ibm.ws.repository.common.enums.ResourceType;
@@ -42,8 +43,8 @@ import com.ibm.ws.repository.resources.SampleResource;
 import com.ibm.ws.repository.resources.ToolResource;
 import com.ibm.ws.repository.resources.internal.ProductResourceImpl;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
-import com.ibm.ws.repository.resources.internal.ResourceCollector;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.MatchResult;
+import com.ibm.ws.repository.resources.internal.ResourceCollector;
 import com.ibm.ws.repository.resources.internal.ResourceCollector.DuplicatePolicy;
 
 /**
@@ -65,7 +66,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Creates a new RepositoryConnectionList, populating it with the contents of the supplied list.
-     * 
+     *
      * @param list the list of RepositoryConnections
      */
     public RepositoryConnectionList(List<? extends RepositoryConnection> list) {
@@ -74,7 +75,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Creates a new RepositoryConnectionList, populating it with a single RepositoryConnection
-     * 
+     *
      * @param repoConnection the RepositoryConnection
      */
     public RepositoryConnectionList(RepositoryConnection repoConnection) {
@@ -104,7 +105,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This object is used to hold a collection of {@link RepositoryConnection} objects, calling this method will set the userAgent into all the
      * the LoginInfoEntrys in the collection.
-     * 
+     *
      * @param userId The userAgent to put into the first LoginInfoEntry in the collection
      */
     public void setUserAgent(String userAgent) {
@@ -151,7 +152,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Find the features that match the supplied search string, ProductDefinition and Visibility
-     * 
+     *
      * @param searchString
      * @param loginInfo
      * @param definition
@@ -179,7 +180,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * Get all features in the repositories that match the provided ProductDefinition (normally of the machine you are on)
      * and the supplied visibility setting.
-     * 
+     *
      * @param loginInfo
      * @param definition
      * @param visible
@@ -197,7 +198,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * This will obtain the addons from the repository that match the specified product definition
-     * 
+     *
      * @param loginInfo The connection information where the resources should be obtained from.
      * @param definition The product definition to match against
      * @return Returns a Collection of {@link ProductResourceImpl} objects that represent the addons that match the product
@@ -219,7 +220,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This will return any ESAs that match the supplied <code>identifier</code>. The matching is done on the same attributes as can be used in the name on a string passed to the
      * {@link MassiveResolver#resolve(String)} method, namely it is either the symbolic name, short name or lower case short name of the resource.
-     * 
+     *
      * @param attribute The attribute to match against
      * @param identifier The identifier to look for
      * @param loginInfo The repository login information to load the resources from
@@ -239,7 +240,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This will return any ESAs that match the supplied <code>identifier</code>. The matching is done on the same attributes as can be used in the name on a string passed to the
      * {@link MassiveResolver#resolve(String)} method, namely it is either the symbolic name, short name or lower case short name of the resource.
-     * 
+     *
      * @param attribute The attribute to match against
      * @param identifier The identifier to look for
      * @param loginInfo The repository login information to load the resources from
@@ -273,10 +274,23 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
+     * Returns all resources which match the supplied set of FilterPredicate objects.
+     */
+    public Collection<RepositoryResource> getMatchingResources(final FilterPredicate... predicates) throws RepositoryBackendException {
+        Collection<RepositoryResource> resources = cycleThroughRepositories(new RepositoryInvoker<RepositoryResource>() {
+            @Override
+            public Collection<RepositoryResource> performActionOnRepository(RepositoryConnection connection) throws RepositoryBackendException {
+                return connection.getMatchingResources(predicates);
+            }
+        });
+        return resources;
+    }
+
+    /**
      * This method gets all the resources in this list of repositories. If a resource is found in multiple repositories
      * then the only the first one found will be returned (the search order is the order of repositories added to
      * this list).
-     * 
+     *
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
      */
@@ -294,7 +308,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This method gets all the resources in this list of repositories, this list may contain dupes if the same
      * asset is found in multiple repositories.
-     * 
+     *
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
      */
@@ -311,7 +325,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Gets all resources of the specified type from Massive
-     * 
+     *
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
      */
@@ -328,7 +342,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Gets all resources of the specified type from Massive
-     * 
+     *
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
      */
@@ -345,7 +359,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Gets all resources of the specified type and license type from Massive
-     * 
+     *
      * @param licenseType The {@link LicenseType} of the resources to obtain
      * @param type The {@link RepositoryResourceImpl.ResourceType} of resource to obtain
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
@@ -382,7 +396,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * This methods returns a list of all features in the supplied repositories
-     * 
+     *
      * @return A list of resources representing the features in massive
      * @throws RepositoryBackendException
      */
@@ -394,7 +408,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This method returns a Collection of all features in the repositories
      * with the specified license type.
-     * 
+     *
      * @Param licenseType the type of license in question - IPLA, ILAN, etc
      * @return A list of resources representing the features in massive
      *         with the requested license type
@@ -406,7 +420,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * 
+     *
      * @return
      * @throws RepositoryBackendException
      */
@@ -433,7 +447,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Get all products with a given license type
-     * 
+     *
      * @param License type
      * @param userId
      * @param password
@@ -469,7 +483,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * 
+     *
      * @param userId
      * @param password
      * @param apiKey
@@ -482,7 +496,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Get all products with a given license type
-     * 
+     *
      * @param License type
      * @param userId
      * @param password
@@ -521,7 +535,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Gets all resources of the specified <code>types</code> from Massive returning only those that are relevant to the <code>productDefinitions</code>.
-     * 
+     *
      * @param productDefinitions The products that these resources will be installed into. Can be <code>null</code> or empty indicating resources for any product should be obtained
      *            (they will just be filtered by type).
      * @param types The {@link RepositoryResourceImpl.ResourceType} of resource to obtain. <code>null</code> indicates that all types should be obtained.
@@ -534,8 +548,8 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
      * @throws RepositoryBackendException
      */
     public Map<ResourceType, Collection<? extends RepositoryResource>> getResources(Collection<ProductDefinition> productDefinitions,
-                                                                            Collection<ResourceType> types,
-                                                                            Visibility visibility) throws RepositoryBackendException {
+                                                                                    Collection<ResourceType> types,
+                                                                                    Visibility visibility) throws RepositoryBackendException {
         // If there's only one connection, just return the result from it
         if (this.size() == 1) {
             return this.get(0).getResources(productDefinitions, types, visibility);
@@ -573,7 +587,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      * Searches for resources that contained <code>searchTerm</code> from the repository returning only those that are relevant to the <code>productDefinitions</code>.
-     * 
+     *
      * @param searchTerm The word(s) to search for.
      * @param productDefinitions The products that these resources will be installed into. Can be <code>null</code> or empty indicating resources for any product should be obtained
      *            (they will just be filtered by type).
