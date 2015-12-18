@@ -44,8 +44,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
-import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.connections.ProductDefinition;
 import com.ibm.ws.repository.connections.RepositoryConnection;
@@ -87,16 +87,16 @@ public class ResourceFilteringTest {
 
     /*
      * The setup for this test is a little complex.
-     * 
+     *
      * The tests in this class expect to run against a repository loaded with assets in setupRepoForFilterTests()
-     * 
+     *
      * As in the other test classes, we need to run these tests against multiple repositories.
-     * 
+     *
      * getClassRule() returns a set of rules which ensure we have the repositories we want set up at the start
      * of the test and cleaned up at the end.
-     * 
+     *
      * getParameters() ensures we actually run the tests against each of the repositories
-     * 
+     *
      * setupClass() loads each of the repositories with the initial test data
      */
 
@@ -122,7 +122,7 @@ public class ResourceFilteringTest {
         // Put all the fixtures into one chain rule because we want to set up all the repositories at the start of the test, test with them and tear them down at the end
         RuleChain chain = RuleChain.emptyRuleChain();
         for (RepoData repoData : getRepoDataList()) {
-            chain.around(repoData.fixture);
+            chain = chain.around(repoData.fixture);
         }
         return chain;
     }
@@ -147,8 +147,9 @@ public class ResourceFilteringTest {
     public void testFilteringWithRightVersion() throws RepositoryBackendException {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.5.5.0", "Archive", "ILAN", "DEVELOPERS");
 
-        Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition), null,
-                                                                                                                               null);
+        Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
+                                                                                                                                       null,
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE, FilterResources.Resources.FEATURE_WITH_NO_VERSION,
                                                                        FilterResources.Resources.FEATURE_WITH_EDITIONS, FilterResources.Resources.FEATURE_TWO_PRODUCTS,
@@ -190,8 +191,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.0.0.0", "Archive", "ILAN", "DEVELOPERS");
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               null,
-                                                                                                                               null);
+                                                                                                                                       null,
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         assertEquals("Expected there to be 1 feature", 1, features.size());
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.FEATURE_WITH_NO_VERSION));
@@ -228,8 +229,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.5.5.4", "Archive", "ILAN", "DEVELOPERS");
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               null,
-                                                                                                                               null);
+                                                                                                                                       null,
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.FEATURE_WITH_NO_VERSION, FilterResources.Resources.FEATURE_WITH_LATER_VERSION));
 
@@ -266,8 +267,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.5.5.0", "Archive", "ILAN", "DEVELOPERS");
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               Collections.singleton(ResourceType.PRODUCTSAMPLE),
-                                                                                                                               null);
+                                                                                                                                       Collections.singleton(ResourceType.PRODUCTSAMPLE),
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         assertNull("Expected there to be no features", features);
 
@@ -307,8 +308,8 @@ public class ResourceFilteringTest {
         types.add(ResourceType.PRODUCTSAMPLE);
         types.add(ResourceType.ADDON);
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               types,
-                                                                                                                               null);
+                                                                                                                                       types,
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         assertNull("Expected there to be no features", features);
 
@@ -387,8 +388,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.5.5.0", "Archive", "ILAN", "DEVELOPERS");
         RepositoryConnectionList repoList = new RepositoryConnectionList(repoConnection);
         Map<ResourceType, Collection<? extends RepositoryResource>> result = repoList.getResources(Collections.singleton(productDefinition),
-                                                                                           Collections.singleton(ResourceType.FEATURE),
-                                                                                           Visibility.PUBLIC);
+                                                                                                   Collections.singleton(ResourceType.FEATURE),
+                                                                                                   Visibility.PUBLIC);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE, FilterResources.Resources.FEATURE_TWO_PRODUCTS));
 
@@ -485,8 +486,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.plw", "1.0.0.0", "Archive", "ILAN", "DEVELOPERS");
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               null,
-                                                                                                                               null);
+                                                                                                                                       null,
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.FEATURE_TWO_PRODUCTS, FilterResources.Resources.FEATURE_OTHER_PRODUCT));
 
@@ -522,8 +523,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.5.5.0", "Archive", "ILAN", "ND");
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               Collections.singleton(ResourceType.FEATURE),
-                                                                                                                               null);
+                                                                                                                                       Collections.singleton(ResourceType.FEATURE),
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         assertEquals("Expected there to be 4 features", 4, features.size());
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE, FilterResources.Resources.FEATURE_WITH_NO_VERSION,
@@ -558,8 +559,8 @@ public class ResourceFilteringTest {
         ProductDefinition productDefinition = new SimpleProductDefinition("com.ibm.ws.wlp", "8.5.5.0", "InstallationManager", "ILAN", "DEVELOPERS");
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(Collections.singleton(productDefinition),
-                                                                                                                               Collections.singleton(ResourceType.FEATURE),
-                                                                                                                               null);
+                                                                                                                                       Collections.singleton(ResourceType.FEATURE),
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE, FilterResources.Resources.FEATURE_WITH_NO_VERSION,
                                                                        FilterResources.Resources.FEATURE_WITH_EDITIONS, FilterResources.Resources.FEATURE_TWO_PRODUCTS));
@@ -596,8 +597,8 @@ public class ResourceFilteringTest {
         products.add(productDefinition2);
 
         Map<ResourceType, Collection<? extends RepositoryResource>> result = new RepositoryConnectionList(repoConnection).getResources(products,
-                                                                                                                               Collections.singleton(ResourceType.FEATURE),
-                                                                                                                               null);
+                                                                                                                                       Collections.singleton(ResourceType.FEATURE),
+                                                                                                                                       null);
         Collection<? extends RepositoryResource> features = result.get(ResourceType.FEATURE);
         filterResources.validateReturnedResources(features, EnumSet.of(FilterResources.Resources.SIMPLE_FEATURE, FilterResources.Resources.FEATURE_WITH_NO_VERSION,
                                                                        FilterResources.Resources.FEATURE_WITH_EDITIONS, FilterResources.Resources.FEATURE_TWO_PRODUCTS,
