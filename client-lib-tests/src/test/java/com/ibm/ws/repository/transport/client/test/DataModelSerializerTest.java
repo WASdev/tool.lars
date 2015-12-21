@@ -24,12 +24,15 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 
-import org.apache.wink.json4j.JSON;
-import org.apache.wink.json4j.JSONObject;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -430,12 +433,12 @@ public class DataModelSerializerTest {
         wlpInformation.setVisibility(Visibility.INSTALL);
         asset.setWlpInformation(wlpInformation);
         String json = DataModelSerializer.serializeAsString(asset);
-        JSONObject jsonObject = (JSONObject) JSON.parse(json);
+        JsonObject jsonObject = parseStringToJson(json);
         assertTrue("There should be a wlpInformation2 field", jsonObject.containsKey("wlpInformation2"));
-        JSONObject wlpInformation1 = (JSONObject) jsonObject.get("wlpInformation");
+        JsonObject wlpInformation1 = jsonObject.getJsonObject("wlpInformation");
         assertFalse("The first wlpinformation shouldn't contain the visibility: " + wlpInformation1, wlpInformation1.containsKey("visibility"));
-        JSONObject wlpInformation2 = (JSONObject) jsonObject.get("wlpInformation2");
-        assertEquals("The incompatible field should be stored in wlpInformation2", Visibility.INSTALL.toString(), wlpInformation2.get("visibility"));
+        JsonObject wlpInformation2 = jsonObject.getJsonObject("wlpInformation2");
+        assertEquals("The incompatible field should be stored in wlpInformation2", Visibility.INSTALL.toString(), wlpInformation2.getString("visibility"));
         Asset reReadAsset = DataModelSerializer.deserializeObject(new ByteArrayInputStream(json.getBytes()), Asset.class);
         assertEquals("The read in wlp inforamtion should say it has a visiblity of installer", Visibility.INSTALL, reReadAsset.getWlpInformation().getVisibility());
     }
@@ -449,13 +452,13 @@ public class DataModelSerializerTest {
         wlpInformation.setVisibility(Visibility.INSTALL);
         asset.setWlpInformation(wlpInformation);
         String json = DataModelSerializer.serializeAsString(asset);
-        JSONObject jsonObject = (JSONObject) JSON.parse(json);
+        JsonObject jsonObject = parseStringToJson(json);
         assertTrue("There should be a wlpInformation2 field", jsonObject.containsKey("wlpInformation2"));
-        JSONObject wlpInformation1 = (JSONObject) jsonObject.get("wlpInformation");
+        JsonObject wlpInformation1 = jsonObject.getJsonObject("wlpInformation");
         assertFalse("The first wlpinformation shouldn't contain the visibility: " + wlpInformation1, wlpInformation1.containsKey("visibility"));
-        assertEquals("The first wlpinformation should contain the applies to: " + wlpInformation1, "wibble", wlpInformation1.get("appliesTo"));
-        JSONObject wlpInformation2 = (JSONObject) jsonObject.get("wlpInformation2");
-        assertEquals("The incompatible field should be stored in wlpInformation2", Visibility.INSTALL.toString(), wlpInformation2.get("visibility"));
+        assertEquals("The first wlpinformation should contain the applies to: " + wlpInformation1, "wibble", wlpInformation1.getString("appliesTo"));
+        JsonObject wlpInformation2 = jsonObject.getJsonObject("wlpInformation2");
+        assertEquals("The incompatible field should be stored in wlpInformation2", Visibility.INSTALL.toString(), wlpInformation2.getString("visibility"));
         Asset reReadAsset = DataModelSerializer.deserializeObject(new ByteArrayInputStream(json.getBytes()), Asset.class);
         assertEquals("The read in wlp inforamtion should say it has a visiblity of installer", Visibility.INSTALL, reReadAsset.getWlpInformation().getVisibility());
         assertEquals("The read in wlp inforamtion should say it has the applies to set", "wibble", reReadAsset.getWlpInformation().getAppliesTo());
@@ -469,11 +472,19 @@ public class DataModelSerializerTest {
         wlpInformation.setVisibility(Visibility.PUBLIC);
         asset.setWlpInformation(wlpInformation);
         String json = DataModelSerializer.serializeAsString(asset);
-        JSONObject jsonObject = (JSONObject) JSON.parse(json);
+        JsonObject jsonObject = parseStringToJson(json);
         assertFalse("There shouldn't be a wlpInformation2 field", jsonObject.containsKey("wlpInformation2"));
-        JSONObject wlpInformation1 = (JSONObject) jsonObject.get("wlpInformation");
-        assertEquals("The first wlpinformation should contain the visibility: " + wlpInformation1, Visibility.PUBLIC.toString(), wlpInformation1.get("visibility"));
+        JsonObject wlpInformation1 = jsonObject.getJsonObject("wlpInformation");
+        assertEquals("The first wlpinformation should contain the visibility: " + wlpInformation1, Visibility.PUBLIC.toString(), wlpInformation1.getString("visibility"));
         Asset reReadAsset = DataModelSerializer.deserializeObject(new ByteArrayInputStream(json.getBytes()), Asset.class);
         assertEquals("The read in wlp inforamtion should say it has a visiblity of installer", Visibility.PUBLIC, reReadAsset.getWlpInformation().getVisibility());
+    }
+
+    private JsonObject parseStringToJson(String string) {
+        StringReader reader = new StringReader(string);
+        JsonReader jsonReader = Json.createReader(reader);
+        JsonObject parsedObject = jsonReader.readObject();
+        jsonReader.close();
+        return parsedObject;
     }
 }

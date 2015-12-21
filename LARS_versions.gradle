@@ -3,7 +3,8 @@ ext {
 	aries_util_version = "1.1.+"
 	osgi_core_version = "5.0.+"
 	jackson_version="2.2.+"
-	wink_json4j_version="1.4"
+	javax_json_version="1.0"
+	glassfish_json_version="1.0.+"
 	mongodb_java_version="2.11.1"
 
 	// Test/compile time only dependencies

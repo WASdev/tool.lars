@@ -40,10 +40,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
-import org.apache.wink.json4j.JSONArray;
-import org.apache.wink.json4j.JSONArtifact;
-import org.apache.wink.json4j.JSONException;
-import org.apache.wink.json4j.JSONObject;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonException;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonString;
+import javax.json.JsonStructure;
+import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
+import javax.json.JsonWriter;
+import javax.json.JsonWriterFactory;
+import javax.json.stream.JsonGenerator;
 
 import com.ibm.ws.repository.common.utils.internal.RepositoryCommonUtils;
 import com.ibm.ws.repository.transport.exceptions.BadVersionException;
@@ -79,57 +90,75 @@ public class DataModelSerializer {
     }
 
     /**
-     * Uses a getter to obtain a value, then sets that value appropriately into a supplied JSONObject.
+     * Uses a getter to obtain a value, then sets that value appropriately into a supplied JsonObject.
      *
      * @param getter
      * @param o
      * @param fieldName
      * @param j
      */
-    private static void addFieldToJSONObject(Method getter, Object o,
-                                             String fieldName, JSONObject j) {
+    private static void addFieldToJsonObject(Method getter, Object o,
+                                             String fieldName, JsonObjectBuilder j) {
         try {
             Object fieldValue = getter.invoke(o);
 
-            if (fieldValue instanceof java.lang.String
-                || fieldValue instanceof java.lang.Boolean
-                || fieldValue instanceof java.lang.Number
-                || fieldValue instanceof java.lang.Integer
-                || fieldValue instanceof java.lang.Long
-                || fieldValue instanceof java.lang.Short
-                || fieldValue instanceof java.lang.Byte
-                || fieldValue == null) {
-                if (fieldValue != null) {
-                    j.put(fieldName, fieldValue);
-                }
+            if (fieldValue == null) {
+            }
+            else if (fieldValue instanceof java.lang.String) {
+                j.add(fieldName, (java.lang.String) fieldValue);
+            }
+            else if (fieldValue instanceof java.lang.Boolean) {
+                j.add(fieldName, (java.lang.Boolean) fieldValue);
+            }
+            else if (fieldValue instanceof java.math.BigInteger) {
+                j.add(fieldName, (java.math.BigInteger) fieldValue);
+            }
+            else if (fieldValue instanceof java.math.BigDecimal) {
+                j.add(fieldName, (java.math.BigDecimal) fieldValue);
+            }
+            else if (fieldValue instanceof java.lang.Double) {
+                j.add(fieldName, (java.lang.Double) fieldValue);
+            }
+            else if (fieldValue instanceof java.lang.Integer) {
+                j.add(fieldName, (java.lang.Integer) fieldValue);
+            }
+            else if (fieldValue instanceof java.lang.Long) {
+                j.add(fieldName, (java.lang.Long) fieldValue);
+            }
+            else if (fieldValue instanceof java.lang.Short) {
+                j.add(fieldName, (java.lang.Short) fieldValue);
+            }
+            else if (fieldValue instanceof java.lang.Byte) {
+                j.add(fieldName, (java.lang.Byte) fieldValue);
+
             } else if (fieldValue instanceof Enum) {
                 try {
                     // enums need careful handling.. look for get/set Value to use.
                     Method getValueForEnumMethod = fieldValue.getClass().getMethod("getValue");
                     Object valueFromGetValueMethod = getValueForEnumMethod.invoke(fieldValue);
-                    j.put(fieldName, valueFromGetValueMethod.toString());
+                    j.add(fieldName, valueFromGetValueMethod.toString());
                 } catch (NoSuchMethodException e) {
                     // else fallback to toString
-                    j.put(fieldName, fieldValue.toString());
+                    j.add(fieldName, fieldValue.toString());
                 }
             } else if (fieldValue instanceof Collection
                        || fieldValue.getClass().getName()
                                        .startsWith(DATA_MODEL_PACKAGE)) {
                 JSONArtrifactPair fieldObjects = findFieldsToSerialize(fieldValue);
-                j.put(fieldName, fieldObjects.mainObject);
+                j.add(fieldName, fieldObjects.mainObject);
                 if (fieldObjects.incompatibleFieldsObject != null && !fieldObjects.incompatibleFieldsObject.isEmpty()) {
                     // As per the contract on the HasBreakingChanges interface store incompatible fields in a second object
-                    j.put(fieldName + "2", fieldObjects.incompatibleFieldsObject);
+                    j.add(fieldName + "2", fieldObjects.incompatibleFieldsObject);
                 }
             } else if (fieldValue instanceof Calendar) {
                 Date date = ((Calendar) fieldValue).getTime();
-                j.put(fieldName, getDateFormat().format(date));
+                j.add(fieldName, getDateFormat().format(date));
             } else if (fieldValue instanceof Date) {
-                j.put(fieldName, getDateFormat().format((Date) fieldValue));
+                j.add(fieldName, getDateFormat().format((Date) fieldValue));
             } else if (fieldValue instanceof Locale) {
                 //note that Locale toString is a bit fiddly to round trip, but it's the best we have for now.
                 String localeString = ((Locale) fieldValue).toString();
-                j.put(fieldName, localeString);
+                j.add(fieldName, localeString);
             } else {
                 throw new IllegalStateException(
                                 "Data Model Error: Unknown data model entity "
@@ -152,7 +181,7 @@ public class DataModelSerializer {
                             "Data Model Error: unable to invoke getter "
                                             + getter.getName() + " on "
                                             + o.getClass().getName(), e);
-        } catch (JSONException e) {
+        } catch (JsonException e) {
             // Shouldn't happen unless field name is null or the value cannot be converted
             throw new IllegalStateException(
                             "Data Model Error: unable to invoke getter "
@@ -163,47 +192,47 @@ public class DataModelSerializer {
 
     /**
      * Use reflection to look inside Object to find fields that should be serialized into the JSON.
-     * The fields are collected into an appropriate JSONArtifact (either JSONObject, or JSONArray), and
+     * The fields are collected into an appropriate JsonStructure (either JsonObject, or JsonArray), and
      * returned for aggregation before serialization.
      *
-     * @param o the Object to query, if o is an instance of Collection, then a JSONArray will be returned.
-     * @return JSONArtifact built from POJO.
+     * @param o the Object to query, if o is an instance of Collection, then a JsonArray will be returned.
+     * @return JSONArtrifactPair built from POJO.
      */
     @SuppressWarnings("unchecked")
     private static JSONArtrifactPair findFieldsToSerialize(Object o) {
-        // if the object is a list, we'll return a JSONArray, containing each
+        // if the object is a list, we'll return a JsonArray, containing each
         // thing in the List.
         if (o instanceof Collection) {
             Collection<? extends Object> listOfO = (Collection<? extends Object>) o;
 
-            JSONArray result = new JSONArray(listOfO.size());
+            JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
             for (Object listObject : listOfO) {
                 //currently, we support lists of strings, or lists of POJOs.
                 if (listObject instanceof String) {
-                    result.add(listObject);
+                    arrayBuilder.add((String) listObject);
                 } else if (listObject.getClass().getName().startsWith(DATA_MODEL_PACKAGE)) {
-                    result.add(findFieldsToSerialize(listObject).mainObject);
+                    arrayBuilder.add(findFieldsToSerialize(listObject).mainObject);
                 } else {
                     throw new IllegalStateException("Data Model Error: serialization only supported for Collections of String, or other Data Model elements");
                 }
             }
+            JsonArray result = arrayBuilder.build();
             return new JSONArtrifactPair(result, null);
         }
 
         // object wasn't a collection.. better see what we can do with it.
-        JSONObject mainObject = new JSONObject();
-
+        JsonObjectBuilder mainObjectBuilder = Json.createObjectBuilder();
         Map<String, Method> gettersFromO = new HashMap<String, Method>();
         Class<? extends Object> classOfO = o.getClass();
 
         // See if we have any breaking changes that need to go into a separate object
-        JSONObject incompatibleFieldsObject = null;
+        JsonObjectBuilder incompatibleFieldsObjectBuilder = null;
         Collection<String> fieldsToPutInIncompatibleObject = null;
         boolean haveIncompatibleFields = false;
         if (HasBreakingChanges.class.isAssignableFrom(classOfO)) {
             fieldsToPutInIncompatibleObject = ((HasBreakingChanges) o).attributesThatCauseBreakingChanges();
             if (!fieldsToPutInIncompatibleObject.isEmpty()) {
-                incompatibleFieldsObject = new JSONObject();
+                incompatibleFieldsObjectBuilder = Json.createObjectBuilder();
                 haveIncompatibleFields = true;
             }
         }
@@ -240,29 +269,34 @@ public class DataModelSerializer {
                             .toString();
 
             if (haveIncompatibleFields && fieldsToPutInIncompatibleObject.contains(nameOfField)) {
-                addFieldToJSONObject(entry.getValue(), o, nameOfField, incompatibleFieldsObject);
+                addFieldToJsonObject(entry.getValue(), o, nameOfField, incompatibleFieldsObjectBuilder);
             } else {
-                addFieldToJSONObject(entry.getValue(), o, nameOfField, mainObject);
+                addFieldToJsonObject(entry.getValue(), o, nameOfField, mainObjectBuilder);
             }
+        }
+        JsonObject mainObject = mainObjectBuilder.build();
+        JsonObject incompatibleFieldsObject = null;
+        if (incompatibleFieldsObjectBuilder != null) {
+            incompatibleFieldsObject = incompatibleFieldsObjectBuilder.build();
         }
 
         return new JSONArtrifactPair(mainObject, incompatibleFieldsObject);
     }
 
     /**
-     * Pair of {@link JSONArtifact}s
+     * Pair of {@link JsonStructure}s
      */
     public static class JSONArtrifactPair {
 
         /**
          * The first object of the pair
          */
-        public final JSONArtifact mainObject;
+        public final JsonStructure mainObject;
 
         /**
          * The second object of the pair
          */
-        public final JSONObject incompatibleFieldsObject;
+        public final JsonObject incompatibleFieldsObject;
 
         /**
          * Construct the pair
@@ -272,7 +306,7 @@ public class DataModelSerializer {
          * @param incompatibleFieldsObject
          *            The object containing all the incompatible errors
          */
-        public JSONArtrifactPair(JSONArtifact mainObject, JSONObject incompatibleFieldsObject) {
+        public JSONArtrifactPair(JsonStructure mainObject, JsonObject incompatibleFieldsObject) {
             this.mainObject = mainObject;
             this.incompatibleFieldsObject = incompatibleFieldsObject;
         }
@@ -284,16 +318,16 @@ public class DataModelSerializer {
      *
      * @param o the POJO to serialize
      * @return a String containing the JSON data.
-     * @throws IOException when there are problems creating the JSON.
+     * @throws IOException when there are problems creating the Json.
      */
     public static String serializeAsString(Object o) throws IOException {
         try {
-            JSONArtifact builtJSONObject = findFieldsToSerialize(o).mainObject;
-            return builtJSONObject.write(true);
+            JsonStructure builtJsonObject = findFieldsToSerialize(o).mainObject;
+            return builtJsonObject.toString();
         } catch (IllegalStateException ise) {
             // the reflective attempt to build the object failed.
             throw new IOException("Unable to build JSON for Object", ise);
-        } catch (JSONException e) {
+        } catch (JsonException e) {
             throw new IOException("Unable to build JSON for Object", e);
         }
     }
@@ -307,12 +341,16 @@ public class DataModelSerializer {
      */
     public static void serializeAsStream(Object o, OutputStream s) throws IOException {
         try {
-            JSONArtifact builtJSONObject = findFieldsToSerialize(o).mainObject;
-            builtJSONObject.write(s, true);
+            JsonStructure builtJsonObject = findFieldsToSerialize(o).mainObject;
+            Map<String, Object> config = new HashMap<>();
+            config.put(JsonGenerator.PRETTY_PRINTING, true);
+            JsonWriterFactory writerFactory = Json.createWriterFactory(config);
+            JsonWriter streamWriter = writerFactory.createWriter(s);
+            streamWriter.write(builtJsonObject);
         } catch (IllegalStateException ise) {
             // the reflective attempt to build the object failed.
             throw new IOException("Unable to build JSON for Object", ise);
-        } catch (JSONException e) {
+        } catch (JsonException e) {
             throw new IOException("Unable to build JSON for Object", e);
         }
     }
@@ -433,9 +471,9 @@ public class DataModelSerializer {
     }
 
     /**
-     * Reads every field from a JSONObject, and creates an instance of typeOfObject, and sets the data into that object.
+     * Reads every field from a JsonObject, and creates an instance of typeOfObject, and sets the data into that object.
      *
-     * @param json JSONObject from JSON4J
+     * @param json JsonObject from JSONP
      * @param typeOfObject The class of the object to create
      * @param verify Specifies if we should check the JSON is something we know how to process
      * @return The object we created
@@ -443,9 +481,8 @@ public class DataModelSerializer {
      * @throws BadVersionException
      */
     @SuppressWarnings("unchecked")
-    private static <T> T processJSONObjectBackIntoDataModelInstance(JSONObject json, Class<? extends T> typeOfObject, Verification verify) throws IOException, BadVersionException {
-        //at this point, you begin to really hate how JSON4J isn't typed..
-        Set<Map.Entry<?, ?>> jsonSet = json.entrySet();
+    private static <T> T processJsonObjectBackIntoDataModelInstance(JsonObject json, Class<? extends T> typeOfObject, Verification verify) throws IOException, BadVersionException {
+        Set<Map.Entry<String, JsonValue>> jsonSet = json.entrySet();
 
         // Make a new instance and make sure we know how to process it
         T targetObject = null;
@@ -458,37 +495,54 @@ public class DataModelSerializer {
         }
 
         if (verify.equals(Verification.VERIFY) && targetObject instanceof VersionableContent) {
-            String version = (String) json.opt(((VersionableContent) targetObject).nameOfVersionAttribute());
+            String version = json.getString(((VersionableContent) targetObject).nameOfVersionAttribute(), null);
             if (version != null) {
                 ((VersionableContent) targetObject).validate(version);
             }
         }
 
-        for (Map.Entry<?, ?> keyEntry : jsonSet) {
-            String keyString = keyEntry.getKey().toString();
-            Object value = keyEntry.getValue();
+        for (Map.Entry<String, JsonValue> keyEntry : jsonSet) {
+            String keyString = keyEntry.getKey();
+            JsonValue value = keyEntry.getValue();
 
             if (value == null)
                 continue;
 
-            //values in the JSON object can be; JSONObject, JSONArray, or simple data.
+            //When calling toString() on a JsonString the value is returned in quotation marks, so we need to call getString() on JsonString to avoid this
+            String valueString = null;
+            if (value.getValueType().equals(ValueType.STRING)) {
+                valueString = ((JsonString) value).getString();
+            } else {
+                valueString = value.toString();
+            }
+
+            //values in the JsonValue can be; JsonObject, JsonArray, or simple data.
             //each is handled with an instanceof block.
 
-            if (value instanceof JSONObject) {
+            if (value instanceof JsonObject) {
                 //easy one, just find out the type for the new child, instantiate it, populate it, and set it.
                 ClassAndMethod fieldType = getClassForFieldName(keyString, targetObject.getClass());
                 if (fieldType != null) {
                     if (HasBreakingChanges.class.isAssignableFrom(fieldType.cls)) {
                         // It's something with a breaking change so see if we have a matching "2" element
-                        Object incompatibleFields = json.opt(keyString + "2");
+                        JsonObject incompatibleFields = json.getJsonObject(keyString + "2");
                         if (incompatibleFields != null) {
-                            ((JSONObject) value).putAll((JSONObject) incompatibleFields);
+                            JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+                            Set<Map.Entry<String, JsonValue>> valueSet = ((JsonObject) value).entrySet();
+                            for (Map.Entry<String, JsonValue> entry : valueSet) {
+                                jsonObjectBuilder.add(entry.getKey(), entry.getValue());
+                            }
+                            Set<Map.Entry<String, JsonValue>> incompatibleFieldsSet = incompatibleFields.entrySet();
+                            for (Map.Entry<String, JsonValue> entry : incompatibleFieldsSet) {
+                                jsonObjectBuilder.add(entry.getKey(), entry.getValue());
+                            }
+                            value = jsonObjectBuilder.build();
                         }
                     }
-                    Object newChild = processJSONObjectBackIntoDataModelInstance((JSONObject) value, fieldType.cls, verify);
+                    Object newChild = processJsonObjectBackIntoDataModelInstance((JsonObject) value, fieldType.cls, verify);
                     invokeSetter(fieldType.m, targetObject, newChild);
                 }
-            } else if (value instanceof JSONArray) {
+            } else if (value instanceof JsonArray) {
                 //slightly more tricky, we must determine the type for the collection to hold the data, instantiate a collection
                 //then process each element in the array into the collection, and set that into the targetObject.
                 ClassAndMethod fieldType = getClassForFieldName(keyString, targetObject.getClass());
@@ -506,7 +560,7 @@ public class DataModelSerializer {
                         }
 
                         // Process the nested array and tell it to throw any bad version exceptions as this is a nested array so if this is a get single by ID we may want to throw it
-                        processJSONArray((JSONArray) value, newList, listElementType.cls, verify, ListVersionHandling.THROW_EXCEPTION);
+                        processJsonArray((JsonArray) value, newList, listElementType.cls, verify, ListVersionHandling.THROW_EXCEPTION);
 
                         invokeSetter(fieldType.m, targetObject, newList);
                     } else {
@@ -523,7 +577,7 @@ public class DataModelSerializer {
                         Object o = null;
                         if (keyString.indexOf(' ') == -1) {
                             try {
-                                Field enumInstance = fieldType.cls.getField(value.toString().toUpperCase());
+                                Field enumInstance = fieldType.cls.getField(valueString.toUpperCase());
                                 if (enumInstance != null) {
                                     o = enumInstance.get(null);
                                 }
@@ -547,7 +601,8 @@ public class DataModelSerializer {
                                     //there may be another method to use yet.
                                     if ("valueOf".equals(m.getName())) {
                                         try {
-                                            o = m.invoke(null, (String) value);
+                                            o = m.invoke(null, valueString
+                                                            );
                                         } catch (IllegalArgumentException e) {
                                             //ignore.. maybe another method will work?
                                         } catch (InvocationTargetException e) {
@@ -557,7 +612,7 @@ public class DataModelSerializer {
                                         }
                                     } else {
                                         try {
-                                            o = m.invoke(null, (String) value);
+                                            o = m.invoke(null, valueString);
                                         } catch (IllegalAccessException e) {
                                             throw new IllegalStateException("Data Model Error: unable to invoke setter " + fieldType.m.getName() + " for data model element "
                                                                             + fieldType.cls.getName() + " on " + targetObject.getClass().getName(), e);
@@ -583,19 +638,19 @@ public class DataModelSerializer {
                         //all primitives in the current data model are numbers..
                         String type = fieldType.cls.getName();
                         if ("int".equals(type)) {
-                            Number n = (Number) value;
+                            JsonNumber n = (JsonNumber) value;
                             invokeSetter(fieldType.m, targetObject, n.intValue());
                         } else if ("byte".equals(type)) {
-                            Number n = (Number) value;
-                            invokeSetter(fieldType.m, targetObject, n.byteValue());
+                            JsonNumber n = (JsonNumber) value;
+                            invokeSetter(fieldType.m, targetObject, (byte) n.intValue());
                         } else if ("short".equals(type)) {
-                            Number n = (Number) value;
-                            invokeSetter(fieldType.m, targetObject, n.shortValue());
+                            JsonNumber n = (JsonNumber) value;
+                            invokeSetter(fieldType.m, targetObject, (short) n.intValue());
                         } else if ("long".equals(type)) {
-                            Number n = (Number) value;
+                            JsonNumber n = (JsonNumber) value;
                             invokeSetter(fieldType.m, targetObject, n.longValue());
                         } else if ("boolean".equals(type)) {
-                            Boolean b = Boolean.valueOf(value.toString());
+                            Boolean b = Boolean.valueOf(valueString);
                             invokeSetter(fieldType.m, targetObject, b);
                         } else {
                             throw new IllegalStateException("Data Model Error: unsupported primitive type used " + type + " in setter " + fieldType.m.getName());
@@ -603,7 +658,7 @@ public class DataModelSerializer {
 
                     } else if (fieldType.cls.equals(Calendar.class)) {
                         try {
-                            Date d = getDateFormat().parse(value.toString());
+                            Date d = getDateFormat().parse(valueString);
                             Calendar c = Calendar.getInstance();
                             c.setTime(d);
                             invokeSetter(fieldType.m, targetObject, c);
@@ -612,14 +667,16 @@ public class DataModelSerializer {
                         }
                     } else if (fieldType.cls.equals(Date.class)) {
                         try {
-                            Date d = getDateFormat().parse(value.toString());
+                            Date d = getDateFormat().parse(valueString);
                             invokeSetter(fieldType.m, targetObject, d);
                         } catch (ParseException e) {
                             throw new IllegalStateException("JSON Error: date was not correctly formatted, got " + value, e);
                         }
                     } else if (fieldType.cls.equals(Locale.class)) {
-                        Locale l = RepositoryCommonUtils.localeForString(value.toString());
+                        Locale l = RepositoryCommonUtils.localeForString(valueString);
                         invokeSetter(fieldType.m, targetObject, l);
+                    } else if (fieldType.cls.equals(String.class)) {
+                        invokeSetter(fieldType.m, targetObject, valueString);
                     } else {
                         invokeSetter(fieldType.m, targetObject, value);
                     }
@@ -630,25 +687,25 @@ public class DataModelSerializer {
     }
 
     /**
-     * Processes an instance of JSONArray created by JSON4J.<br>
+     * Processes an instance of JsonArray created by JSONP.<br>
      * Assumes each element of the array is the same sort of object, and that nested arrays are forbidden.
      * Handles arrays of simple values, and arrays of complex objects.
      *
-     * @param jsonArray the JSON4J instance to read data from
+     * @param jsonArray the JSONP instance to read data from
      * @param list the list to add the POJOs/simple data to.
      * @param listClass the type of data in the list (required to instantiate elements for pojos)
      * @throws BadVersionException
      * @throws IOException
      */
-    private static <T> void processJSONArray(JSONArray jsonArray, List<T> list, Class<? extends T> listClass, Verification verify, ListVersionHandling versionHandler) throws IOException, BadVersionException {
+    private static <T> void processJsonArray(JsonArray jsonArray, List<T> list, Class<? extends T> listClass, Verification verify, ListVersionHandling versionHandler) throws IOException, BadVersionException {
         for (Object o : jsonArray) {
-            if (o instanceof JSONArray) {
+            if (o instanceof JsonArray) {
                 //array had another array as an element.
                 throw new IllegalStateException("Data Model Error: Simple parser does not understand nested arrays");
-            } else if (o instanceof JSONObject) {
+            } else if (o instanceof JsonObject) {
                 //array had a complex object as an element.
                 try {
-                    T newArrayElement = processJSONObjectBackIntoDataModelInstance((JSONObject) o, listClass, verify);
+                    T newArrayElement = processJsonObjectBackIntoDataModelInstance((JsonObject) o, listClass, verify);
                     list.add(newArrayElement);
                 } catch (BadVersionException e) {
                     // versionHandler tells us what to do...
@@ -657,6 +714,8 @@ public class DataModelSerializer {
                         throw e;
                     } // Else ignore this
                 }
+            } else if (o instanceof JsonString) {
+                list.add(listClass.cast(((JsonString) o).getString()));
             } else {
                 //array had a primitive as an element..
                 list.add(listClass.cast(o));
@@ -683,10 +742,12 @@ public class DataModelSerializer {
     private static <T> T doDeserializeObject(InputStream i, Class<? extends T> typeOfObject, Verification verify)
                     throws IOException, BadVersionException {
         try {
-            JSONObject parsedObject = new JSONObject(i);
-            T newT = processJSONObjectBackIntoDataModelInstance(parsedObject, typeOfObject, verify);
+            JsonReader jsonReader = Json.createReader(i);
+            JsonObject parsedObject = jsonReader.readObject();
+            jsonReader.close();
+            T newT = processJsonObjectBackIntoDataModelInstance(parsedObject, typeOfObject, verify);
             return newT;
-        } catch (JSONException e) {
+        } catch (JsonException e) {
             throw new IOException("Failed to deserialize object of type " + typeOfObject.getName(), e);
         }
     }
@@ -695,12 +756,14 @@ public class DataModelSerializer {
         List<T> newT = new ArrayList<T>();
 
         try {
-            JSONArray parsedArray = new JSONArray(i);
+            JsonReader jsonReader = Json.createReader(i);
+            JsonArray parsedArray = jsonReader.readArray();
+            jsonReader.close();
             // Process the array, if it comes across any elements that are at an invalid version tell it to ignore them rather than throw an exception
-            processJSONArray(parsedArray, newT, listElementType, Verification.VERIFY, ListVersionHandling.IGNORE_ELEMENT);
+            processJsonArray(parsedArray, newT, listElementType, Verification.VERIFY, ListVersionHandling.IGNORE_ELEMENT);
         } catch (BadVersionException e) {
             // We've told the Array handle to ignore these exception so this should never happen but it is in the method signature for nested array processing
-        } catch (JSONException e) {
+        } catch (JsonException e) {
             throw new IOException("Failed to deserialize list", e);
         }
         return newT;
