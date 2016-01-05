@@ -49,8 +49,8 @@ import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.ZipRepositoryFixture;
 import com.ibm.ws.repository.common.enums.AttachmentType;
 import com.ibm.ws.repository.common.enums.FilterableAttribute;
-import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.transport.client.RepositoryReadableClient;
 import com.ibm.ws.repository.transport.client.RepositoryWriteableClient;
@@ -1220,6 +1220,7 @@ public class RepositoryClientTest {
         wlpInfo.setVisibility(Visibility.PUBLIC);
         wlpInfo.addProvideFeature("feature1");
         wlpInfo.setShortName("IsThisShort?");
+        wlpInfo.setVanityRelativeURL("no_url");
         AppliesToFilterInfo filterInfo = new AppliesToFilterInfo();
         filterInfo.setProductId("a.product");
         FilterVersion filterVersion = new FilterVersion();
@@ -1312,6 +1313,16 @@ public class RepositoryClientTest {
         assertEquals("There should be a single asset filtered", 1, filteredAssets.size());
         assertEquals("We should get the right asset back", assetId, filteredAssets.iterator().next().get_id());
         filters.put(FilterableAttribute.LOWER_CASE_SHORT_NAME, Collections.singleton("Wibble"));
+        filteredAssets = _client.getFilteredAssets(filters);
+        assertEquals("There should be no assets filtered", 0, filteredAssets.size());
+
+        // VANITY URL
+        filters.clear();
+        filters.put(FilterableAttribute.VANITY_URL, Collections.singleton("no_url"));
+        filteredAssets = _client.getFilteredAssets(filters);
+        assertEquals("There should be a single asset filtered", 1, filteredAssets.size());
+        assertEquals("We should get the right asset back", assetId, filteredAssets.iterator().next().get_id());
+        filters.put(FilterableAttribute.VANITY_URL, Collections.singleton("foo_url"));
         filteredAssets = _client.getFilteredAssets(filters);
         assertEquals("There should be no assets filtered", 0, filteredAssets.size());
 
@@ -1499,7 +1510,7 @@ public class RepositoryClientTest {
 
     /*
      * Creates a test asset with a timestamp in its name
-     *
+     * 
      * @return The asset
      */
     protected Asset createTestAsset() {

@@ -39,7 +39,7 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
     /**
      * This method will return all of the assets matching specific filters in Massive.
      * It will just return a summary of each asset and not include any {@link Attachment}s.
-     * 
+     *
      * @param types
      *            The types to look for or <code>null</code> will return all types
      * @param productIds The product IDs to look for. Should not be <code>null</code> although supplying this will return assets for any product ID
@@ -50,14 +50,14 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
      * @throws RequestFailureException
      */
     @Override
-    public Collection<Asset> getAssets(final Collection<ResourceType> types, final Collection<String> productIds, final Visibility visibility, final Collection<String> productVersions) throws IOException, RequestFailureException {
+    public Collection<Asset> getAssets(final Collection<ResourceType> types, final Collection<String> productIds, final Visibility visibility,final Collection<String> productVersions) throws IOException, RequestFailureException {
         return getFilteredAssets(types, productIds, visibility, productVersions, false);
     }
 
     /**
      * This method will return all of the assets matching specific filters in Massive that do not have a maximum version in their applies to filter info.
      * It will just return a summary of each asset and not include any {@link Attachment}s.
-     * 
+     *
      * @param types
      *            The types to look for or <code>null</code> will return all types
      * @param productIds The product IDs to look for. Should not be <code>null</code> although supplying this will return assets for any product ID
@@ -74,7 +74,7 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
     /**
      * This method will return all of the assets of a specific type in Massive.
      * It will just return a summary of each asset and not include any {@link Attachment}s.
-     * 
+     *
      * @param type
      *            The type to look for, if <code>null</code> this method behaves
      *            in the same way as {@link #getAllAssets()}
@@ -96,7 +96,7 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
     /**
      * Implementation for the filtered get methods {@link #getAssets(Collection, String, Visibility, String)} and
      * {@link #getAssetsWithUnboundedMaxVersion(Collection, String, Visibility)}.
-     * 
+     *
      * @param types
      *            The types to look for or <code>null</code> will return all types
      * @param productIds The product IDs to look for or <code>null</code> will return assets for any product ID
@@ -122,7 +122,7 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
             filters.put(FilterableAttribute.VISIBILITY, Collections.singleton(visibility.toString()));
         }
         filters.put(FilterableAttribute.PRODUCT_MIN_VERSION, productVersions);
-    
+
         if (unboundedMaxVersion) {
             filters.put(FilterableAttribute.PRODUCT_HAS_MAX_VERSION, Collections.singleton(Boolean.FALSE.toString()));
         }
@@ -131,7 +131,7 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
 
     /**
      * Returns <code>true</code> if all the filters are empty.
-     * 
+     *
      * @param filters
      * @return
      */
@@ -187,6 +187,9 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
             case VISIBILITY:
                 ret = asset.getWlpInformation().getVisibility() == null ? null : asset.getWlpInformation().getVisibility().toString();
                 return (ret == null ? Collections.<String> emptyList() : Collections.singleton(ret));
+            case VANITY_URL:
+                ret = asset.getWlpInformation().getVanityRelativeURL() == null ? null : asset.getWlpInformation().getVanityRelativeURL();
+                return (ret == null ? Collections.<String> emptyList() : Collections.singleton(ret));
             default:
                 return null;
 
@@ -195,7 +198,7 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
 
     /**
      * Utility method to cycle through the applies to filters info and collate the values found
-     * 
+     *
      * @param asset
      * @param getter
      * @return

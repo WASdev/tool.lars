@@ -13,15 +13,16 @@ package com.ibm.ws.repository.strategies.test;
 
 import static com.ibm.ws.lars.testutils.BasicChecks.populateResource;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.reflectiveCallNoPrimitives;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,7 +33,6 @@ import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.connections.RepositoryConnectionList;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
-import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
 import com.ibm.ws.repository.strategies.writeable.AddNewStrategy;
@@ -45,11 +45,6 @@ public class AddThenHideOldStrategyTest extends StrategyTestBaseClass {
 
     public AddThenHideOldStrategyTest(RepositoryFixture fixture) {
         super(fixture);
-    }
-
-    @Before
-    public void clearCache() {
-        AddThenHideOldStrategy.clearCache();
     }
 
     @Test
@@ -279,45 +274,57 @@ public class AddThenHideOldStrategyTest extends StrategyTestBaseClass {
     }
 
     /**
-     * Test that when you have duplicate vanity URLs we don't populate a half baked map
+     * Having two visible assets with the same vanity URL means that repository
+     * is in an inconsistent state. There is some logic to look for this inconsistency
+     * in the AddThenHideStrategy. This test is testing the checking logic. It sets
+     * up the repository in a dodgy state by uploading two visible assets with the
+     * same URL (using AddNew), and then tests that an error is thrown by the checking
+     * logic when you try to add a third asset using AddThenHideOld
      *
-     * @throws URISyntaxException
-     * @throws RepositoryResourceException
-     * @throws RepositoryBackendException
      */
     @Test
-    public void testHalfPopulateMapNotLeft() throws URISyntaxException, RepositoryBackendException, RepositoryResourceException {
+    public void testDuplicateVisibleVanityURLs() throws RepositoryBackendException, RepositoryResourceException {
+
+        // Need to set name/appliesTo for the the assets to ensure they are treated as different
+        // and hence the second asset will get uploaded (instead of ignored)
+        // Also set the vanity URL to be the same for both.
         EsaResourceImpl resource1 = new EsaResourceImpl(repoConnection);
         populateResource(resource1);
         resource1.setWebDisplayPolicy(DisplayPolicy.VISIBLE);
         resource1.setProviderName("IBM");
+        resource1.setName("name1");
+        resource1.setAppliesTo("com.ibm.ws.wlp; productVersion=8.5.5.0");
+        resource1.setVanityURL("foourl");
         resource1.uploadToMassive(new AddNewStrategy(null, State.PUBLISHED));
         assertEquals("this resource should have gone into the published state", State.PUBLISHED, resource1.getState());
 
         EsaResourceImpl resource2 = new EsaResourceImpl(repoConnection);
         populateResource(resource2);
         resource2.setWebDisplayPolicy(DisplayPolicy.VISIBLE);
-        resource2.uploadToMassive(new AddNewStrategy(null, State.PUBLISHED));
         resource2.setProviderName("IBM");
+        resource2.setName("name2");
+        resource2.setVanityURL("foourl");
+        resource2.setAppliesTo("com.ibm.ws.wlp; productVersion=8.5.5.1");
+        resource2.uploadToMassive(new AddNewStrategy(null, State.PUBLISHED));
         assertEquals("this resource should have gone into the published state", State.PUBLISHED, resource2.getState());
 
+        // Should now have 2 visible assets with the URL 'foourl'. Uploading another
+        // asset with the same URL (using AddThenHideOld), should trigger the checks for
+        // duplicate vanity URLs and hence an error.
         EsaResourceImpl resource3 = new EsaResourceImpl(repoConnection);
-        populateResource(resource2);
+        populateResource(resource3);
         resource3.setProviderName("IBM");
         resource3.setWebDisplayPolicy(DisplayPolicy.VISIBLE);
+        resource3.setName("name3");
+        resource3.setVanityURL("foourl");
+        resource3.setAppliesTo("com.ibm.ws.wlp; productVersion=8.5.5.2");
         try {
             resource3.uploadToMassive(new AddThenHideOldStrategy(null, State.PUBLISHED));
-            fail("There are duplicate vanity URLs so should not be able to use add then hide strategy");
-        } catch (RepositoryResourceUpdateException e) {
-            // Expected
+            fail("The expected exception was not thrown");
+        } catch (RepositoryResourceException e) {
+            assertThat(e.getMessage(), containsString("There was more than 1 resource with the vanity URL foourl in state visible"));
         }
 
-        try {
-            resource3.uploadToMassive(new AddThenHideOldStrategy(null, State.PUBLISHED));
-            fail("There are duplicate vanity URLs so should not be able to use add then hide strategy even when running it twice!");
-        } catch (RepositoryResourceUpdateException e) {
-            // Expected
-        }
     }
 
     @Override
