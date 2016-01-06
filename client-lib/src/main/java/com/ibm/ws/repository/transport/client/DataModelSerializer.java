@@ -344,7 +344,7 @@ public class DataModelSerializer {
     public static void serializeAsStream(Object o, OutputStream s) throws IOException {
         try {
             JsonStructure builtJsonObject = findFieldsToSerialize(o).mainObject;
-            Map<String, Object> config = new HashMap<>();
+            Map<String, Object> config = new HashMap<String, Object>();
             config.put(JsonGenerator.PRETTY_PRINTING, true);
             JsonWriterFactory writerFactory = Json.createWriterFactory(config);
             JsonWriter streamWriter = writerFactory.createWriter(s);

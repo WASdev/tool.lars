@@ -16,7 +16,6 @@
 package com.ibm.ws.lars.testutils.fixtures;
 
 import java.io.File;
-import java.nio.file.Files;
 
 import com.ibm.ws.lars.testutils.clients.DirectoryWriteableClient;
 import com.ibm.ws.repository.connections.DirectoryRepositoryConnection;
@@ -64,7 +63,7 @@ public class FileRepositoryFixture extends RepositoryFixture {
             return;
         }
 
-        if (file.isDirectory() && !Files.isSymbolicLink(file.toPath())) {
+        if (file.isDirectory()) {
             for (File child : file.listFiles()) {
                 recursiveDelete(child);
             }

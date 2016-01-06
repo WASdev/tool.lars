@@ -21,12 +21,31 @@ dependencies {
     compile group:'org.hamcrest', name:'hamcrest-library', version:hamcrest_version
     compile group:'junit', name:'junit', version:junit_version
     compile group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
+    compile group:'commons-io', name:'commons-io', version:'2.4'
     compile project(':client-lib')
 }
 
 findbugsMain {
     enabled = false
 }
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+rootProject.afterEvaluate {
+    if (rootProject.hasProperty("java6BootClasspath")) {
+        tasks.each {
+            if (it instanceof JavaCompile) {
+                it.options.bootClasspath = rootProject.java6BootClasspath
+            }
+        }
+        tasks.each {
+            if (it instanceof Test) {
+                it.executable = rootProject.java6Executable
+            }
+        }
+    }
+}
+eclipse.classpath.containers=['org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6']
 
 
 // vim: set si:

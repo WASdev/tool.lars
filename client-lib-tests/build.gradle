@@ -24,6 +24,26 @@ dependencies {
     testCompile project(':test-utils')
 }
 
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+rootProject.afterEvaluate {
+    if (rootProject.hasProperty("java6BootClasspath")) {
+        tasks.each {
+            if (it instanceof JavaCompile) {
+                it.options.bootClasspath = rootProject.java6BootClasspath
+            }
+        }
+        tasks.each {
+            if (it instanceof Test) {
+                it.executable = rootProject.java6Executable
+                it.systemProperty 'SHOULD_USE_JAVA_6', 'true'
+            }
+        }
+    }
+}
+eclipse.classpath.containers=['org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6']
+
 ext {
     // Indicate that we'd like a file hosted by the test server
     serverHostedTestFiles = [file('src/fat/testResources/testfile.txt')];

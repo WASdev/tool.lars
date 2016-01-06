@@ -65,4 +65,9 @@ public class ZipRepositoryFixture extends RepositoryFixture {
         return "Zip repo";
     }
 
+    @Override
+    public boolean isUpdateSupported() {
+        return false;
+    }
+
 }
