@@ -20,9 +20,7 @@
 /*
  * Temporarily copied from aries in order to fix parseFilterList.
  * A patch has been submitted to aries to get this fixed properly. This
- * file should be deleted when possible. See RTC work item:
- *
- * https://wasrtc.hursley.ibm.com:9443/jazz/resource/itemName/com.ibm.team.workitem.WorkItem/148418
+ * file should be deleted when possible.
  *
  */
 
