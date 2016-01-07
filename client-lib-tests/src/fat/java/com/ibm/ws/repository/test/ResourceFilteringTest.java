@@ -93,16 +93,16 @@ public class ResourceFilteringTest {
 
     /*
      * The setup for this test is a little complex.
-     *
+     * 
      * The tests in this class expect to run against a repository loaded with assets in setupRepoForFilterTests()
-     *
+     * 
      * As in the other test classes, we need to run these tests against multiple repositories.
-     *
+     * 
      * getClassRule() returns a set of rules which ensure we have the repositories we want set up at the start
      * of the test and cleaned up at the end.
-     *
+     * 
      * getParameters() ensures we actually run the tests against each of the repositories
-     *
+     * 
      * setupClass() loads each of the repositories with the initial test data
      */
 
@@ -111,7 +111,7 @@ public class ResourceFilteringTest {
      */
     @Parameters(name = "{0}")
     public static Object[][] getParameters() {
-        List<Object[]> parameters = new ArrayList<>();
+        List<Object[]> parameters = new ArrayList<Object[]>();
         for (RepoData data : getRepoDataList()) {
             parameters.add(new Object[] { data });
         }
@@ -781,7 +781,7 @@ public class ResourceFilteringTest {
 
     private static List<RepoData> getRepoDataList() {
         if (repoDataCache == null) {
-            repoDataCache = new ArrayList<>();
+            repoDataCache = new ArrayList<RepoData>();
             for (Object[] param : FatUtils.getRestFixtureParameters()) {
                 RepoData data = new RepoData();
                 data.fixture = (RepositoryFixture) param[0];
