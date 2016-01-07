@@ -29,8 +29,32 @@ task srcJar(type: Jar) {
 }
 assemble.dependsOn srcJar
  
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+if(hasProperty("JAVA_6_HOME")) {
+    def java_lib_dir = JAVA_6_HOME + File.separator + "jre" + File.separator + "lib"
+    def jars = [];
+    try {
+    new File(java_lib_dir).eachFileRecurse {
+        if (it.path =~/\.jar$/) {
+            jars.add(it.path)
+        }
+    }
+    } catch (FileNotFoundException e) {
+        // do nothing. The check below will fail the build
+    }
+    if (jars.size() == 0) {
+        throw new GradleException("the JAVA_6_HOME property was specified but no jar files were found in the expected lib directory. JAVA_6_HOME was " 
+            + JAVA_6_HOME + " and no jars were found in " + java_lib_dir)
+    } else {
+        def bootClassPathString = jars.iterator().join(File.pathSeparator)
+        println("Setting the bootclasspath to: " + bootClassPathString)
+        compileJava {
+            options.bootClasspath = bootClassPathString
+        }
+    }
+}
 
 
 // vim: set si:
