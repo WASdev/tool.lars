@@ -117,7 +117,7 @@ public class FatUtils {
 
     public static MassiveRepositoryFixture getMassiveFixture() {
         String massiveServerString = System.getProperty("massiveServer");
-        if (massiveServerString == null) {
+        if (massiveServerString == null || massiveServerString.equals("")) {
             return null;
         }
 
@@ -125,8 +125,12 @@ public class FatUtils {
         if (parts.length != 4) {
             throw new RuntimeException("Invalid massiveServer property set");
         }
+        String repositoryUrlString = parts[0].trim();
+        String apiKey = parts[1].trim();
+        String adminId = parts[2].trim();
+        String adminPassword = parts[3].trim();
 
-        MassiveRepositoryFixture fixture = MassiveRepositoryFixture.createFixture(parts[0], parts[1], parts[2], parts[3]);
+        MassiveRepositoryFixture fixture = MassiveRepositoryFixture.createFixture(repositoryUrlString, apiKey, adminId, adminPassword);
         return fixture;
     }
 }
