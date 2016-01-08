@@ -177,6 +177,11 @@ task createTestUsrDir (type: Copy) {
     
     rename 'server\\.xml', 'mainServer.xml'
     
+    def traceSpec=""
+    if (hasProperty("libertyTraceSpec")) {
+        traceSpec = libertyTraceSpec
+    }
+    
     from('config/testServer.xml') {
         into "servers/${testServerName}"
         rename 'testServer\\.xml', 'server.xml'
@@ -184,7 +189,7 @@ task createTestUsrDir (type: Copy) {
                                       'HTTPS_PORT':testLibertyPortHTTPS,
                                       'TEST_DB_NAME':testDbName,
                                       'MONGO_PORT':testMongoPort,
-                                      'LIBERTY_TRACE_SPEC':libertyTraceSpec])
+                                      'LIBERTY_TRACE_SPEC':traceSpec])
     }
 
     // Add the bluemix war as a separate app, so that the https redirection
@@ -199,7 +204,7 @@ task createTestUsrDir (type: Copy) {
         filter(ReplaceTokens, tokens:['HTTP_PORT':baseUrlLibertyPortHTTP,
                                       'TEST_DB_NAME':testDbName,
                                       'MONGO_PORT':testMongoPort,
-                                      'LIBERTY_TRACE_SPEC':libertyTraceSpec])
+                                      'LIBERTY_TRACE_SPEC':traceSpec])
     }
     
     // Some tests need files served over http
