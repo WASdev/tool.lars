@@ -14,7 +14,7 @@ newer versions may work but this is what we've tested with)
 
 Either clone the repository or download and extract a snapshot
 
-Edit `server/gradle.properties` to point to your mongodb and liberty
+Rename `server/gradle.properties.template` to `server/gradle.properties` and edit to point to your mongodb and liberty
 installation directories.
 
 Have a look at `test-utils/src/main/resources/config.properties` and
