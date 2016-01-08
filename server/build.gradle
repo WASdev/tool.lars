@@ -26,6 +26,24 @@ import static java.lang.ProcessBuilder.Redirect.INHERIT
 
 archivesBaseName = 'larsServer'
 
+if (!hasProperty("libertyRoot")) {
+    throw new GradleException("The required property 'libertyRoot' was not set. It should be set to a valid Liberty installation."
+        + " Have you copied/edited gradle.properties.template to gradle.properties?")
+} else {
+    println("Will use libertyRoot " + libertyRoot)
+    File libertyExecutable = new File(libertyRoot + File.separator + "bin" + File.separator + "server")
+    if (!libertyExecutable.exists()) {
+        throw new GradleException("The property 'libertyRoot' doesn't seem to point to a valid liberty installation. Can't find " + libertyExecutable)
+    }
+}
+if (!hasProperty("mongodExecutable")) {
+    throw new GradleException("The required property 'mongodExecutable' was not set. It should be set to a valid mongod")
+} else {
+    println("Will use mongodExecutable " + mongodExecutable)
+    // This will throw an exception if it's not there
+    getMongodExecutable()
+}
+
 def requiredSpecJars = [
     'com.ibm.ws.javaee.jaxrs.1.1_*.jar',
     'com.ibm.ws.javaee.servlet.3.0_*.jar',
