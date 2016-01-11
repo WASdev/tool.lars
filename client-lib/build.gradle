@@ -28,6 +28,17 @@ task srcJar(type: Jar) {
     from sourceSets.main.java
 }
 assemble.dependsOn srcJar
+ 
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+rootProject.afterEvaluate {
+    if (rootProject.hasProperty("java6BootClasspath")) {
+        println("Setting the boot class path for client-lib project to " + rootProject.java6BootClasspath)
+        compileJava {
+            options.bootClasspath = rootProject.java6BootClasspath
+        }
+    }
+}
 
 
 // vim: set si:
