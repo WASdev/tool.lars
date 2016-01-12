@@ -968,7 +968,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
             return null;
         }
         try {
-            // Just use JsonObject parse directly instead of Wibblifier as we only want one attribute
+            // Just use JsonObject parse directly instead of DataModelSerializer as we only want one attribute
             InputStream inputStream = new ByteArrayInputStream(errorObject.getBytes(StandardCharsets.UTF_8));
             JsonReader jsonReader = Json.createReader(inputStream);
             JsonObject parsedObject = jsonReader.readObject();

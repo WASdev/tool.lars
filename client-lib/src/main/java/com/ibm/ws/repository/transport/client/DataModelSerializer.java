@@ -26,6 +26,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -104,32 +106,32 @@ public class DataModelSerializer {
 
             if (fieldValue == null) {
             }
-            else if (fieldValue instanceof java.lang.String) {
-                j.add(fieldName, (java.lang.String) fieldValue);
+            else if (fieldValue instanceof String) {
+                j.add(fieldName, (String) fieldValue);
             }
-            else if (fieldValue instanceof java.lang.Boolean) {
-                j.add(fieldName, (java.lang.Boolean) fieldValue);
+            else if (fieldValue instanceof Boolean) {
+                j.add(fieldName, (Boolean) fieldValue);
             }
-            else if (fieldValue instanceof java.math.BigInteger) {
-                j.add(fieldName, (java.math.BigInteger) fieldValue);
+            else if (fieldValue instanceof BigInteger) {
+                j.add(fieldName, (BigInteger) fieldValue);
             }
             else if (fieldValue instanceof java.math.BigDecimal) {
-                j.add(fieldName, (java.math.BigDecimal) fieldValue);
+                j.add(fieldName, (BigDecimal) fieldValue);
             }
-            else if (fieldValue instanceof java.lang.Double) {
-                j.add(fieldName, (java.lang.Double) fieldValue);
+            else if (fieldValue instanceof Double) {
+                j.add(fieldName, (Double) fieldValue);
             }
-            else if (fieldValue instanceof java.lang.Integer) {
-                j.add(fieldName, (java.lang.Integer) fieldValue);
+            else if (fieldValue instanceof Integer) {
+                j.add(fieldName, (Integer) fieldValue);
             }
-            else if (fieldValue instanceof java.lang.Long) {
-                j.add(fieldName, (java.lang.Long) fieldValue);
+            else if (fieldValue instanceof Long) {
+                j.add(fieldName, (Long) fieldValue);
             }
-            else if (fieldValue instanceof java.lang.Short) {
-                j.add(fieldName, (java.lang.Short) fieldValue);
+            else if (fieldValue instanceof Short) {
+                j.add(fieldName, (Short) fieldValue);
             }
-            else if (fieldValue instanceof java.lang.Byte) {
-                j.add(fieldName, (java.lang.Byte) fieldValue);
+            else if (fieldValue instanceof Byte) {
+                j.add(fieldName, (Byte) fieldValue);
 
             } else if (fieldValue instanceof Enum) {
                 try {
