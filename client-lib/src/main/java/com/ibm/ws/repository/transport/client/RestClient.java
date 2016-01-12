@@ -32,6 +32,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -42,14 +43,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.wink.json4j.JSONException;
-import org.apache.wink.json4j.JSONObject;
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.JsonString;
 
 import com.ibm.ws.repository.common.enums.AttachmentLinkType;
 import com.ibm.ws.repository.common.enums.AttachmentType;
 import com.ibm.ws.repository.common.enums.FilterableAttribute;
-import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.transport.exceptions.BadVersionException;
 import com.ibm.ws.repository.transport.exceptions.RequestFailureException;
 import com.ibm.ws.repository.transport.model.Asset;
@@ -964,15 +968,18 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
             return null;
         }
         try {
-            // Just use JSONObject parse directly instead of Wibblifier as we only want one attribute
-            JSONObject json = new JSONObject(errorObject);
-            Object errorMessage = json.opt("message");
-            if (errorMessage != null && errorMessage instanceof String && !((String) errorMessage).isEmpty()) {
-                return (String) errorMessage;
+            // Just use JsonObject parse directly instead of DataModelSerializer as we only want one attribute
+            InputStream inputStream = new ByteArrayInputStream(errorObject.getBytes(StandardCharsets.UTF_8));
+            JsonReader jsonReader = Json.createReader(inputStream);
+            JsonObject parsedObject = jsonReader.readObject();
+            jsonReader.close();
+            Object errorMessage = parsedObject.get("message");
+            if (errorMessage != null && errorMessage instanceof JsonString && !((JsonString) errorMessage).getString().isEmpty()) {
+                return ((JsonString) errorMessage).getString();
             } else {
                 return errorObject;
             }
-        } catch (JSONException e) {
+        } catch (JsonException e) {
             return errorObject;
         }
     }

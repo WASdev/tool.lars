@@ -1,0 +1,26 @@
+/*
+ * The purpose of this file is to provide fixed versions of some
+ * these version run the gradle build with:
+ * 
+ *   -PversionFile=LARS-1.1_versions.gradle
+ */
+
+ext {
+	// Packaged runtime dependencies
+	// Fixed versions for the LARS 1.1 release
+	aries_util_version = "1.1.0"
+	osgi_core_version = "5.0.0"
+	jackson_version="2.4.4"
+	javax_json_version="1.0"
+	glassfish_json_version="1.0.4"
+	mongodb_java_version="2.11.1"
+
+	// Test/compile time only dependencies
+	// Fixed at 1.15 as 1.16beta was getting picked up, which had a bug in it.	
+	jmockit_version="1.15"
+	hamcrest_version="1.+"
+	junit_version="4.+"
+	httpclient_version="4.3.+"
+	httpmime_version="4.3.+"
+	wlp_ant_tasks_version="1.0"
+}

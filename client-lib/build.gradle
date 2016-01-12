@@ -20,7 +20,8 @@ apply plugin: 'eclipse'
 dependencies {
     compile group:'org.apache.aries', name:'org.apache.aries.util', version:aries_util_version
     compile group:'org.osgi', name:'org.osgi.core', version:osgi_core_version
-    compile group:'org.apache.wink', name:'wink-json4j', version:wink_json4j_version
+    compile group:'javax.json', name:'javax.json-api', version:javax_json_version
+    runtime group:'org.glassfish', name:'javax.json', version:glassfish_json_version
 }
 
 task srcJar(type: Jar) {
