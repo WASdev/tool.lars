@@ -135,17 +135,15 @@ public class AppliesToProcessorTest {
         assertEquals("filter info should be for fish", "com.ibm.fish", atfi.getProductId());
         assertNotNull("filter info should have edition info", atfi.getEditions());
         assertEquals("filter info should be a single edition", 2, atfi.getEditions().size());
-        assertTrue("filter info should be for base", atfi.getEditions().get(0).equals("Betas") ||
-                                                     atfi.getEditions().get(0).equals("Blue mix"));
-        assertTrue("filter info should be for base", atfi.getEditions().get(1).equals("Betas") ||
-                                                     atfi.getEditions().get(1).equals("Bluemix"));
+        assertEquals("filter info should be a single edition", 1, atfi.getEditions().size());
+        assertTrue("filter info should be for base", atfi.getEditions().get(0).equals("Beta"));
         assertNotNull("filter info should have minVersion information", atfi.getMinVersion());
         assertEquals("filter info minVersion should be for 2013.13.13", "2013.13.13", atfi.getMinVersion().getValue());
-        assertEquals("filter info minVersion should have label Betas", "Betas", atfi.getMinVersion().getLabel());
+        assertEquals("filter info minVersion should have label Beta", "Beta", atfi.getMinVersion().getLabel());
         assertTrue("filter info minVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertNotNull("filter info should have maxVersion information", atfi.getMaxVersion());
         assertEquals("filter info maxVersion should be for 2013.13.13", "2013.13.13", atfi.getMaxVersion().getValue());
-        assertEquals("filter info maxVersion should have label Betas", "Betas", atfi.getMaxVersion().getLabel());
+        assertEquals("filter info maxVersion should have label Beta", "Beta", atfi.getMaxVersion().getLabel());
         assertTrue("filter info maxVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertTrue("filter info should have a max version", Boolean.valueOf(atfi.getHasMaxVersion()));
     }
@@ -161,11 +159,11 @@ public class AppliesToProcessorTest {
         assertEquals("filter info should be for base", "Base", atfi.getEditions().get(0));
         assertNotNull("filter info should have minVersion information", atfi.getMinVersion());
         assertEquals("filter info minVersion should be for 2013.13.13", "2013.13.13", atfi.getMinVersion().getValue());
-        assertEquals("filter info minVersion should have label Betas", "Betas", atfi.getMinVersion().getLabel());
+        assertEquals("filter info minVersion should have label Beta", "Beta", atfi.getMinVersion().getLabel());
         assertTrue("filter info minVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertNotNull("filter info should have maxVersion information", atfi.getMaxVersion());
         assertEquals("filter info maxVersion should be for 2013.13.13", "2013.13.13", atfi.getMaxVersion().getValue());
-        assertEquals("filter info maxVersion should have label Betas", "Betas", atfi.getMaxVersion().getLabel());
+        assertEquals("filter info maxVersion should have label Beta", "Beta", atfi.getMaxVersion().getLabel());
         assertTrue("filter info maxVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertTrue("filter info should have a max version", Boolean.valueOf(atfi.getHasMaxVersion()));
     }
@@ -181,7 +179,7 @@ public class AppliesToProcessorTest {
         assertEquals("filter info should be for base", "Base", atfi.getEditions().get(0));
         assertNotNull("filter info should have minVersion information", atfi.getMinVersion());
         assertEquals("filter info minVersion should be for 2013.13.13", "2013.13.13", atfi.getMinVersion().getValue());
-        assertEquals("filter info minVersion should have label Betas", "Betas", atfi.getMinVersion().getLabel());
+        assertEquals("filter info minVersion should have label Beta", "Beta", atfi.getMinVersion().getLabel());
         assertTrue("filter info minVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertNull("filter info should not have maxVersion information", atfi.getMaxVersion());
         assertFalse("filter info should not have a max version", Boolean.valueOf(atfi.getHasMaxVersion()));
@@ -198,11 +196,11 @@ public class AppliesToProcessorTest {
         assertEquals("filter info should be for Liberty Core", "Liberty Core", atfi.getEditions().get(0));
         assertNotNull("filter info should have minVersion information", atfi.getMinVersion());
         assertEquals("filter info minVersion should be for 2013.13.13", "2013.13.13", atfi.getMinVersion().getValue());
-        assertEquals("filter info minVersion should have label Betas", "Betas", atfi.getMinVersion().getLabel());
+        assertEquals("filter info minVersion should have label Beta", "Beta", atfi.getMinVersion().getLabel());
         assertTrue("filter info minVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertNotNull("filter info should have maxVersion information", atfi.getMaxVersion());
         assertEquals("filter info maxVersion should be for 2013.13.13", "2013.13.13", atfi.getMaxVersion().getValue());
-        assertEquals("filter info maxVersion should have label Betas", "Betas", atfi.getMaxVersion().getLabel());
+        assertEquals("filter info maxVersion should have label Beta", "Beta", atfi.getMaxVersion().getLabel());
         assertTrue("filter info maxVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertTrue("filter info should have a max version", Boolean.valueOf(atfi.getHasMaxVersion()));
     }
@@ -219,11 +217,11 @@ public class AppliesToProcessorTest {
         assertEquals("filter info should be for base", "Base", atfi.getEditions().get(1));
         assertNotNull("filter info should have minVersion information", atfi.getMinVersion());
         assertEquals("filter info minVersion should be for 2013.13.13", "2013.13.13", atfi.getMinVersion().getValue());
-        assertEquals("filter info minVersion should have label Betas", "Betas", atfi.getMinVersion().getLabel());
+        assertEquals("filter info minVersion should have label Beta", "Beta", atfi.getMinVersion().getLabel());
         assertTrue("filter info minVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertNotNull("filter info should have maxVersion information", atfi.getMaxVersion());
         assertEquals("filter info maxVersion should be for 2013.13.13", "2013.13.13", atfi.getMaxVersion().getValue());
-        assertEquals("filter info maxVersion should have label Betas", "Betas", atfi.getMaxVersion().getLabel());
+        assertEquals("filter info maxVersion should have label Beta", "Beta", atfi.getMaxVersion().getLabel());
         assertTrue("filter info maxVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertTrue("filter info should have a max version", Boolean.valueOf(atfi.getHasMaxVersion()));
     }
@@ -240,11 +238,11 @@ public class AppliesToProcessorTest {
         assertEquals("filter info should be for base", "Base", atfi.getEditions().get(1));
         assertNotNull("filter info should have minVersion information", atfi.getMinVersion());
         assertEquals("filter info minVersion should be for 2013.13.13", "2013.13.13", atfi.getMinVersion().getValue());
-        assertEquals("filter info minVersion should have label Betas", "Betas", atfi.getMinVersion().getLabel());
+        assertEquals("filter info minVersion should have label Beta", "Beta", atfi.getMinVersion().getLabel());
         assertTrue("filter info minVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertNotNull("filter info should have maxVersion information", atfi.getMaxVersion());
         assertEquals("filter info maxVersion should be for 2013.13.13", "2013.13.13", atfi.getMaxVersion().getValue());
-        assertEquals("filter info maxVersion should have label Betas", "Betas", atfi.getMaxVersion().getLabel());
+        assertEquals("filter info maxVersion should have label Beta", "Beta", atfi.getMaxVersion().getLabel());
         assertTrue("filter info maxVersion should be inclusive", atfi.getMinVersion().getInclusive());
         assertTrue("filter info should have a max version", Boolean.valueOf(atfi.getHasMaxVersion()));
         atfi = atfis.get(1);
