@@ -20,7 +20,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.Calendar;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -57,14 +56,17 @@ public class ZipWriteableClient extends AbstractFileWriteableClient {
     public static ZipOutputStream appendToZip(final File zip, String pathToWriteTo) throws IOException {
 
         if (!zip.exists()) {
-            return new ZipOutputStream(new FileOutputStream(zip));
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zip));
+            zos.putNextEntry(new ZipEntry("dummy"));
+            zos.write((byte) 1);
+            return zos;
         }
 
         File temp = File.createTempFile("tempRepo", ".zip", zip.getParentFile());
         if (!temp.delete()) {
             throw new IOException("Unable to delete temp file " + temp.getAbsolutePath());
         }
-        Files.move(zip.toPath(), temp.toPath());
+        org.apache.commons.io.FileUtils.moveFile(zip, temp);
 
         // Copy contents into new zip file
         ZipInputStream readFrom = new ZipInputStream(new FileInputStream(temp));

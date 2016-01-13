@@ -259,3 +259,47 @@ void loadProperties(String fileName) {
     }
     
 }
+
+// If a Java 6 VM is available, set up the bootclasspath and path to java.exe for
+// other projects to use.
+if(hasProperty("java6Home")) {
+	def java_lib_dir = java6Home + File.separator + "jre" + File.separator + "lib"
+	def java_bin_dir = java6Home + File.separator + "jre" + File.separator + "bin"
+	def java_executable = java_bin_dir + File.separator + "java.exe"
+	File java_exe_file = new File(java_executable)
+	if (!java_exe_file.exists()) {
+		java_executable = java_bin_dir + File.separator + "java"
+		java_exe_file = new File(java_executable)
+		if (!java_exe_file.exists()) {
+			throw new GradleException("java6Home property was specified but no exectuable could be found. java6Home was "
+				+ java6Home + " and " + java_executable + " couldn't be found") 
+		}
+	}
+
+	// The set of jars needed for the bootclasspath varies depending on which JVM is being used
+	// so this code has to search for them.	
+	def jars = [];
+	try {
+		new File(java_lib_dir).eachFileRecurse {
+			if (it.path =~/\.jar$/) {
+				jars.add(it.path)
+			}
+		}
+	} catch (FileNotFoundException e) {
+		// do nothing. The check below will fail the build
+	}
+	if (jars.size() == 0) {
+		throw new GradleException("the java6Home property was specified but no jar files were found in the expected JRE lib directory. java6Home was "
+			+ java6Home + " and no jars were found in " + java_lib_dir)
+	}
+
+	ext.java6BootClasspath = jars.iterator().join(File.pathSeparator)
+	ext.java6Executable = java_executable
+	logger.warn("Will execute client-lib-tests with JVM at " + java6Executable)
+	logger.debug("bootstrapclasspath for Java 6 projects set to:\n" + java6BootClasspath)
+
+} else {
+	logger.warn("java6Home property was not set, so the bootstrapclasspath for client-lib will not be sets,"
+		+" and client-lib-tests will be executed on the current JVM") 
+}
+	

@@ -30,7 +30,7 @@ if (!hasProperty("libertyRoot")) {
     throw new GradleException("The required property 'libertyRoot' was not set. It should be set to a valid Liberty installation."
         + " Have you copied/edited gradle.properties.template to gradle.properties?")
 } else {
-    println("Will use libertyRoot " + libertyRoot)
+    logger.warn("Will use libertyRoot " + libertyRoot)
     File libertyExecutable = new File(libertyRoot + File.separator + "bin" + File.separator + "server")
     if (!libertyExecutable.exists()) {
         throw new GradleException("The property 'libertyRoot' doesn't seem to point to a valid liberty installation. Can't find " + libertyExecutable)
@@ -39,7 +39,7 @@ if (!hasProperty("libertyRoot")) {
 if (!hasProperty("mongodExecutable")) {
     throw new GradleException("The required property 'mongodExecutable' was not set. It should be set to a valid mongod")
 } else {
-    println("Will use mongodExecutable " + mongodExecutable)
+    logger.warn("Will use mongodExecutable " + mongodExecutable)
     // This will throw an exception if it's not there
     getMongodExecutable()
 }
@@ -554,6 +554,7 @@ eclipse {
     }
     
 }
+
 
 
 // vim: set si:

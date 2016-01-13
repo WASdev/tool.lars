@@ -32,7 +32,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -969,7 +968,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
         }
         try {
             // Just use JsonObject parse directly instead of DataModelSerializer as we only want one attribute
-            InputStream inputStream = new ByteArrayInputStream(errorObject.getBytes(StandardCharsets.UTF_8));
+            InputStream inputStream = new ByteArrayInputStream(errorObject.getBytes(Charset.forName("UTF-8")));
             JsonReader jsonReader = Json.createReader(inputStream);
             JsonObject parsedObject = jsonReader.readObject();
             jsonReader.close();

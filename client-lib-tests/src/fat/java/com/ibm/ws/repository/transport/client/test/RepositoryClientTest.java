@@ -82,7 +82,7 @@ public class RepositoryClientTest {
 
     @Parameters(name = "{0}")
     public static Object[][] getParameters() {
-        List<Object[]> parameters = new ArrayList<>();
+        List<Object[]> parameters = new ArrayList<Object[]>();
         for (Object[] parameter : FatUtils.getRestFixtureParameters()) {
             parameters.add(parameter);
         }
@@ -1514,7 +1514,7 @@ public class RepositoryClientTest {
 
     /*
      * Creates a test asset with a timestamp in its name
-     *
+     * 
      * @return The asset
      */
     protected Asset createTestAsset() {
