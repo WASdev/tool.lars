@@ -46,7 +46,7 @@ public class ZipClient extends AbstractFileClient {
 
     /**
      * Create a zip client which points to the specified zip file
-     * 
+     *
      * @param zip The zip file the client should read from
      */
     public ZipClient(File zip) {
@@ -61,16 +61,20 @@ public class ZipClient extends AbstractFileClient {
 
     /**
      * Checks the repository availability
-     * 
+     *
      * @return This will return void if all is ok but will throw an exception if
      *         there are any problems
      * @throws FileNotFoundException
      */
     @Override
     public void checkRepositoryStatus() throws IOException {
-        if (!exists(null)) {
+        if (!DirectoryUtils.exists(_zip)) {
             throw new FileNotFoundException("Could not find " + _zip);
         }
+        // This will throw an exception if the file is not a zip
+        ZipFile zip = DirectoryUtils.createZipFile(_zip);
+        // if the creation of the zip file is successful ensure it is closed to release the lock
+        zip.close();
     }
 
     /**
@@ -279,7 +283,7 @@ public class ZipClient extends AbstractFileClient {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @throws BadVersionException
      * @throws IOException
      */
@@ -335,7 +339,7 @@ public class ZipClient extends AbstractFileClient {
                 ZipEntry ze = zis.getNextEntry();
                 while (ze != null) {
                     if (ze.isDirectory()) {
-                        //do nothing 
+                        //do nothing
                     } else {
                         if ((liLocation != null && ze.getName().startsWith(liLocation)) ||
                             (laLocation != null && ze.getName().startsWith(laLocation))) {
@@ -368,7 +372,7 @@ public class ZipClient extends AbstractFileClient {
 
     /**
      * Gets the manifest for the specified asset
-     * 
+     *
      * @param assetId
      * @return
      * @throws IOException
@@ -384,7 +388,7 @@ public class ZipClient extends AbstractFileClient {
 
     /**
      * Gets the manifest file from an ESA
-     * 
+     *
      * @param assetId
      * @return
      * @throws IOException
@@ -425,7 +429,7 @@ public class ZipClient extends AbstractFileClient {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @throws IOException
      */
     protected Manifest getJarManifest(String assetId) throws IOException {
