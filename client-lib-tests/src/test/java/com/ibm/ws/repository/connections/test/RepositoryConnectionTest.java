@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.ibm.ws.repository.connections.DirectoryRepositoryConnection;
 import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.connections.ZipRepositoryConnection;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 import com.ibm.ws.repository.resources.internal.SampleResourceImpl;
 
@@ -48,5 +49,14 @@ public class RepositoryConnectionTest {
         RepositoryResourceImpl mr = new SampleResourceImpl(dirCon);
         assertEquals("The repo url in the resource is not the one we set",
                      root.getAbsolutePath(), mr.getRepositoryConnection().getRepositoryLocation());
+    }
+
+    @Test
+    public void testZipRepoLocation() {
+        File zip = new File("repo.zip");
+        ZipRepositoryConnection zipCon = new ZipRepositoryConnection(zip);
+        RepositoryResourceImpl mr = new SampleResourceImpl(zipCon);
+        assertEquals("The repo url in the resource is not the one we set",
+                     zip.getAbsolutePath(), mr.getRepositoryConnection().getRepositoryLocation());
     }
 }

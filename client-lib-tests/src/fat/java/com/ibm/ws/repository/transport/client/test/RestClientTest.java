@@ -57,6 +57,7 @@ import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.connections.RestRepositoryConnection;
+import com.ibm.ws.repository.transport.client.ClientLoginInfo;
 import com.ibm.ws.repository.transport.client.RepositoryReadableClient;
 import com.ibm.ws.repository.transport.client.RepositoryWriteableClient;
 import com.ibm.ws.repository.transport.client.RestClient;
@@ -73,7 +74,6 @@ import com.ibm.ws.repository.transport.model.AttachmentSummary;
 @RunWith(Parameterized.class)
 public class RestClientTest {
 
-    protected RestRepositoryConnection _loginInfoEntry;
     private static final Logger logger = Logger.getLogger(RestClientTest.class.getName());
     private static final File resourcesDir = new File("resources");
 
@@ -461,6 +461,21 @@ public class RestClientTest {
             fail("Should not be able to filter on private and install visibilities at the same time");
         } catch (IllegalArgumentException e) {
 
+        }
+    }
+
+    @Test
+    public void testRepositoryStatusNoRepoFound() throws IOException, RequestFailureException {
+
+        RestRepositoryConnection connection = (RestRepositoryConnection) fixture.getAdminConnection();
+        String realLocation = connection.getRepositoryUrl();
+        String invalidUrl = realLocation.substring(0, realLocation.indexOf("/ma")) + "/invalid";
+        RestClient notFound = new RestClient(new ClientLoginInfo("user", "password", "12345", invalidUrl));
+        try {
+            notFound.checkRepositoryStatus();
+            fail("An exception should have been thrown as the repo should not be reachable");
+        } catch (RequestFailureException e) {
+            // Expect a request failure exception
         }
     }
 

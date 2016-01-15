@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.json.stream.JsonGenerationException;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1479,6 +1481,18 @@ public class RepositoryClientTest {
                 fail("Unexpected asset found: " + asset);
             }
         }
+    }
+
+    @Test
+    public void testRepositoryStatusPass() throws Exception {
+
+        // create and write an asset to the repository before the check as the file will have been deleted
+        Asset asset1 = createTestAsset();
+        asset1.setType(ResourceType.FEATURE);
+        asset1.setDescription("keyword1");
+        asset1 = _writeableClient.addAsset(asset1);
+
+        _client.checkRepositoryStatus();
     }
 
     protected static Attachment addAttachment(String id, final String name,
