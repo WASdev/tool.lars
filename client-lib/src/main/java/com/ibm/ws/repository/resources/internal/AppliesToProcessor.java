@@ -39,13 +39,13 @@ import com.ibm.ws.repository.transport.model.FilterVersion;
 public class AppliesToProcessor {
 
     private final static List<String> allEditions = Arrays.asList("Liberty Core", "Base", "Express", "Developers", "ND", "z/OS");
-    private final static List<String> betaEditions = Arrays.asList("Betas", "Bluemix");
+    private final static List<String> betaEditions = Arrays.asList("Beta");
 
     private final static Map<String, String> editionsMap = new HashMap<String, String>();
     public final static String VERSION_ATTRIB_NAME = "productVersion";
     public final static String EDITION_ATTRIB_NAME = "productEdition";
     public final static String INSTALL_TYPE_ATTRIB_NAME = "productInstallType";
-    private final static String EARLY_ACCESS_LABEL = "Betas";
+    private final static String EARLY_ACCESS_LABEL = "Beta";
 
     /** Use this constant for an edition that should not be added to the editions list at all (eg BASE_ILAN) */
     private final static String EDITION_UNMAPPED = "EDITION_UNMAPPED";
@@ -63,7 +63,7 @@ public class AppliesToProcessor {
         editionsMap.put("BASE", "Base");
         editionsMap.put("DEVELOPERS", "Developers");
         editionsMap.put("EXPRESS", "Express");
-        editionsMap.put("EARLY_ACCESS", "Betas");
+        editionsMap.put("EARLY_ACCESS", "Beta");
         editionsMap.put("zOS", "z/OS");
         editionsMap.put("ND", "ND");
         editionsMap.put("BASE_ILAN", EDITION_UNMAPPED);
