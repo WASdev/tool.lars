@@ -25,7 +25,7 @@ import com.ibm.ws.repository.common.enums.Visibility;
  * <p>
  * This interface allows read access to fields which are specific to features.
  */
-public interface EsaResource extends RepositoryResource {
+public interface EsaResource extends RepositoryResource, ApplicableToProduct {
 
     /**
      * Gets the symbolic name of the feature
@@ -61,13 +61,6 @@ public interface EsaResource extends RepositoryResource {
      * @return The lower cased short name, or null if it has not been set
      */
     public String getLowerCaseShortName();
-
-    /**
-     * Gets the appliesTo field associated with the resource
-     *
-     * @return The appliesTo field associated with the resource, or null if it has not been set
-     */
-    public String getAppliesTo();
 
     /**
      * Returns the value of the ibmProvisionCapability field (from the

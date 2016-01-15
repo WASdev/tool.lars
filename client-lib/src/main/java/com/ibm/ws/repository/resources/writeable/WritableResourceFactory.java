@@ -17,6 +17,7 @@ package com.ibm.ws.repository.resources.writeable;
 
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
 import com.ibm.ws.repository.resources.internal.AdminScriptResourceImpl;
 import com.ibm.ws.repository.resources.internal.ConfigSnippetResourceImpl;
 import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
@@ -60,6 +61,29 @@ public class WritableResourceFactory {
 
     public static ToolResourceWritable createTool(RepositoryConnection repoConnection) {
         return new ToolResourceImpl(repoConnection);
+    }
+
+    public static RepositoryResourceWritable createResource(RepositoryConnection repoConnection, ResourceType type) throws RepositoryResourceCreationException {
+        switch (type) {
+            case ADDON:
+            case INSTALL:
+                return createProduct(repoConnection, type);
+            case ADMINSCRIPT:
+                return createAdminScript(repoConnection);
+            case CONFIGSNIPPET:
+                return createConfigSnippet(repoConnection);
+            case FEATURE:
+                return createEsa(repoConnection);
+            case IFIX:
+                return createIfix(repoConnection);
+            case OPENSOURCE:
+            case PRODUCTSAMPLE:
+                return createSample(repoConnection, type);
+            case TOOL:
+                return createTool(repoConnection);
+            default:
+                throw new RepositoryResourceCreationException("Can not create an asset of type " + type, null);
+        }
     }
 
 }

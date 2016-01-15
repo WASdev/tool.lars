@@ -26,18 +26,11 @@ import com.ibm.ws.repository.common.enums.ResourceType;
  * <p>
  * Samples represented by this interface can either be of type {@link ResourceType#PRODUCTSAMPLE} or {@link ResourceType#OPENSOURCE}.
  */
-public interface SampleResource extends RepositoryResource {
-
-    /**
-     * Gets the appliesTo field associated with the resource
-     * 
-     * @return The appliesTo field associated with the resource, or null if it has not been set
-     */
-    public String getAppliesTo();
+public interface SampleResource extends RepositoryResource, ApplicableToProduct {
 
     /**
      * Gets the list of required features for this sample
-     * 
+     *
      * @return The list of required features for this sample, or null if it has not been set
      */
     public Collection<String> getRequireFeature();
@@ -46,7 +39,7 @@ public interface SampleResource extends RepositoryResource {
      * Gets the short name for this sample
      * <p>
      * The short name should be the name of the server included in the sample.
-     * 
+     *
      * @return The short name for this sample, or null if it has not been set
      */
     public String getShortName();

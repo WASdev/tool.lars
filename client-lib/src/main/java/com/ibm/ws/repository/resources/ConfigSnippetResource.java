@@ -22,11 +22,11 @@ import java.util.Collection;
  * <p>
  * This interface allows read access to fields which are specific to config snippets.
  */
-public interface ConfigSnippetResource extends RepositoryResource {
+public interface ConfigSnippetResource extends RepositoryResource, ApplicableToProduct {
 
     /**
      * Gets the list of required features for this config snippet
-     * 
+     *
      * @return The list of required features for this config snippet, or null if no features are required
      */
     public Collection<String> getRequireFeature();
