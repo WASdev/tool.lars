@@ -27,25 +27,22 @@ import com.ibm.ws.repository.transport.model.Asset;
 public class ResourceFactory {
 
     private static ResourceFactory _instance;
-    private static Object _lock = new Object();
 
-    // Mkae it private to ensure callers use getInstance
+    // Make it private to ensure callers use getInstance
     private ResourceFactory() {
 
     }
 
-    public static ResourceFactory getInstance() {
-        synchronized (_lock) {
-            if (_instance == null) {
-                _instance = new ResourceFactory();
-            }
+    public synchronized static ResourceFactory getInstance() {
+        if (_instance == null) {
+            _instance = new ResourceFactory();
         }
         return _instance;
     }
 
     /**
      * Creates a resources from the supplied asset
-     * 
+     *
      * @param ass The asset to create the resource from.
      * @param userId user id to log on to massive with
      * @param password password to log on to massive with
