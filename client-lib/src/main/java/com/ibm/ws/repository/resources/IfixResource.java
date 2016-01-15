@@ -23,25 +23,18 @@ import java.util.Date;
  * <p>
  * This interface allows read access to fields which are specific to ifixes.
  */
-public interface IfixResource extends RepositoryResource {
+public interface IfixResource extends RepositoryResource, ApplicableToProduct {
 
     /**
      * Gets the list of APAR IDs which are provided in this ifix resource
-     * 
+     *
      * @return the list of APAR IDs, or null if no APAR IDs are provided
      */
     public Collection<String> getProvideFix();
 
     /**
-     * Gets the appliesTo field associated with the resource
-     * 
-     * @return The appliesTo field associated with the resource, or null if it has not been set
-     */
-    public String getAppliesTo();
-
-    /**
      * Gets the modified date of the most recently modified file to be replaced by the update
-     * 
+     *
      * @return the date, or null if it has not been set
      */
     public Date getDate();

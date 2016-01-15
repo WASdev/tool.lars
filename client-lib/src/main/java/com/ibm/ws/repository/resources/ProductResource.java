@@ -24,13 +24,6 @@ import com.ibm.ws.repository.common.enums.ResourceType;
  * <p>
  * Products represented by this interface can either be of type {@link ResourceType#INSTALL} or {@link ResourceType#ADDON}.
  */
-public interface ProductResource extends ProductRelatedResource {
-
-    /**
-     * Gets the appliesTo field associated with the resource
-     * 
-     * @return The appliesTo field associated with the resource, or null if it has not been set
-     */
-    public String getAppliesTo();
+public interface ProductResource extends ProductRelatedResource, ApplicableToProduct {
 
 }

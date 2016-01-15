@@ -22,25 +22,18 @@ import java.util.Collection;
  * <p>
  * This interface allows read access to fields which are specific to admin scripts.
  */
-public interface AdminScriptResource extends RepositoryResource {
+public interface AdminScriptResource extends RepositoryResource, ApplicableToProduct {
 
     /**
      * Get the language that the script is written in
-     * 
+     *
      * @return the language the script is written in, or null if it has not been set
      */
     public String getScriptLanguage();
 
     /**
-     * Gets the appliesTo field associated with the resource
-     * 
-     * @return The appliesTo field associated with the resource, or null if it has not been set
-     */
-    public String getAppliesTo();
-
-    /**
      * Gets the list of required features for this admin script
-     * 
+     *
      * @return The list of required features for this admin script, or null if no features are required
      */
     public Collection<String> getRequireFeature();
