@@ -286,10 +286,10 @@ if(hasProperty("java6Home")) {
 			}
 		}
 		new File(java_bin_dir).eachFileRecurse {
-            if (it.path =~/\.jar$/) {
-                jars.add(it.path)
-            }
-        }
+			if (it.path =~/\.jar$/) {
+				jars.add(it.path)
+			}
+		}
 	} catch (FileNotFoundException e) {
 		// do nothing. The check below will fail the build
 	}
