@@ -1,11 +1,11 @@
 ext {
 	// Packaged runtime dependencies
 	aries_util_version = "1.1.+"
-	osgi_core_version = "5.0.+"
-	jackson_version="2.2.+"
+	osgi_core_version = "6.0.+"
+	jackson_version="2.5.+"
 	javax_json_version="1.0"
 	glassfish_json_version="1.0.+"
-	mongodb_java_version="2.11.1"
+	mongodb_java_version="2.13.0"
 
 	// Test/compile time only dependencies
 	// Fixed at 1.15 as 1.16beta was getting picked up, which had a bug in it.

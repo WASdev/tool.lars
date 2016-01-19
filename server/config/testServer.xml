@@ -44,7 +44,7 @@ limitations under the License.
          same MongoDB driver classes.
       -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
-        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.11.1.jar"/>
+        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.13.0.jar"/>
     </library>
 
     <httpEndpoint httpPort="@HTTP_PORT@" httpsPort="@HTTPS_PORT@" id="defaultHttpEndpoint"/>
