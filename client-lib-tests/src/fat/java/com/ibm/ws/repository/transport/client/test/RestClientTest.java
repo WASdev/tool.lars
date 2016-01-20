@@ -392,7 +392,7 @@ public class RestClientTest {
         _writeableClient.updateState(createdAsset2.get_id(), StateAction.APPROVE);
         logger.log(Level.INFO, "Created asset id=" + createdAsset2.get_id());
 
-        List<Asset> assetList = _unauthenticatedClient.getAllAssets();
+        Collection<Asset> assetList = _unauthenticatedClient.getAllAssets();
 
         assertThat("Wrong list of assets found", assetList, containsInAnyOrder(hasId(createdAsset1), hasId(createdAsset2)));
     }
