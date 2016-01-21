@@ -126,9 +126,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testGetAllAssets() throws IOException, RequestFailureException {
-        @SuppressWarnings("unused")
-        List<Asset> assets = _client.getAllAssets();
-
+        _client.getAllAssets();
         /*
          * We don't have any consistent test data in there at the moment, if we
          * get this far call it a pass!
@@ -411,7 +409,7 @@ public class RepositoryClientTest {
         addAttachment(createdAsset.get_id(),
                       "TestAttachment.txt", new File(getResourcesDir(), "TestAttachment.txt"), 0);
 
-        List<Asset> allAssets = _client.getAllAssets();
+        Collection<Asset> allAssets = _client.getAllAssets();
         for (Asset theAsset : allAssets) {
             List<Attachment> noAttachments = theAsset.getAttachments();
             assertNull("There should not be any attachments from a getAllAssets call", noAttachments);
@@ -789,9 +787,9 @@ public class RepositoryClientTest {
             // This is expected as add tries to reload the asset and it is invalid
         }
         _writeableClient.addAsset(validAsset);
-        List<Asset> allAssets = _client.getAllAssets();
+        Collection<Asset> allAssets = _client.getAllAssets();
         assertEquals("Expected to get just the single valid asset back" + allAssets, 1, allAssets.size());
-        assertEquals("Expected to get just the valid asset back", "Valid", allAssets.get(0).getName());
+        assertEquals("Expected to get just the valid asset back", "Valid", allAssets.iterator().next().getName());
     }
 
     @Test
@@ -1528,7 +1526,7 @@ public class RepositoryClientTest {
 
     /*
      * Creates a test asset with a timestamp in its name
-     * 
+     *
      * @return The asset
      */
     protected Asset createTestAsset() {

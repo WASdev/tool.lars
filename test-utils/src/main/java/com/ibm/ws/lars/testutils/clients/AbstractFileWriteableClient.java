@@ -144,7 +144,7 @@ public abstract class AbstractFileWriteableClient implements RepositoryWriteable
     }
 
     @Override
-    public List<Asset> getAllAssets() throws IOException, RequestFailureException {
+    public Collection<Asset> getAllAssets() throws IOException, RequestFailureException {
         return _readClient.getAllAssets();
     }
 

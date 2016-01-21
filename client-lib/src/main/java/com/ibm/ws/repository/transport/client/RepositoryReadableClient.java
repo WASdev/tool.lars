@@ -43,12 +43,12 @@ public interface RepositoryReadableClient extends RepositoryClient {
     /**
      * @return Gets a list of all the assets in this repository.
      */
-    public List<Asset> getAllAssets() throws IOException, RequestFailureException;
+    public Collection<Asset> getAllAssets() throws IOException, RequestFailureException;
 
     /**
      * This method will return all of the assets of a specific type in Massive.
      * It will just return a summary of each asset and not include any {@link Attachment}s.
-     * 
+     *
      * @param type
      *            The type to look for, if <code>null</code> this method behaves
      *            in the same way as {@link #getAllAssets()}
@@ -61,7 +61,7 @@ public interface RepositoryReadableClient extends RepositoryClient {
     /**
      * This method will return all of the assets matching specific filters in Massive.
      * It will just return a summary of each asset and not include any {@link Attachment}s.
-     * 
+     *
      * @param types
      *            The types to look for or <code>null</code> will return all types
      * @param productIds The product IDs to look for. Should not be <code>null</code> although supplying this will return assets for any product ID
@@ -78,7 +78,7 @@ public interface RepositoryReadableClient extends RepositoryClient {
     /**
      * This method will return all of the assets matching specific filters in Massive that do not have a maximum version in their applies to filter info.
      * It will just return a summary of each asset and not include any {@link Attachment}s.
-     * 
+     *
      * @param types
      *            The types to look for or <code>null</code> will return all types
      * @param productIds The product IDs to look for. Should not be <code>null</code> although supplying this will return assets for any product ID
@@ -101,11 +101,11 @@ public interface RepositoryReadableClient extends RepositoryClient {
 
     /**
      * Find assets based on the <code>searchString</code>.
-     * 
+     *
      * NOTE: TODO at the moment this only works when called against an unauthenticated Client
      * due to a problem with how the stores are defined (the company values are defined
      * incorrectly).
-     * 
+     *
      * @param searchString The string to search for
      * @param types The types to filter the results for
      * @return The assets that match the search string and type
@@ -117,7 +117,7 @@ public interface RepositoryReadableClient extends RepositoryClient {
     /**
      * This will obtain assets from Massive using the supplied filters. The map can contain <code>null</code> or empty collections of values, in which case they will not be used in
      * the filter.
-     * 
+     *
      * @param filters A map of attributes to filter on mapped to the values to use
      * @return The filtered assets
      * @throws IOException
@@ -128,7 +128,7 @@ public interface RepositoryReadableClient extends RepositoryClient {
 
     /**
      * Checks the repository availability
-     * 
+     *
      * @return This will return void if all is ok but will throw an exception if
      *         there are any problems
      * @throws RequestFailureException
