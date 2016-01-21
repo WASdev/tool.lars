@@ -482,7 +482,6 @@ public class DataModelSerializer {
      * @throws IOException
      * @throws BadVersionException
      */
-    @SuppressWarnings("unchecked")
     private static <T> T processJsonObjectBackIntoDataModelInstance(JsonObject json, Class<? extends T> typeOfObject, Verification verify) throws IOException, BadVersionException {
         Set<Map.Entry<String, JsonValue>> jsonSet = json.entrySet();
 
@@ -507,7 +506,7 @@ public class DataModelSerializer {
             String keyString = keyEntry.getKey();
             JsonValue value = keyEntry.getValue();
 
-            if (value == null)
+            if (value == null || value.getValueType().equals(ValueType.NULL))
                 continue;
 
             //When calling toString() on a JsonString the value is returned in quotation marks, so we need to call getString() on JsonString to avoid this
