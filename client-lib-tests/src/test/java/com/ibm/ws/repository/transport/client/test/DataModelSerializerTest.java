@@ -353,6 +353,27 @@ public class DataModelSerializerTest {
         }
     }
 
+    public static class NullFieldTest {
+        String nullField;
+
+        public String getNullField() {
+            return nullField;
+        }
+
+        public void setNullField(String nullField) {
+            this.nullField = nullField;
+        }
+    }
+
+    @Test
+    public void testDeserializeNull() throws Exception {
+
+        NullFieldTest nft = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"nullField\": null }".getBytes()),
+                                                                  NullFieldTest.class);
+        assertEquals("Null field was not set correctly during null test,",
+                     null, nft.getNullField());
+    }
+
     public static class LocaleTest {
         Locale locale;
 
