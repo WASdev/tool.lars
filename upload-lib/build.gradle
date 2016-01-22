@@ -23,32 +23,5 @@ dependencies {
     testCompile project(':test-utils')
 }
 
-Map<String, List<String>> javaVersionEsas = [
-    'requires_java6.esa': ['requires_java6_bundle.jar'],
-    'requires_java7.esa': ['requires_java7_bundle.jar'],
-    'requires_java7_exact.esa': ['requires_java7_exact_bundle.jar'],
-    'requires_incompatible_versions.esa': ['requires_java7_exact_bundle.jar',
-                                         'requires_java8_bundle.jar'],
-    'requires_multiple_versions.esa': ['requires_java6_bundle.jar',
-                                     'requires_java7_bundle.jar'],
-    'requires_bad_java_version.esa':['requires_bad_java_version_bundle.jar']
-]
-
-javaVersionEsas.each({target, bundles ->
-    Task task = task "create--${target}" (type:Zip) {
-        archiveName = target
-        destinationDir = file('build/test-working/resources')
-        bundles.each({
-            from file("build/test-working/resources/${it}")
-            dependsOn "create--${it}"
-        })
-        from (file('src/fat/testResources/javaVersionTests/SUBSYSTEM.MF')) {
-            into('OSGI-INF')
-        }
-    }
-    prepareTestResources.dependsOn task
-    prepareTestResources.outputs.files(task)
-})
-
 
 // vim: set si:

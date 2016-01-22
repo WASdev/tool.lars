@@ -51,7 +51,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -86,7 +85,6 @@ import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
 import com.ibm.ws.repository.transport.client.DataModelSerializer;
 import com.ibm.ws.repository.transport.model.AppliesToFilterInfo;
 import com.ibm.ws.repository.transport.model.Asset;
-import com.ibm.ws.repository.transport.model.JavaSEVersionRequirements;
 import com.ibm.ws.repository.transport.model.WlpInformation;
 
 /**
@@ -94,9 +92,6 @@ import com.ibm.ws.repository.transport.model.WlpInformation;
  * the com.ibm.ws.massive.testsuite project
  */
 public class MassiveEsaTest {
-
-    private static final String EE_7_FEATURE_COMPATIBILITY = "Java SE 7, Java SE 8";
-    private static final String EE_6_FEATURE_COMPATIBILITY = "Java SE 6, Java SE 7, Java SE 8";
 
     private static final String ENABLES = "Features that this feature enables";
     private static final String ENABLED_BY = "Features that enable this feature";
@@ -181,93 +176,6 @@ public class MassiveEsaTest {
         license = blueprintFeature.getLicenseAgreement(Locale.CHINESE);
         assertEquals("Missing license agreement", Locale.CHINESE, license.getLocale());
         assertEquals("Wrong attachment size", (long) esaSizes.get("wlp/lafiles/LA_zh"), license.getSize());
-    }
-
-    @Test
-    public void testJava6Feature() throws Throwable {
-        File java6_esa = new File(esaDir, "requires_java6.esa");
-        EsaResourceImpl java6Feature = (EsaResourceImpl) uploadAsset(java6_esa);
-
-        JavaSEVersionRequirements reqs = java6Feature.getJavaSEVersionRequirements();
-        assertEquals("Incorrect minimum version", "1.6.0", reqs.getMinVersion());
-        assertNull("Max version should be null, actually was: " + reqs.getMaxVersion(), reqs.getMaxVersion());
-        assertEquals("Display version was incorrect", EE_6_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
-    }
-
-    @Test
-    public void testJava7Feature() throws Throwable {
-        File java7_esa = new File(esaDir, "requires_java7.esa");
-        EsaResourceImpl java7Feature = (EsaResourceImpl) uploadAsset(java7_esa);
-
-        JavaSEVersionRequirements reqs = java7Feature.getJavaSEVersionRequirements();
-        assertEquals("Incorrect minimum version", "1.7.0", reqs.getMinVersion());
-        assertNull("Max version should be null, actually was: " + reqs.getMaxVersion(), reqs.getMaxVersion());
-        assertEquals("Display version was incorrect", EE_7_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
-    }
-
-    /**
-     * Test an esa where a bundle has an '=' requirement for the java version, rather than an
-     * implied exact version from a combination of intersecting ranges of the various bundles.
-     * Should still just end up with a minimum required, as maximums don't need to be specified
-     *
-     * @throws Throwable
-     */
-    @Test
-    public void testExactJavaRequirementFeature() throws Throwable {
-        File broken_esa = new File(esaDir, "requires_java7_exact.esa");
-        EsaResourceImpl java7Feature = (EsaResourceImpl) uploadAsset(broken_esa);
-        JavaSEVersionRequirements reqs = java7Feature.getJavaSEVersionRequirements();
-        assertEquals("Incorrect minimum version", "1.7.0", reqs.getMinVersion());
-        assertEquals("Incorrect maximum version", "1.7.0", reqs.getMaxVersion());
-        assertEquals("Display version was incorrect", EE_7_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
-
-    }
-
-    @Test
-    public void testIncompatibleVersionsFeature() throws Throwable {
-        File java7_esa = new File(esaDir, "requires_incompatible_versions.esa");
-        try {
-            uploadAsset(java7_esa);
-        } catch (RepositoryException e) {
-            assertEquals("The message from the exception was unexpected.",
-                         "ESA requires_incompatible_versions.esa is invalid, two bundles require incompatible JavaSE versions"
-                         , e.getMessage());
-            return;
-        }
-        fail("The ESA is invalid so an exception should have been thrown");
-    }
-
-    @Test
-    public void testMultipleVersionFeature() throws Throwable {
-        File java7_esa = new File(esaDir, "requires_multiple_versions.esa");
-        EsaResourceImpl java7Feature = (EsaResourceImpl) uploadAsset(java7_esa);
-
-        JavaSEVersionRequirements reqs = java7Feature.getJavaSEVersionRequirements();
-        assertEquals("Incorrect minimum version", "1.7.0", reqs.getMinVersion());
-        assertNull("Incorrect maxmimum version, should have been null", reqs.getMaxVersion());
-        assertEquals("Incorrect minimum version", EE_7_FEATURE_COMPATIBILITY, reqs.getVersionDisplayString());
-    }
-
-    /**
-     * The Java version required by the ESA needs converting into something displayable. If the
-     * required version is unexpected and hence can't be converted to a nice format for display, an
-     * exception should be thrown
-     *
-     * @throws Throwable
-     */
-    @Test
-    public void testBadJavaVersionFeature() throws Throwable {
-        File java7_esa = new File(esaDir, "requires_bad_java_version.esa");
-        try {
-            uploadAsset(java7_esa);
-        } catch (RepositoryException e) {
-            assertEquals("Incorrect message in the exception",
-                         "Lower bound to Java version range is expected to be either Java 6 or Java 7. Actually was 5.9.0", e.getMessage());
-            return;
-        }
-
-        fail("An exception should be thrown if an unexpected Java version is required");
-
     }
 
     @Test

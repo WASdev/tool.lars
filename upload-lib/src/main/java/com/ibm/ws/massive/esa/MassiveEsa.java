@@ -18,40 +18,19 @@ package com.ibm.ws.massive.esa;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.StringTokenizer;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipException;
 
-import org.apache.aries.util.VersionRange;
-import org.osgi.framework.Version;
-
-import com.ibm.ws.massive.esa.ManifestHeaderProcessor.GenericMetadata;
 import com.ibm.ws.massive.esa.internal.EsaManifest;
 import com.ibm.ws.massive.upload.RepositoryArchiveEntryNotFoundException;
 import com.ibm.ws.massive.upload.RepositoryArchiveIOException;
@@ -83,18 +62,6 @@ import com.ibm.ws.repository.transport.model.Asset;
  * </p>
  */
 public class MassiveEsa extends MassiveUploader implements RepositoryUploader<EsaResourceWritable> {
-
-    /**  */
-    private static final String JAVA_FILTER_KEY = "JavaSE";
-
-    /**  */
-    private static final String VERSION_FILTER_KEY = "version";
-
-    /**  */
-    private static final String OSGI_EE_NAMESPACE_ID = "osgi.ee";
-
-    /**  */
-    private static final String REQUIRE_CAPABILITY_HEADER_NAME = "Require-Capability";
 
     /** Map of symbolic name to asset to make finding other features easy */
     private final Map<EsaIdentifier, EsaResource> allFeatures;
@@ -347,8 +314,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
             throw new RepositoryArchiveIOException(e.getMessage(), esa, e);
         }
         resource.setLicenseId(feature.getHeader("Subsystem-License"));
-
-        setJavaRequirements(esa, resource);
 
         // Publish to massive
         try {
@@ -617,186 +582,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
                 return false;
             return true;
         }
-
-    }
-
-    /**
-     * Look in the esa for bundles with particular java version requirements. Create an aggregate
-     * requirement of the esa as a whole, and write the data into the supplied resource
-     *
-     * @param esa
-     * @param resource
-     * @throws RepositoryException If there are any IOExceptions reading the esa, or if the the
-     *             bundles have conflicting Java version requirements.
-     */
-    private static void setJavaRequirements(File esa, EsaResourceWritable resource) throws RepositoryException {
-
-        Map<String, String> bundleRequirements = new HashMap<String, String>();
-        Path zipfile = esa.toPath();
-        VersionRange esaRange = null;
-
-        try (final FileSystem zipSystem = FileSystems.newFileSystem(zipfile, null)) {
-
-            class BundleFinder extends SimpleFileVisitor<Path> {
-                ArrayList<Path> bundles = new ArrayList<Path>();
-                // Bundles should be jars in the root of the zip
-                PathMatcher bundleMatcher = zipSystem.getPathMatcher("glob:/*.jar");
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
-                    if (bundleMatcher.matches(file)) {
-                        bundles.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            }
-
-            Iterable<Path> roots = zipSystem.getRootDirectories();
-            BundleFinder finder = new BundleFinder();
-            for (Path root : roots) {
-                // Bundles should be in the root of the zip, so depth is 1
-                Files.walkFileTree(root, new HashSet<FileVisitOption>(), 1, finder);
-            }
-
-            for (Path bundle : finder.bundles) {
-
-                // Need to extract the bundles to read their manifest, can't find a way to do this in place.
-                Path extractedJar = Files.createTempFile(null, ".jar", new FileAttribute[0]);
-                extractedJar.toFile().deleteOnExit();
-                Files.copy(bundle, extractedJar, StandardCopyOption.REPLACE_EXISTING);
-
-                Manifest bundleJarManifest = null;
-                try (JarFile bundleJar = new JarFile(extractedJar.toFile())) {
-                    bundleJarManifest = bundleJar.getManifest();
-                }
-                Attributes bundleManifestAttrs = bundleJarManifest.getMainAttributes();
-                String requireCapabilityAttr = bundleManifestAttrs.getValue(REQUIRE_CAPABILITY_HEADER_NAME);
-                if (requireCapabilityAttr == null) {
-                    continue;
-                }
-
-                // The Require-Capability attribute will look a little like this:
-                // Require-Capability: osgi.ee; filter:="(&(osgi.ee=JavaSE)(version>=1.7))"
-                List<GenericMetadata> requirementMetadata = ManifestHeaderProcessor.parseRequirementString(requireCapabilityAttr);
-                GenericMetadata eeVersionMetadata = null;
-                for (GenericMetadata metaData : requirementMetadata) {
-                    if (metaData.getNamespace().equals(OSGI_EE_NAMESPACE_ID)) {
-                        eeVersionMetadata = metaData;
-                        break;
-                    }
-                }
-
-                if (eeVersionMetadata == null) {
-                    // No version requirements, go to the next bundle
-                    continue;
-                }
-
-                Map<String, String> dirs = eeVersionMetadata.getDirectives();
-                for (Entry<String, String> directive : dirs.entrySet()) {
-                    String key = directive.getKey();
-                    if (!key.equals("filter")) {
-                        continue;
-                    }
-
-                    Map<String, String> filter = null;
-                    filter = ManifestHeaderProcessor.parseFilter(dirs.get(key));
-
-                    // The interesting filter should contain osgi.ee=JavaSE and version=XX
-                    if (!(filter.containsKey(OSGI_EE_NAMESPACE_ID) && filter.get(OSGI_EE_NAMESPACE_ID).equals(JAVA_FILTER_KEY)
-                    && filter.containsKey(VERSION_FILTER_KEY))) {
-                        continue; // Uninteresting filter
-                    }
-
-                    // Store the raw filter to add to the resource later.
-                    bundleRequirements.put(bundle.getFileName().toString(), directive.getValue());
-
-                    VersionRange range = ManifestHeaderProcessor.parseVersionRange(filter.get(VERSION_FILTER_KEY));
-                    if (esaRange == null) {
-                        esaRange = range;
-                    } else {
-                        VersionRange newRange = range.intersect(esaRange);
-                        if (newRange == null) {
-                            // VersionRange.intersect returns null if the ranges are incompatible
-                            throw new RepositoryException("ESA " + zipfile.getFileName() + " is invalid, two bundles " +
-                                                          "require incompatible JavaSE versions");
-                        }
-                        esaRange = newRange;
-                    }
-
-                    // Assume there is only one Java version filter, so stop looking
-                    break;
-                }
-
-            }
-
-        } catch (IOException e) {
-            // Any IOException means that the version info isn't reliable, so only thing to do is ditch out.
-            throw new RepositoryArchiveIOException(e.getMessage(), esa, e);
-        }
-
-        ArrayList<String> rawRequirements = new ArrayList<String>();
-        for (Entry<String, String> bundleRequirement : bundleRequirements.entrySet()) {
-            rawRequirements.add(bundleRequirement.getKey() + ": " + bundleRequirement.getValue());
-        }
-        if (rawRequirements.size() == 0) {
-            rawRequirements = null;
-        }
-
-        String minimum = null;
-        String maximum = null;
-        if (esaRange != null) {
-            Version minimumVersion = esaRange.getMinimumVersion();
-            if (minimumVersion != null) {
-                minimum = minimumVersion.toString();
-            }
-            Version maximumVersion = esaRange.getMaximumVersion();
-            if (maximumVersion != null) {
-                maximum = maximumVersion.toString();
-            }
-        }
-
-        validateJavaVersionRange(esaRange);
-
-        resource.setJavaSEVersionRequirements(minimum, maximum, rawRequirements);
-
-    }
-
-    /**
-     * Check that the version range in this ESA is acceptable. Acceptable is defined by what the
-     * tooling can deal with, and what is currently known about Liberty.
-     *
-     * @param range
-     * @throws RepositoryException if the version range is unexpected
-     */
-    private static void validateJavaVersionRange(VersionRange range) throws RepositoryException {
-        if (range == null) {
-            // This is fine. The ESA is implicitly valid on whatever liberty supports.
-            return;
-        }
-        Version max = range.getMaximumVersion();
-        Version min = range.getMinimumVersion();
-        if (max != null) {
-            // If this is the case then the ESA should have specified an exact required version.
-            // If the min version is either not specified or the min version != max version, then
-            // treat it as badly formed, as a range is not currently expected, and there is no logic to
-            // handle displaying an ESA like this.
-            if (min == null || !min.equals(max)) {
-                throw new RepositoryException("Unexpected upper bound to Java version range");
-            }
-        }
-
-        if (min == null) {
-            throw new RepositoryException("Lower bound to Java version range shouldn't be empty");
-        }
-
-        Version version6 = new Version(1, 6, 0);
-        Version version7 = new Version(1, 7, 0);
-        if (min.equals(version6) || min.equals(version7)) {
-            return;
-        }
-
-        throw new RepositoryException("Lower bound to Java version range is expected to be either Java 6 or Java 7."
-                                      + " Actually was " + min);
 
     }
 
