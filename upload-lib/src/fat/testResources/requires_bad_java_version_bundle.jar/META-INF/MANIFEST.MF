@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=5.9))
- "
