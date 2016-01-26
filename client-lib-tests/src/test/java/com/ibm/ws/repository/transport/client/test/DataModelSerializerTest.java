@@ -25,8 +25,10 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 import javax.json.Json;
@@ -353,25 +355,151 @@ public class DataModelSerializerTest {
         }
     }
 
-    public static class NullFieldTest {
-        String nullField;
+    public static class DeserialisationHelperClass {
+        int intField;
+        String stringField;
+        boolean booleanField;
+        List<String> stringList;
+        List<Boolean> booleanList;
+        List<Integer> integerList;
 
-        public String getNullField() {
-            return nullField;
+        public int getIntField() {
+            return intField;
         }
 
-        public void setNullField(String nullField) {
-            this.nullField = nullField;
+        public void setIntField(int intField) {
+            this.intField = intField;
+        }
+
+        public List<Integer> getIntegerList() {
+            return integerList;
+        }
+
+        public void setIntegerList(List<Integer> integerList) {
+            this.integerList = integerList;
+        }
+
+        public List<Boolean> getBooleanList() {
+            return booleanList;
+        }
+
+        public void setBooleanList(List<Boolean> booleanList) {
+            this.booleanList = booleanList;
+        }
+
+        public String getStringField() {
+            return stringField;
+        }
+
+        public void setStringField(String stringField) {
+            this.stringField = stringField;
+        }
+
+        public boolean getBooleanField() {
+            return booleanField;
+        }
+
+        public void setBooleanField(boolean booleanField) {
+            this.booleanField = booleanField;
+        }
+
+        public List<String> getStringList() {
+            return stringList;
+        }
+
+        public void setStringList(List<String> stringList) {
+            this.stringList = stringList;
         }
     }
 
     @Test
-    public void testDeserializeNull() throws Exception {
+    public void deserializePrimitives() throws Exception {
 
-        NullFieldTest nft = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"nullField\": null }".getBytes()),
-                                                                  NullFieldTest.class);
-        assertEquals("Null field was not set correctly during null test,",
-                     null, nft.getNullField());
+        DeserialisationHelperClass dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"intField\": 25 }".getBytes()),
+                                                                               DeserialisationHelperClass.class);
+        assertEquals("dummy text", 25, dhc.getIntField());
+    }
+
+    @Test
+    public void testDeserializeIntegers() throws Exception {
+
+        // deserialize a single integer
+        try {
+            DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"integerField\": 99 }".getBytes()),
+                                                  DeserialisationHelperClass.class);
+            fail("deserializing an Integer should have thrown an exception as we don't support them");
+        } catch (IllegalArgumentException iae) {
+            if (!iae.getMessage().contains("Data Model Error: unable to invoke setter for data model element")) {
+                fail("unrecognised exception text");
+            }
+            // expected
+        }
+
+        // deserialize a list of Integers
+        try {
+            DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"integerList\": [1,2,3] }".getBytes()),
+                                                  DeserialisationHelperClass.class);
+            fail("deserializing an integer in a list should have thrown an exception");
+        } catch (IllegalStateException ise) {
+            assertEquals("Unexpected exception tests message,", DataModelSerializer.DATA_MODEL_ERROR_NUMBER, ise.getMessage());
+        }
+
+    }
+
+    @Test
+    public void testDeserializeNulls() throws Exception {
+
+        // simple string list sanity check
+        DeserialisationHelperClass dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"stringList\": [\"somestring1\", \"somestring2\"] }".getBytes()),
+                                                                               DeserialisationHelperClass.class);
+        List<String> list = new ArrayList<String>();
+        list.add("somestring1");
+        list.add("somestring2");
+        assertEquals("List was not set correctly from JSON list,", list, dhc.getStringList());
+
+        // test a field set to null
+        dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"stringField\": null }".getBytes()),
+                                                    DeserialisationHelperClass.class);
+        assertEquals("Field was not correctly set to null from a null JSON field,", null, dhc.getStringField());
+
+        // test a list set to null
+        dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"stringList\": null }".getBytes()),
+                                                    DeserialisationHelperClass.class);
+        assertEquals("List was not correctly set to null from a null JSON list,", null, dhc.getStringList());
+
+        // list containing nulls
+        dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"stringList\": [ null, null ] }".getBytes()),
+                                                    DeserialisationHelperClass.class);
+        list = new ArrayList<String>();
+        list.add(null);
+        list.add(null);
+        assertEquals("List containing nulls was not correctly set from JSON string,", list, dhc.getStringList());
+    }
+
+    @Test
+    public void testDeserializeBooleans() throws Exception {
+
+        // add false to a boolean field
+        DeserialisationHelperClass dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"booleanField\": false }".getBytes()),
+                                                                               DeserialisationHelperClass.class);
+        assertEquals("Boolean field not set correctly test,",
+                     false, dhc.getBooleanField());
+
+        // We don't support list containing JSON true / false
+        try {
+            dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"booleanList\": [ true ] }".getBytes()),
+                                                        DeserialisationHelperClass.class);
+            fail("Deserializing a List containing true should have thrown an IllegalStateException");
+        } catch (IllegalStateException ise) {
+            assertEquals("Incorrect IllegalStateException caught,", DataModelSerializer.DATA_MODEL_ERROR_ARRAY, ise.getMessage());
+        }
+        try {
+            dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"booleanList\": [ false ] }".getBytes()),
+                                                        DeserialisationHelperClass.class);
+            fail("Deserializing a List containing false should have thrown an IllegalStateException");
+        } catch (IllegalStateException ise) {
+            assertEquals("Incorrect IllegalStateException caught,", DataModelSerializer.DATA_MODEL_ERROR_ARRAY, ise.getMessage());
+        }
     }
 
     public static class LocaleTest {
@@ -440,9 +568,7 @@ public class DataModelSerializerTest {
         String data = DataModelSerializer.serializeAsString(ignore);
         assertTrue("Getter wasn't invoked when it should have been, so the data should contain wibble fish monkey",
                    data.contains(testString));
-        System.out.println("Data is " + data);
         JSONIgnoreSetterTest gotBack = DataModelSerializer.deserializeObject(new ByteArrayInputStream(data.getBytes()), JSONIgnoreSetterTest.class);
-        System.out.println("Read back " + gotBack.getTestData());
         assertNull("Setter was invoked when it should not have been, so the data should be null", gotBack.getTestData());
     }
 

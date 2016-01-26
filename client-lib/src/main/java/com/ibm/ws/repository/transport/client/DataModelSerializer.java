@@ -76,6 +76,10 @@ public class DataModelSerializer {
     private static final String DATE_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'";
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
+    // Make processJsonArray Exception messages visible for test use
+    public final static String DATA_MODEL_ERROR_ARRAY = "Data Model Error: Simple parser does not understand nested arrays, or true/false in an array.";
+    public final static String DATA_MODEL_ERROR_NUMBER = "Data Model Error: Simple parser does not understand numbers in arrays.";
+
     public static volatile boolean IGNORE_UNKNOWN_FIELDS = true;
 
     public static enum Verification {
@@ -679,7 +683,9 @@ public class DataModelSerializer {
                     } else if (fieldType.cls.equals(String.class)) {
                         invokeSetter(fieldType.m, targetObject, valueString);
                     } else {
-                        invokeSetter(fieldType.m, targetObject, value);
+                        throw new IllegalArgumentException("Data Model Error: unable to invoke setter for data model element "
+                                                           + fieldType.m.getName() + " on "
+                                                           + targetObject.getClass().getName());
                     }
                 }
             }
@@ -699,27 +705,39 @@ public class DataModelSerializer {
      * @throws IOException
      */
     private static <T> void processJsonArray(JsonArray jsonArray, List<T> list, Class<? extends T> listClass, Verification verify, ListVersionHandling versionHandler) throws IOException, BadVersionException {
-        for (Object o : jsonArray) {
-            if (o instanceof JsonArray) {
-                //array had another array as an element.
-                throw new IllegalStateException("Data Model Error: Simple parser does not understand nested arrays");
-            } else if (o instanceof JsonObject) {
-                //array had a complex object as an element.
-                try {
-                    T newArrayElement = processJsonObjectBackIntoDataModelInstance((JsonObject) o, listClass, verify);
-                    list.add(newArrayElement);
-                } catch (BadVersionException e) {
-                    // versionHandler tells us what to do...
-                    if (!ListVersionHandling.IGNORE_ELEMENT.equals(versionHandler)) {
-                        // Default and THROW_EXCEPTION mean we should rethrow this
-                        throw e;
-                    } // Else ignore this
-                }
-            } else if (o instanceof JsonString) {
-                list.add(listClass.cast(((JsonString) o).getString()));
-            } else {
-                //array had a primitive as an element..
-                list.add(listClass.cast(o));
+
+        for (JsonValue value : jsonArray) {
+            switch (value.getValueType()) {
+                case TRUE:
+                case FALSE:
+                case ARRAY:
+                    // array had another array as an element or a JSON true/false.
+                    // message reads "Data Model Error: Simple parser does not understand nested arrays, or true/false in an array."
+                    throw new IllegalStateException(DATA_MODEL_ERROR_ARRAY);
+                case OBJECT:
+                    //array had a complex object as an element.
+                    try {
+                        T newArrayElement = processJsonObjectBackIntoDataModelInstance((JsonObject) value, listClass, verify);
+                        list.add(newArrayElement);
+                    } catch (BadVersionException e) {
+                        // versionHandler tells us what to do...
+                        if (!ListVersionHandling.IGNORE_ELEMENT.equals(versionHandler)) {
+                            // Default and THROW_EXCEPTION mean we should rethrow this
+                            throw e;
+                        } // Else ignore this
+                    }
+                    break;
+                case STRING:
+                    list.add(listClass.cast(((JsonString) value).getString()));
+                    break;
+                case NULL:
+                    list.add(null);
+                    break;
+                case NUMBER:
+                    // message reads "Data Model Error: Simple parser does not understand numbers in arrays.";
+                    throw new IllegalStateException(DATA_MODEL_ERROR_NUMBER);
+                default:
+                    throw new IllegalStateException("Data Model Error: Unknown Json value type returned: " + value.getValueType().toString());
             }
         }
     }
