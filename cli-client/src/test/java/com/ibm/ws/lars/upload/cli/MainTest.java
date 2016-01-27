@@ -21,7 +21,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import org.junit.Test;
@@ -42,9 +44,10 @@ public class MainTest {
         }
 
         public void run(String... args) throws ClientException {
+            InputStream input = new ByteArrayInputStream(new byte[0]);
             ByteArrayOutputStream stdoutBAOS = new ByteArrayOutputStream();
             try (PrintStream output = new PrintStream(stdoutBAOS)) {
-                Main main = new Main(output);
+                Main main = new Main(input, output);
                 Exception exception = null;
                 try {
                     main.run(args);
@@ -76,14 +79,14 @@ public class MainTest {
      */
     @Test
     public void testRun() throws ClientException {
-        MainRunner runner = new MainRunner("No options were given", 41);
+        MainRunner runner = new MainRunner("No options were given", 47);
         runner.run();
         assertThat(runner.stdout, containsString("Usage: java -jar larsClient.jar action [options] [arguments]"));
     }
 
     @Test
     public void shouldPrintHelpMessageIfHelpOptionSpecified() throws ClientException {
-        MainRunner runner = new MainRunner(null, 39);
+        MainRunner runner = new MainRunner(null, 45);
         runner.run("--help");
         assertThat(runner.stdout, containsString("Usage: java -jar larsClient.jar action [options] [arguments] ..."));
         assertThat(runner.stdout, containsString("Show help for larsClient."));
@@ -95,7 +98,7 @@ public class MainTest {
     @Test
     public void shouldPrintHelpMessageIfHelpInvokedOnNonExistentComment() throws ClientException {
         // there is no such command as "cheese"
-        MainRunner runner = new MainRunner(null, 39);
+        MainRunner runner = new MainRunner(null, 45);
         runner.run("--help", "cheese");
     }
 
@@ -118,6 +121,14 @@ public class MainTest {
         MainRunner runner = new MainRunner(null, 27);
         runner.run("--help", "delete");
         assertThat(runner.stdout, containsString("Delete one or more assets from the repository, specified by id."));
+    }
+
+    @Test
+    public void shouldPrintHelpForFindAndDelete() throws ClientException {
+        MainRunner runner = new MainRunner(null, 30);
+        runner.run("--help", "findAndDelete");
+        assertThat(runner.stdout,
+                   containsString("Finds and deletes all the assets in the repository"));
     }
 
     @Test

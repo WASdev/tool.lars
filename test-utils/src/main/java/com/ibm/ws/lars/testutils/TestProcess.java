@@ -22,6 +22,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.util.List;
 
@@ -36,6 +38,7 @@ public class TestProcess {
     private static final String NOT_YET_RUN = "Cannot check output before program has been run";
     private final ProcessBuilder processBuilder;
     private Process process;
+    private String systemInput;
     private StringBuilder outputBuilder;
     private StringBuilder errorBuilder;
     private Integer returnCode;
@@ -51,6 +54,17 @@ public class TestProcess {
     }
 
     /**
+     * Set up the TestProcess
+     *
+     * @param commandLine the command line (program followed by arguments) to execute
+     * @param systemInput the system input to be read during execution of the process
+     */
+    public TestProcess(List<String> commandLine, String systemInput) {
+        this(commandLine);
+        this.systemInput = systemInput;
+    }
+
+    /**
      * Run the program passed in the constructor and wait for it to finish
      *
      * @throws IOException if any exceptions are thrown when starting or reading from the process
@@ -59,6 +73,12 @@ public class TestProcess {
         process = processBuilder.start();
         outputBuilder = new StringBuilder();
         errorBuilder = new StringBuilder();
+
+        if (systemInput != null) {
+            OutputStreamWriter osw = new OutputStreamWriter(process.getOutputStream());
+            osw.write(systemInput);
+            osw.flush();
+        }
 
         ProcessStreamReader outReader = new ProcessStreamReader(process.getInputStream(), outputBuilder);
         new Thread(outReader).start();

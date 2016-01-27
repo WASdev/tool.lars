@@ -23,7 +23,14 @@ public enum Option {
     URL("url"),
     USERNAME("username"),
     PASSWORD("password"),
-    CONFIG_FILE("configFile");
+    CONFIG_FILE("configFile"),
+
+    // options for the find command
+    FIND_DELETE("F"),
+    NAME("name"),
+
+    // options for the delete command
+    NO_PROMPTS("noPrompts");
 
     private String argument;
 

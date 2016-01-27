@@ -16,12 +16,14 @@
 
 package com.ibm.ws.lars.upload.cli;
 
+import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -66,6 +69,7 @@ public class Main {
     private Map<Option, String> options;
     private Action action;
 
+    private final InputStream input;
     private final PrintStream output;
 
     /** Filter that only accepts .esa files */
@@ -76,9 +80,7 @@ public class Main {
                 return false;
 
             String name = file.getName();
-            return !file.isDirectory() &&
-                   name != null &&
-                   name.endsWith(".esa");
+            return !file.isDirectory() && name != null && name.endsWith(".esa");
         }
     };
 
@@ -86,7 +88,7 @@ public class Main {
      * All logic here should be delegated to run, to allow for easier testing
      */
     public static void main(String[] args) {
-        Main main = new Main(System.out);
+        Main main = new Main(System.in, System.out);
 
         try {
             main.run(args);
@@ -97,8 +99,9 @@ public class Main {
         System.exit(0);
     }
 
-    public Main(PrintStream output) {
-        this.output = output;
+    public Main(InputStream in, PrintStream out) {
+        this.input = in;
+        this.output = out;
     }
 
     /**
@@ -117,6 +120,13 @@ public class Main {
                     doUpload(remainingArgs);
                     break;
                 case DELETE:
+                    doDelete(remainingArgs);
+                    break;
+                case FIND:
+                    doFind(remainingArgs);
+                    break;
+                case FIND_AND_DELETE:
+                    // doDelete has conditional code checking for the FIND_AND_DELETE action
                     doDelete(remainingArgs);
                     break;
                 case LISTALL:
@@ -193,8 +203,7 @@ public class Main {
 
             if (keepProcessingOptions && arg.equals("--")) {
                 keepProcessingOptions = false;
-            }
-            else if (keepProcessingOptions && arg.startsWith("--")) {
+            } else if (keepProcessingOptions && arg.startsWith("--")) {
                 String[] argParts = arg.substring(2).split("=", 2);
                 if (argParts.length == 0) {
                     throw new ClientException(arg + " is not a valid option", 1, HelpDisplay.SHOW_HELP);
@@ -208,8 +217,7 @@ public class Main {
                 }
 
                 options.put(option, value);
-            }
-            else {
+            } else {
                 nonOptionArgs.add(arg);
             }
         }
@@ -236,6 +244,8 @@ public class Main {
                     case UPLOAD:
                     case DELETE:
                     case LISTALL:
+                    case FIND:
+                    case FIND_AND_DELETE:
                         help.printCommandUsage(action.getUsage(), action.getHelpDetail());
                         help.printGlobalOptions();
                         break;
@@ -294,8 +304,7 @@ public class Main {
         try {
             uploader = new MassiveEsa(repoConnection);
         } catch (RepositoryException ex) {
-            throw new ClientException("An error occurred while connecting to the repository: " + ex.getMessage(),
-                    1, HelpDisplay.NO_HELP, ex);
+            throw new ClientException("An error occurred while connecting to the repository: " + ex.getMessage(), 1, HelpDisplay.NO_HELP, ex);
         }
 
         int size = files.size();
@@ -323,8 +332,7 @@ public class Main {
                     output.println("done");
                 }
             } catch (RepositoryException ex) {
-                throw new ClientException("An error occurred while uploading " + file.toString() + ": " + ex.getMessage(),
-                        1, HelpDisplay.NO_HELP, ex);
+                throw new ClientException("An error occurred while uploading " + file.toString() + ": " + ex.getMessage(), 1, HelpDisplay.NO_HELP, ex);
             }
         }
     }
@@ -341,6 +349,14 @@ public class Main {
 
         output.println("Listing all assets in the repository:");
 
+        printAssets(assets);
+
+    }
+
+    /**
+     * @param assets
+     */
+    private void printAssets(Collection<? extends RepositoryResource> assets) {
         if (assets.size() == 0) {
             output.println("No assets found in repository");
             return;
@@ -377,19 +393,62 @@ public class Main {
 
             printTabbed(resource.getId(), type, appliesTo, name);
         }
-
     }
 
     void printTabbed(String id, String type, String appliesTo, String name) {
         output.format("%-30.30s | %-15.15s | %-15.15s | %s%n", id, type, appliesTo, name);
     }
 
+    private List<String> doFind(List<String> remainingArgs) throws ClientException {
+
+        RepositoryConnection repoConnection = createRepoConnection();
+        Collection<? extends RepositoryResource> assets = null;
+        try {
+            if (remainingArgs.size() > 0) {
+                String searchString = remainingArgs.get(0);
+                assets = repoConnection.findResources(searchString, null, null, null);
+            } else {
+                assets = repoConnection.getAllResources();
+            }
+        } catch (RepositoryBackendException e) {
+            throw new ClientException("An error was recieved from the repository: " + e.getMessage(), 1, HelpDisplay.NO_HELP, e);
+        }
+
+        if (options.containsKey(Option.NAME)) {
+            String name = options.get(Option.NAME);
+            Iterator<? extends RepositoryResource> i = assets.iterator();
+            while (i.hasNext()) {
+                String assetName = i.next().getName();
+                if (assetName == null || !!!assetName.contains(name)) {
+                    i.remove();
+                }
+            }
+        }
+
+        if (action == Action.FIND_AND_DELETE) {
+            List<String> assetIds = new ArrayList<String>(assets.size());
+            for (RepositoryResource resource : assets) {
+                assetIds.add(resource.getId());
+            }
+            return assetIds;
+        }
+
+        printAssets(assets);
+        return null;
+    }
+
     private void doDelete(List<String> remainingArgs) throws ClientException {
         RepositoryConnection repoConnection = createRepoConnection();
 
-        if (remainingArgs.size() == 0) {
+        if (remainingArgs.size() == 0 && !!!options.containsKey(Option.FIND_DELETE)) {
             throw new ClientException(NO_IDS_FOR_DELETE, 1, HelpDisplay.SHOW_HELP);
         }
+
+        if (action == Action.FIND_AND_DELETE) {
+            remainingArgs = doFind(remainingArgs);
+        }
+
+        BufferedReader inputReader = new BufferedReader(new InputStreamReader(input));
 
         for (String id : remainingArgs) {
             RepositoryResourceWritable toDelete = null;
@@ -408,13 +467,22 @@ public class Main {
                     continue;
                 }
                 // Anything else should be a server error
-                throw new ClientException("Asset " + id + " not deleted. " + SERVER_ERROR + e.getMessage(),
-                        1, HelpDisplay.NO_HELP, e);
+                throw new ClientException("Asset " + id + " not deleted. " + SERVER_ERROR + e.getMessage(), 1, HelpDisplay.NO_HELP, e);
 
             } catch (RepositoryBackendException e) {
                 // Anything else is probably some kind of connection problem, so ditch out
-                throw new ClientException("Asset " + id + " not deleted. " + CONNECTION_PROBLEM + e.getMessage(),
-                        1, HelpDisplay.NO_HELP, e);
+                throw new ClientException("Asset " + id + " not deleted. " + CONNECTION_PROBLEM + e.getMessage(), 1, HelpDisplay.NO_HELP, e);
+            }
+
+            if ((action == Action.FIND_AND_DELETE) && !!!options.containsKey(Option.NO_PROMPTS)) {
+                output.println("Delete asset " + toDelete.getId() + " " + toDelete.getName() + " (y/N)?");
+                try {
+                    if (!!!("y".equalsIgnoreCase(inputReader.readLine()))) {
+                        continue;
+                    }
+                } catch (IOException e) {
+                    throw new ClientException(e.getMessage(), 1, HelpDisplay.NO_HELP, e);
+                }
             }
 
             try {
@@ -484,8 +552,7 @@ public class Main {
         }
 
         if (username == null && (password != null || promptForPassword)) {
-            throw new ClientException("A username must be provided if a password is provided or will be prompted for",
-                    1, HelpDisplay.SHOW_HELP);
+            throw new ClientException("A username must be provided if a password is provided or will be prompted for", 1, HelpDisplay.SHOW_HELP);
         }
 
         if (promptForPassword) {

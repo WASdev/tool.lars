@@ -32,13 +32,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import mockit.Mock;
-import mockit.MockUp;
-
 import org.junit.After;
 import org.junit.Test;
 
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.Visibility;
+import com.ibm.ws.repository.connections.ProductDefinition;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.resources.EsaResource;
@@ -48,7 +47,10 @@ import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 import com.ibm.ws.repository.transport.model.Asset;
 import com.ibm.ws.repository.transport.model.WlpInformation;
 
-public class ListAllTest {
+import mockit.Mock;
+import mockit.MockUp;
+
+public class FindTest {
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ByteArrayOutputStream ebaos = new ByteArrayOutputStream();
@@ -69,7 +71,7 @@ public class ListAllTest {
         // Should throw an exception and print out a help message
 
         try {
-            tested.run(new String[] { "--listAll" });
+            tested.run(new String[] { "--find" });
         } catch (ClientException e) {
             assertEquals("Unexpected exception message", Main.MISSING_URL, e.getMessage());
             String outputString = baos.toString();
@@ -88,7 +90,7 @@ public class ListAllTest {
         // Should throw an exception but no help message
 
         try {
-            tested.run(new String[] { "--listAll", "--url=foobar" });
+            tested.run(new String[] { "--find", "--url=foobar" });
         } catch (ClientException e) {
             assertEquals("Unexpected exception message", Main.INVALID_URL + "foobar", e.getMessage());
             String outputString = baos.toString();
@@ -105,12 +107,14 @@ public class ListAllTest {
 
         new MockUp<RC>() {
             @Mock
-            public Collection<RepositoryResource> getAllResources() throws RepositoryBackendException {
+            public Collection<? extends RepositoryResource> findResources(String searchTerm, Collection<ProductDefinition> productDefinitions,
+                                                                          Collection<ResourceType> types,
+                                                                          Visibility visibility) throws RepositoryBackendException {
                 return Collections.emptySet();
             }
         };
 
-        tested.run(new String[] { "--listAll", "--url=http://foobar.baz" });
+        tested.run(new String[] { "--find", "*", "--url=http://foobar.baz" });
         String output = baos.toString();
         assertTrue("The test output didn't contain the expected string, was: " + output,
                    output.contains("No assets found in repository"));
@@ -118,7 +122,7 @@ public class ListAllTest {
     }
 
     @Test
-    public <RC extends RepositoryConnection> void testResultsFormat() throws ClientException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public <RC extends RepositoryConnection> void testFind() throws ClientException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         final List<RepositoryResource> getAllList = new ArrayList<>();
         getAllList.add(getTestEsa("1", "A name", "A short description", "productVersion=8.5.5.4;"));
         getAllList.add(getTestEsa("2", "A name", null, null));
@@ -126,12 +130,12 @@ public class ListAllTest {
 
         new MockUp<RC>() {
             @Mock
-            public Collection<RepositoryResource> getAllResources() throws RepositoryBackendException {
+            public Collection<? extends RepositoryResource> getAllResources() throws RepositoryBackendException {
                 return getAllList;
             }
         };
 
-        tested.run(new String[] { "--listAll", "--url=http://foobar.baz" });
+        tested.run(new String[] { "--find", "--url=http://foobar.baz" });
         String output = baos.toString();
 
         Pattern pat = Pattern.compile("1\\s\\+|\\s+Feature\\s+\\|\\s+8\\.5\\.5\\.4\\s+\\|\\s+A name\\s+\\(A short description\\)");
@@ -153,7 +157,8 @@ public class ListAllTest {
      * Creates an EsaResource with the specified fields. These are normally created from the
      * repository or read in from a real Esa, so a number of fields have to be set reflectively.
      */
-    private EsaResource getTestEsa(String id, String name, String shortName, String appliesTo) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    private EsaResource getTestEsa(String id, String name, String shortName,
+                                   String appliesTo) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         Asset asset = new Asset();
         asset.set_id(id);
         asset.setName(name);
