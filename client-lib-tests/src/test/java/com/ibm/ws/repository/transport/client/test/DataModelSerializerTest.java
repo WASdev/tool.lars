@@ -362,6 +362,15 @@ public class DataModelSerializerTest {
         List<String> stringList;
         List<Boolean> booleanList;
         List<Integer> integerList;
+        Integer integerField;
+
+        public Integer getIntegerField() {
+            return integerField;
+        }
+
+        public void setIntegerField(Integer integerField) {
+            this.integerField = integerField;
+        }
 
         public int getIntField() {
             return intField;
