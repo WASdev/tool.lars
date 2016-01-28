@@ -177,32 +177,22 @@ task dist(type: Sync) {
  * list, throws an exception.
  */
 boolean checkZipContents(zipFileName, toCheck) {
-    // When you create a zip tree, the jar gets unpacked. So the paths 'inside' the jar
-    // end up looking a bit like this:
-    // /tmp/expandedArchives/larsServerPackage.jar_1vjjzyok4kl5hstxnvin6rjqx/wlp/usr/servers/larsServer/LICENSE
-    // so the matching logic is a bit ick.
     FileTree tree = zipTree(zipFileName)
-    boolean found = tree.find { File file ->
+    tree.visit { FileVisitDetails details ->
         def foundFiles = []
         toCheck.each {
-            if (file.getPath().endsWith(it)) {
+            if (details.getPath().equals(it)) {
                 foundFiles << it
             }
         }
         foundFiles.each {
             toCheck.remove(it)
         }
-        if (toCheck) {
-            return false
-        }
-        // toCheck is empty, so all files were found
-        return true;
     }
     
-    if (!found) {
+    if (toCheck) {
         throw new GradleException("Couldn't find files '${toCheck}' in the zip file '${zipFileName}'")
     }
-    
 }
 
 task globalTestReport(type: TestReport) {
