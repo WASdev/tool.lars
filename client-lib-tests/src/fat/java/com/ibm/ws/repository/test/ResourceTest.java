@@ -62,8 +62,8 @@ import com.ibm.ws.lars.testutils.fixtures.FileRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.ibm.ws.repository.common.enums.AttachmentLinkType;
 import com.ibm.ws.repository.common.enums.AttachmentType;
-import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.utils.internal.HashUtils;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.connections.RepositoryConnectionList;
@@ -79,8 +79,8 @@ import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
 import com.ibm.ws.repository.resources.internal.IfixResourceImpl;
 import com.ibm.ws.repository.resources.internal.ProductResourceImpl;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
-import com.ibm.ws.repository.resources.internal.ResourceFactory;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.AttachmentResourceImpl;
+import com.ibm.ws.repository.resources.internal.ResourceFactory;
 import com.ibm.ws.repository.resources.internal.SampleResourceImpl;
 import com.ibm.ws.repository.resources.internal.UpdateType;
 import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
@@ -568,7 +568,7 @@ public class ResourceTest {
         // No url specified yet
         sampleRes.addAttachment(attachment, AttachmentType.DOCUMENTATION, "useDefaultURL");
         List<RepositoryResourceImpl> matching = sampleRes.findMatchingResource();
-        assertEquals("Asset had been uploaded, isUpdateRequired should have returned ADD",
+        assertEquals("Asset has not been uploaded, isUpdateRequired should have returned ADD",
                      UpdateType.ADD, sampleRes.updateRequired(getFirst(matching)));
         sampleAtt = (AttachmentResourceImpl) sampleRes.getAttachment("useDefaultURL");
         assertEquals("Attachment was added, isUpdateRequired should have returned type ADD",
@@ -584,15 +584,6 @@ public class ResourceTest {
         assertEquals("Attachment has not changed, isUpdateRequired should have returned type NOTHING",
                      UpdateType.NOTHING, sampleAtt.updateRequired(getFirst(matching)));
         uploadResource(sampleRes);
-
-        // Now go back to using the massive provided URLs - we can't do this....yet....
-//		sampleRes.addAttachment(attachment, AttachmentType.DOCUMENTATION, "useDefaultURL");
-//		matching = sampleRes.findMatchingResource();
-//		assertEquals ("Attachment had been uploaded, isUpdateRequired should have returned NOTHING",
-//				UpdateType.NOTHING, sampleRes.updateRequired(matching));
-//		assertEquals ("Attachment was added, isUpdateRequired should have returned type UPDATE",
-//				UpdateType.UPDATE, sampleRes.getAttachment("useDefaultURL").updateRequired(matching));
-//		uploadResource(sampleRes);
 
         // Now create a new attachment and use the internal URL, should add a new attachment
         sampleRes.addAttachment(attachment, AttachmentType.DOCUMENTATION, "specifyURL");
