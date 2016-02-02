@@ -39,11 +39,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.ibm.ws.repository.common.enums.DisplayPolicy;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.transport.client.DataModelSerializer;
 import com.ibm.ws.repository.transport.client.JSONIgnore;
 import com.ibm.ws.repository.transport.exceptions.BadVersionException;
 import com.ibm.ws.repository.transport.model.Asset;
+import com.ibm.ws.repository.transport.model.Provider;
 import com.ibm.ws.repository.transport.model.WlpInformation;
 
 public class DataModelSerializerTest {
@@ -422,7 +424,7 @@ public class DataModelSerializerTest {
     }
 
     @Test
-    public void deserializePrimitives() throws Exception {
+    public void testDeserializePrimitives() throws Exception {
 
         DeserialisationHelperClass dhc = DataModelSerializer.deserializeObject(new ByteArrayInputStream("{ \"intField\": 25 }".getBytes()),
                                                                                DeserialisationHelperClass.class);
@@ -509,6 +511,59 @@ public class DataModelSerializerTest {
         } catch (IllegalStateException ise) {
             assertEquals("Incorrect IllegalStateException caught,", DataModelSerializer.DATA_MODEL_ERROR_ARRAY, ise.getMessage());
         }
+    }
+
+    public static class JsonOrderingHelperClass {
+        String stringAlpha;
+        String stringGamma;
+        String stringBeta;
+
+        List<String> stringList;
+
+        public String getStringAlpha() {
+            return "alphaValue";
+        }
+
+        public String getStringGamma() {
+            return "gammaValue";
+        }
+
+        public String getStringBeta() {
+            return "betaValue";
+        }
+    }
+
+    @Test
+    public void testJsonOrdering() throws Exception {
+        String actual;
+        JsonOrderingHelperClass johc = new JsonOrderingHelperClass();
+        actual = DataModelSerializer.serializeAsString(johc);
+        String expected = "{\"stringAlpha\":\"alphaValue\",\"stringBeta\":\"betaValue\",\"stringGamma\":\"gammaValue\"}";
+        assertEquals("JSON was not alphabetically ordered or otherwise incorrect", expected, actual);
+    }
+
+    @Test
+    public void testJsonOrderingOfAnAsset() throws Exception {
+        Asset asset = new Asset();
+
+        Provider prov = new Provider();
+        prov.setName("IBM");
+        asset.setProvider(prov);
+
+        WlpInformation wlpInformation = new WlpInformation();
+        wlpInformation.setVisibility(Visibility.INSTALL);
+        wlpInformation.setDisplayPolicy(DisplayPolicy.HIDDEN);
+        Collection<String> providesFeature = new ArrayList<String>();
+        providesFeature.add("my.feature-1.0");
+        wlpInformation.setProvideFeature(providesFeature);
+
+        asset.setWlpInformation(wlpInformation);
+
+        String actual = DataModelSerializer.serializeAsString(asset);
+        String expected = "{\"provider\":{\"name\":\"IBM\"},\"wlpInformation\":{\"displayPolicy\":\"HIDDEN\",\"mainAttachmentSize\":0,\"provideFeature\":[\"my.feature-1.0\"]},\"wlpInformation2\":{\"visibility\":\"INSTALL\"}}";
+
+        assertEquals("JSON created from an asset was not in alphabetical order or otherwise incorrect",
+                     expected, actual);
     }
 
     public static class LocaleTest {

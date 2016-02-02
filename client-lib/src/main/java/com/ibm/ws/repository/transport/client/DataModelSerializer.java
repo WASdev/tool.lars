@@ -40,7 +40,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -222,13 +224,14 @@ public class DataModelSerializer {
                     throw new IllegalStateException("Data Model Error: serialization only supported for Collections of String, or other Data Model elements");
                 }
             }
+
             JsonArray result = arrayBuilder.build();
             return new JSONArtrifactPair(result, null);
         }
 
         // object wasn't a collection.. better see what we can do with it.
         JsonObjectBuilder mainObjectBuilder = Json.createObjectBuilder();
-        Map<String, Method> gettersFromO = new HashMap<String, Method>();
+        SortedMap<String, Method> gettersFromO = new TreeMap<String, Method>();
         Class<? extends Object> classOfO = o.getClass();
 
         // See if we have any breaking changes that need to go into a separate object
