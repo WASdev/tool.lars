@@ -487,7 +487,7 @@ public class Main {
 
             try {
                 toDelete.delete();
-            } catch (RepositoryResourceDeletionException e) {
+            } catch (RepositoryResourceDeletionException | RepositoryBackendException e) {
                 // This can be an IO issue, or a request fail. Request fail is either a server
                 // problem, or a non-existent asset. We've just checked that the asset exists, so
                 // non-existent asset seems unlikely, most likely a server problem. As the source exception

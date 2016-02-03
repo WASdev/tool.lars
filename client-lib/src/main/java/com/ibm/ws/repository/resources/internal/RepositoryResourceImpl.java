@@ -48,10 +48,10 @@ import com.ibm.ws.repository.common.enums.AttachmentType;
 import com.ibm.ws.repository.common.enums.DisplayPolicy;
 import com.ibm.ws.repository.common.enums.DownloadPolicy;
 import com.ibm.ws.repository.common.enums.LicenseType;
-import com.ibm.ws.repository.common.enums.State;
-import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.common.enums.ResourceTypeLabel;
+import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.common.enums.StateAction;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.common.utils.internal.HashUtils;
 import com.ibm.ws.repository.connections.ProductDefinition;
@@ -72,6 +72,7 @@ import com.ibm.ws.repository.exceptions.RepositoryResourceLifecycleException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.AttachmentResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.AppliesToProcessor.AppliesToEntry;
 import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
 import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
@@ -1263,11 +1264,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
 
     /** {@inheritDoc} */
     @Override
-    public void delete() throws RepositoryResourceDeletionException {
+    public void delete() throws RepositoryResourceDeletionException, RepositoryBackendIOException {
         try {
             getWritableClient().deleteAssetAndAttachments(_asset.get_id());
         } catch (IOException ioe) {
-            throw new RepositoryResourceDeletionException("Failed to delete resource", this.getId(), ioe);
+            throw new RepositoryBackendIOException("Failed to delete resource " + this.getId(), ioe, this.getRepositoryConnection());
         } catch (RequestFailureException e) {
             throw new RepositoryResourceDeletionException("Failed to delete resource", this.getId(), e);
         } catch (RepositoryOperationNotSupportedException e) {
@@ -1680,7 +1681,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
          *
          * @throws RepositoryResourceException
          */
-        public void deleteNow() throws RepositoryResourceDeletionException {
+        public void deleteNow() throws RepositoryResourceDeletionException, RepositoryBackendIOException {
             synchronized (RepositoryResourceImpl.this) {
                 try {
                     if (getId() != null) {
@@ -1691,7 +1692,8 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                         _contentAttached = false;
                     }
                 } catch (IOException e) {
-                    throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset " + RepositoryResourceImpl.this.getId(), this.getId(), e);
+                    throw new RepositoryBackendIOException("Failed to delete the attachment " + getId() + " in asset " + RepositoryResourceImpl.this.getId(), e,
+                                    RepositoryResourceImpl.this.getRepositoryConnection());
                 } catch (RequestFailureException e) {
                     throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset " + RepositoryResourceImpl.this.getId(), this.getId(), e);
                 } catch (RepositoryOperationNotSupportedException rbnse) {

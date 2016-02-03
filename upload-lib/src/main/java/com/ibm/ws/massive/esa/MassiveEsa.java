@@ -44,6 +44,7 @@ import com.ibm.ws.repository.common.enums.LicenseType;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.connections.RepositoryConnectionList;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
@@ -117,7 +118,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.ibm.ws.massive.upload.RepositoryUploader#canUploadFile(java.io.File)
      */
     @Override
@@ -127,7 +128,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.ibm.ws.massive.upload.RepositoryUploader#uploadFile(java.io.File,
      * com.ibm.ws.massive.resources.UploadStrategy)
      */
@@ -385,10 +386,12 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
     /**
      * Utility method to delete all the features in MaaSive.
+     * 
+     * @throws RepositoryBackendException
      *
      * @throws IOException
      */
-    public void deleteAllFeatures() throws RepositoryResourceException {
+    public void deleteAllFeatures() throws RepositoryResourceException, RepositoryBackendException {
         Iterator<EsaResource> featureIterator = this.allFeatures
                 .values().iterator();
         while (featureIterator.hasNext()) {
@@ -538,7 +541,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see java.lang.Object#hashCode()
          */
         @Override
@@ -553,7 +556,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
