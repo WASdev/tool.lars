@@ -18,11 +18,11 @@ command line, run the following:
 
     java -jar larsServerPackage.jar
 
-You must specify the installation directory of an existing Liberty
+You will be prompted for the installation directory of an existing Liberty
 runtime. If that Libety runtime does not contain any of LARS's
 prerequiste features then you can install them using `installUtility`:
 
-    bin/installUtility install cdi-1.0 servlet-3.0 mongodb-2.0 jaxrs-1.1 cdi-1.0 servlet-3.0 mongodb-2.0 jaxrs-1.1
+    bin/installUtility install cdi-1.0 servlet-3.0 mongodb-2.0 jaxrs-1.1
 
 ## By building and then unzipping larsServer.zip
 
