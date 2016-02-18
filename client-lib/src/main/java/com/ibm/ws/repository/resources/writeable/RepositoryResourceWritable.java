@@ -33,6 +33,7 @@ import com.ibm.ws.repository.exceptions.RepositoryResourceDeletionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
 import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
+import com.ibm.ws.repository.transport.model.WlpInformation;
 
 /**
  * Represents a resource which could be written to a repository.
@@ -300,6 +301,13 @@ public interface RepositoryResourceWritable extends RepositoryResource {
      * @param lic the license id
      */
     public void setLicenseId(String lic);
+
+    /**
+     * Sets the {@link WlpInformation} version of the asset
+     *
+     * @param wlpInformationVersion The {@link WlpInformation} version to use for the asset
+     */
+    public void setWlpInformationVersion(String wlpInformationVersion);
 
     /**
      * Uploads the resource to the repository using the supplied strategy
