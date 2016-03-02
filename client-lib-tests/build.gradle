@@ -22,6 +22,17 @@ apply plugin: 'eclipse'
 dependencies {
     testCompile project(':client-lib')
     testCompile project(':test-utils')
+    testCompile group:'org.jmockit', name:'jmockit', version:jmockit_version
+}
+// With out the exclude below, the jmockit classes are initialised during the fat test runs
+// for some not obvious reason. The test run then falls over with an 'AttachNotSupported'
+// exception. None of the fat tests use jmockit, so it's not obvious what's happening.
+// Excluding the jmockit jar seems to be the simplest solution.
+configurations.fatCompile.exclude group: 'org.jmockit', module: 'jmockit'
+
+test {
+    File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
+    jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_6

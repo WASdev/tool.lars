@@ -108,7 +108,7 @@ public abstract class AbstractFileClient extends AbstractRepositoryClient implem
                 // List of values in the asset
                 Collection<String> assetValues = getValues(attrib, asset);
 
-                if (values != null) {
+                if (values != null && values.size() != 0) {
                     // Check each required value and see if the asset has it
                     for (String filterValue : values) {
                         // if we find a match stop checking this attribute and move to next attribute
