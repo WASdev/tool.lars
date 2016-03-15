@@ -20,6 +20,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -92,19 +93,25 @@ public class AssetQueryParameters {
     }
 
     /**
-     * Returns the filters parsed from the request in a map (parameter name -> conditions)
+     * Returns the filters parsed from the request as a list of AssetFilter.
      * <p>
-     * If there were no filter parameters passed with the request then the returned map will be
+     * If there were no filter parameters passed with the request then the returned list will be
      * empty
+     * 
+     * If a single field name appeared twice or more in the query string, the returned list will
+     * only contain one filter for that field, in a single AssetFilter instance. The filter in the
+     * returned list will represent the last filter from the query string.
      *
-     * @return a map from parameter name to condition
+     * @return a list of AssetFilter
      */
-    public Map<String, List<Condition>> getFilterMap() {
+    public Collection<AssetFilter> getFilters() {
         // process parameters as filters
         // Filters have the following syntax
         // field=value[|value]...
 
-        Map<String, List<Condition>> filterMap = new HashMap<>();
+        // To ensure there is only one filter per field, add
+        // them to a keyed map. Convert to a list later
+        Map<String, AssetFilter> filterMap = new HashMap<>();
         for (Entry<String, String> entry : params.entrySet()) {
 
             // Skip any parameters which have a special meaning
@@ -140,10 +147,12 @@ public class AssetQueryParameters {
                 }
             }
 
-            filterMap.put(entry.getKey(), conditions);
+            filterMap.put(entry.getKey(), new AssetFilter(entry.getKey(), conditions));
         }
 
-        return filterMap;
+        List<AssetFilter> assetFilters = new ArrayList<>();
+        assetFilters.addAll(filterMap.values());
+        return assetFilters;
     }
 
     /**
