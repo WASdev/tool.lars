@@ -17,8 +17,10 @@ package com.ibm.ws.lars.rest;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -39,8 +41,8 @@ import com.mongodb.DBObject;
 
 /**
  * This is a set of basic unit tests for the search logic in
- * {@link PersistenceBean#retrieveAllAssets(java.util.Map, String, PaginationOptions, SortOptions)}
- * , where those tests don't require replicating any database logic. Tests that do require database
+ * {@link PersistenceBean#retrieveAllAssets(Collection, String, PaginationOptions, SortOptions)} ,
+ * where those tests don't require replicating any database logic. Tests that do require database
  * logic are written as FAT tests in {@link PersistenceBeanTest}.
  */
 public class PersistenceBeanBasicSearchTest {
@@ -73,7 +75,7 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        createTestBean().retrieveAllAssets(new HashMap<String, List<Condition>>(), null, null, null);
+        createTestBean().retrieveAllAssets(Collections.<AssetFilter> emptySet(), null, null, null);
     }
 
     /**
@@ -92,8 +94,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         createTestBean().retrieveAllAssets(filters, null, null, null);
     }
 
@@ -114,8 +116,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         PaginationOptions pagination = new PaginationOptions(20, 10);
         createTestBean().retrieveAllAssets(filters, null, pagination, null);
     }
@@ -134,8 +136,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         SortOptions sortOptions = new SortOptions("key2", SortOrder.DESCENDING);
         createTestBean().retrieveAllAssets(filters, null, null, sortOptions);
     }
@@ -158,8 +160,7 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        createTestBean().retrieveAllAssets(filters, "foo", null, null);
+        createTestBean().retrieveAllAssets(Collections.<AssetFilter> emptySet(), "foo", null, null);
     }
 
     /**
@@ -178,8 +179,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         createTestBean().retrieveAllAssets(filters, "foo", null, null);
     }
 
@@ -198,8 +199,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<String, List<Condition>>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         SortOptions sortOptions = new SortOptions("key2", SortOrder.DESCENDING);
         createTestBean().retrieveAllAssets(filters, "foo", null, sortOptions);
     }
@@ -220,8 +221,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         int count = createTestBean().countAllAssets(filters, null);
         assertEquals(3, count);
     }
@@ -243,8 +244,8 @@ public class PersistenceBeanBasicSearchTest {
             }
         };
 
-        HashMap<String, List<Condition>> filters = new HashMap<>();
-        filters.put("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") }));
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("key1", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "value1") })));
         int count = createTestBean().countAllAssets(filters, "foo");
         assertEquals(3, count);
     }

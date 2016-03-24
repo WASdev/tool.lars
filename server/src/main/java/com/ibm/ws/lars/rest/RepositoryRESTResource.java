@@ -126,7 +126,7 @@ public class RepositoryRESTResource {
 
         AssetQueryParameters params = AssetQueryParameters.create(info);
 
-        AssetList assets = assetService.retrieveAllAssets(params.getFilterMap(), params.getSearchTerm(), params.getPagination(), params.getSortOptions());
+        AssetList assets = assetService.retrieveAllAssets(params.getFilters(), params.getSearchTerm(), params.getPagination(), params.getSortOptions());
         String json = assets.toJson();
         return Response.ok(json).build();
     }
@@ -140,7 +140,7 @@ public class RepositoryRESTResource {
 
         AssetQueryParameters params = AssetQueryParameters.create(info);
 
-        int count = assetService.countAllAssets(params.getFilterMap(), params.getSearchTerm());
+        int count = assetService.countAllAssets(params.getFilters(), params.getSearchTerm());
 
         return Response.noContent().header("count", count).build();
     }
@@ -222,7 +222,7 @@ public class RepositoryRESTResource {
 
         List<String> fields = Arrays.asList(fieldsString.split(","));
 
-        List<Map<String, Object>> summary = assetService.summarizeAssets(fields, params.getFilterMap(), params.getSearchTerm());
+        List<Map<String, Object>> summary = assetService.summarizeAssets(fields, params.getFilters(), params.getSearchTerm());
 
         String resultJson;
         try {

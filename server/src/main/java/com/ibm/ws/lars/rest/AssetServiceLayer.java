@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -66,16 +67,16 @@ public class AssetServiceLayer {
     }
 
     /**
-     * @see Persistor#retrieveAllAssets(Map,String, PaginationOptions, SortOptions)
+     * @see Persistor#retrieveAllAssets(Collection,String, PaginationOptions, SortOptions)
      */
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
         return persistenceBean.retrieveAllAssets(filters, searchTerm, pagination, sortOptions);
     }
 
     /**
-     * @see Persistor#countAllAssets(Map, String)
+     * @see Persistor#countAllAssets(Collection, String)
      */
-    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+    public int countAllAssets(Collection<AssetFilter> filters, String searchTerm) {
         return persistenceBean.countAllAssets(filters, searchTerm);
     }
 
@@ -95,14 +96,14 @@ public class AssetServiceLayer {
      * </pre>
      * <p>
      * Filters and searchTerm are treated the same as they are in
-     * {@link #retrieveAllAssets(Map, String, PaginationOptions, SortOptions)}.
+     * {@link #retrieveAllAssets(Collection, String, PaginationOptions, SortOptions)}.
      *
      * @param fields a list of fields to summarize
-     * @param filters a map of filters, which may be empty
+     * @param filters a list of filters, which may be empty
      * @param searchTerm a term to search for, which may be null
      * @return a list of result maps, one for each field
      */
-    public List<Map<String, Object>> summarizeAssets(List<String> fields, Map<String, List<Condition>> filters, String searchTerm) {
+    public List<Map<String, Object>> summarizeAssets(List<String> fields, Collection<AssetFilter> filters, String searchTerm) {
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (String field : fields) {

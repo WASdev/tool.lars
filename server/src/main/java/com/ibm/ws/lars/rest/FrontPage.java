@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -48,7 +47,7 @@ public class FrontPage extends HttpServlet {
         resp.setContentType(MediaType.TEXT_HTML);
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-        int count = serviceLayer.countAllAssets(Collections.<String, List<Condition>> emptyMap(), null);
+        int count = serviceLayer.countAllAssets(Collections.<AssetFilter> emptyList(), null);
 
         PrintWriter out = resp.getWriter();
         out.println("<!DOCTYPE html>");

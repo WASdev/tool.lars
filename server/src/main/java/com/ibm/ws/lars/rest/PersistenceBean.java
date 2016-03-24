@@ -19,9 +19,9 @@ package com.ibm.ws.lars.rest;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -144,7 +144,7 @@ public class PersistenceBean implements Persistor {
 
     /** {@inheritDoc} */
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
 
         if (filters.size() == 0 && searchTerm == null && pagination == null && sortOptions == null) {
             return retrieveAllAssets();
@@ -186,7 +186,7 @@ public class PersistenceBean implements Persistor {
 
     /** {@inheritDoc} */
     @Override
-    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+    public int countAllAssets(Collection<AssetFilter> filters, String searchTerm) {
         BasicDBObject filterObject = createFilterObject(filters, searchTerm);
         return queryCount(filterObject);
     }
@@ -194,7 +194,7 @@ public class PersistenceBean implements Persistor {
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override
-    public List<Object> getDistinctValues(String field, Map<String, List<Condition>> filters, String searchTerm) {
+    public List<Object> getDistinctValues(String field, Collection<AssetFilter> filters, String searchTerm) {
         return getAssetCollection().distinct(field, createFilterObject(filters, searchTerm));
     }
 
@@ -205,7 +205,7 @@ public class PersistenceBean implements Persistor {
      * @param searchTerm the search term
      * @return a filter object which can be passed as a query to mongodb find()
      */
-    private BasicDBObject createFilterObject(Map<String, List<Condition>> filters, String searchTerm) {
+    private BasicDBObject createFilterObject(Collection<AssetFilter> filters, String searchTerm) {
 
         // Must return an empty object if there are no filters or search term
         if ((filters == null || filters.isEmpty()) && searchTerm == null) {
@@ -217,8 +217,8 @@ public class PersistenceBean implements Persistor {
         BasicDBList filterList = new BasicDBList();
         BasicDBObject filterObject = new BasicDBObject("$and", filterList);
 
-        for (Entry<String, List<Condition>> filter : filters.entrySet()) {
-            List<Condition> conditions = filter.getValue();
+        for (AssetFilter filter : filters) {
+            List<Condition> conditions = filter.getConditions();
             if (conditions.size() == 1) {
                 filterList.add(createFilterObject(filter.getKey(), conditions.get(0)));
             } else {

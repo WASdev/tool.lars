@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,18 +70,18 @@ public class MemoryPersistor implements Persistor {
     }
 
     @Override
-    public AssetList retrieveAllAssets(Map<String, List<Condition>> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 
     @Override
-    public List<Object> getDistinctValues(String field, Map<String, List<Condition>> filters, String searchTerm) {
+    public List<Object> getDistinctValues(String field, Collection<AssetFilter> filters, String searchTerm) {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 
     /** {@inheritDoc} */
     @Override
-    public int countAllAssets(Map<String, List<Condition>> filters, String searchTerm) {
+    public int countAllAssets(Collection<AssetFilter> filters, String searchTerm) {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 

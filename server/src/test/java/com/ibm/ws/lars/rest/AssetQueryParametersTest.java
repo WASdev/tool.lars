@@ -18,11 +18,12 @@ package com.ibm.ws.lars.rest;
 import static com.ibm.ws.lars.rest.Condition.Operation.EQUALS;
 import static com.ibm.ws.lars.rest.Condition.Operation.NOT_EQUALS;
 import static java.util.Arrays.asList;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
@@ -51,19 +52,20 @@ public class AssetQueryParametersTest {
         // Note %7C == '|'
         UriInfo uriInfo = new DummyUriInfo("http://example.org/test", "/foobar?a=1&b=!1&c=testX%7CtestY&d=!testA%7CtestB&e=testA%7C!testB");
         AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
-        Map<String, List<Condition>> expected = new HashMap<>();
-        expected.put("a", asList(new Condition(EQUALS, "1")));
-        expected.put("b", asList(new Condition(NOT_EQUALS, "1")));
-        expected.put("c", asList(new Condition(EQUALS, "testX"), new Condition(EQUALS, "testY")));
-        expected.put("d", asList(new Condition(NOT_EQUALS, "testA"), new Condition(EQUALS, "testB")));
-        expected.put("e", asList(new Condition(EQUALS, "testA"))); // NOT_EQUALS conditions are ignored if they are not first in the list
-        assertEquals(expected, params.getFilterMap());
+        List<AssetFilter> expected = new ArrayList<>();
+        expected.add(new AssetFilter("a", asList(new Condition(EQUALS, "1"))));
+        expected.add(new AssetFilter("b", asList(new Condition(NOT_EQUALS, "1"))));
+        expected.add(new AssetFilter("c", asList(new Condition(EQUALS, "testX"), new Condition(EQUALS, "testY"))));
+        // NOT_EQUALS conditions are ignored if they are not first in the list
+        expected.add(new AssetFilter("d", asList(new Condition(NOT_EQUALS, "testA"), new Condition(EQUALS, "testB"))));
+        expected.add(new AssetFilter("e", asList(new Condition(EQUALS, "testA"))));
+        assertThat(params.getFilters(), containsInAnyOrder(expected.toArray()));
 
         params = AssetQueryParameters.create(ALL_PARAMS_URI);
         expected.clear();
-        expected.put("name", asList(new Condition(EQUALS, "foo")));
-        expected.put("key", asList(new Condition(NOT_EQUALS, "value")));
-        assertEquals(expected, params.getFilterMap());
+        expected.add(new AssetFilter("name", asList(new Condition(EQUALS, "foo"))));
+        expected.add(new AssetFilter("key", asList(new Condition(NOT_EQUALS, "value"))));
+        assertEquals(expected, params.getFilters());
     }
 
     @Test
