@@ -81,19 +81,23 @@ public class AddThenHideOldStrategy extends AddThenDeleteStrategy {
         List<String> hiddenAssets = new ArrayList<String>();
         for (RepositoryResource resource : matchingResources) {
             // Only hide visible, published resources, and don't hide the one that's just been created!
+            if (newResource.getId().equals(resource.getId())) {
+                continue;
+            }
             if (!isVisibleAndWebDisplayable(resource)) {
                 continue;
             }
-            if (!State.PUBLISHED.equals(((RepositoryResourceWritable) resource).getState())) {
-                continue;
-            }
-            if (newResource.getId().equals(resource.getId())) {
+            State stateOfResourceToBeHidden = ((RepositoryResourceWritable) resource).getState();
+            if (!stateOfResourceToBeHidden.equals(State.PUBLISHED)) {
                 continue;
             }
 
             // This is safe, due to the isVisibleAndWebDisplayable check above
             ((WebDisplayable) resource).setWebDisplayPolicy(DisplayPolicy.HIDDEN);
-            ((RepositoryResourceWritable) resource).uploadToMassive(new AddThenDeleteStrategy(null, State.DRAFT, true));
+            // The desired stated is passed explicitly here, just in case a previous, failed, upload attempt
+            // has left a matching resource in the wrong state.
+            // There should always be a matching resource, so the desiredStateIfNoMatchingFound (second parameter) should never be used.
+            ((RepositoryResourceWritable) resource).uploadToMassive(new AddThenDeleteStrategy(stateOfResourceToBeHidden, State.DRAFT, true));
             hiddenAssets.add(resource.getId());
         }
 
