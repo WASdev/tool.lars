@@ -179,7 +179,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
         /*
          * Force the PUT to take place by getting the response code and making sure it is ok
          */
-        testResponseCode(connection);
+        testResponseCode(connection, true);
 
         /*
          * PUTs don't return an (they just return "1" - not sure what that
@@ -204,7 +204,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
         HttpURLConnection connection = createHttpURLConnectionToMassive("/assets/"
                                                                         + id);
         connection.setRequestMethod("DELETE");
-        testResponseCode(connection);
+        testResponseCode(connection, true);
     }
 
     /**
@@ -512,7 +512,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
         HttpURLConnection connection = createHttpURLConnectionToMassive("/assets/"
                                                                         + assetId + "/attachments/" + attachmentId);
         connection.setRequestMethod("DELETE");
-        testResponseCode(connection);
+        testResponseCode(connection, true);
     }
 
     /**
@@ -600,7 +600,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
         JSONAssetConverter.writeValue(connection.getOutputStream(), newState);
 
         // Make sure it was ok
-        testResponseCode(connection);
+        testResponseCode(connection, true);
     }
 
     /**
@@ -891,31 +891,84 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @see HttpURLConnection#getErrorStream()
      */
     private void testResponseCode(HttpURLConnection connection) throws RequestFailureException, IOException {
+        testResponseCode(connection, false);
+    }
+
+    /**
+     * This method will test the return type to make sure that it is between 200 (inclusive) and 300 (exclusive), i.e. that it is "successful". If it is not then it will throw an
+     * {@link RequestFailureException} with the response code and message from the error stream.
+     * <br>
+     * if clearInputStream is true, then on a 'good' response code (2xx), any content on the
+     * input stream will be read and thrown away. This should help Java to re-use connections
+     * http://docs.oracle.com/javase/6/docs/technotes/guides/net/http-keepalive.html
+     *
+     * @param connection
+     * @param clearInputStream if true the connections input stream will be read and discarded.
+     * @throws RequestFailureException
+     * @throws IOException
+     * @see HttpURLConnection#getResponseCode()
+     * @see HttpURLConnection#getErrorStream()
+     */
+
+    private void testResponseCode(HttpURLConnection connection, boolean clearInputStream) throws RequestFailureException, IOException {
 
         int responseCode = connection.getResponseCode();
-        if (responseCode < 200 || responseCode >= 300) {
-            // Not one of the OK response codes so get the message off the error stream and throw an exception
-            InputStream errorStream = connection.getErrorStream();
-            String errorStreamString = null;
-            String message = null;
-            if (errorStream != null) {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                int read = -1;
-                while ((read = errorStream.read()) != -1) {
-                    outputStream.write(read);
-                }
-                errorStreamString = outputStream.toString(getCharset(connection.getContentType()));
-
-                // The content of the error stream coming from Massive seems to vary in structure
-                // (HTML, JSON) see if it is is JSON and get a good message or use it as is
-                message = parseErrorObject(errorStreamString);
-            } else {
-                // No error stream returned (this can happen on LARS if the error is returned by liberty rather than the application)
-                // Set the message to the HTTP response message so that we have something slightly helpful to show to the user
-                message = connection.getResponseMessage();
+        if (responseCode >= 200 && responseCode < 300) {
+            if (clearInputStream) {
+                clearInputStream(connection);
             }
+            return;
+        }
 
-            throw new RequestFailureException(responseCode, message, connection.getURL(), errorStreamString);
+        // Not one of the OK response codes so get the message off the error stream and throw an exception
+        InputStream errorStream = connection.getErrorStream();
+        String errorStreamString = null;
+        String message = null;
+        if (errorStream != null) {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            int read = -1;
+            while ((read = errorStream.read()) != -1) {
+                outputStream.write(read);
+            }
+            errorStreamString = outputStream.toString(getCharset(connection.getContentType()));
+
+            // The content of the error stream coming from Massive seems to vary in structure
+            // (HTML, JSON) see if it is is JSON and get a good message or use it as is
+            message = parseErrorObject(errorStreamString);
+        } else {
+            // No error stream returned (this can happen on LARS if the error is returned by liberty rather than the application)
+            // Set the message to the HTTP response message so that we have something slightly helpful to show to the user
+            message = connection.getResponseMessage();
+        }
+
+        throw new RequestFailureException(responseCode, message, connection.getURL(), errorStreamString);
+
+    }
+
+    /**
+     * Read the input stream from the connection, throw it away and close
+     * the connection, swallow all exceptions.
+     *
+     * @param conn
+     */
+    private void clearInputStream(HttpURLConnection conn) {
+        InputStream is = null;
+        byte[] buffer = new byte[1024];
+        try {
+            is = conn.getInputStream();
+            while (is.read(buffer) != -1) {
+                continue;
+            }
+        } catch (IOException e) {
+            // Don't care.
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // Don't care.
+                }
+            }
         }
     }
 
