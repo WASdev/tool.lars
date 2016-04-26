@@ -23,8 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URISyntaxException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -87,9 +85,7 @@ public abstract class StrategyTestBaseClass {
                 _testRes.setFeaturedWeight("" + featured);
                 _testRes.uploadToMassive(createStrategy(targetState, targetState));
                 SampleResourceImpl readBack = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
-                Logger.getLogger(getClass().getName()).log(Level.INFO, "checking " + startingState + " was move to state " + targetState);
                 assertEquals("Make sure state was set to target state", targetState, readBack.getState());
-
             }
         }
     }

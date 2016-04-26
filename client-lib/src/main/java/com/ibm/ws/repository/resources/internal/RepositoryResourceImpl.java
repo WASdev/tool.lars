@@ -72,7 +72,6 @@ import com.ibm.ws.repository.exceptions.RepositoryResourceLifecycleException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.AttachmentResource;
-import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.AppliesToProcessor.AppliesToEntry;
 import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
 import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;

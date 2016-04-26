@@ -154,7 +154,7 @@ public class BasicChecks {
         res.setProviderName("test provider");
         res.setProviderUrl("http://testhost/testfile");
 
-        res.setVersion("version 1");
+        res.setVersion("1.0.0");
         res.setDescription("This is a test resource");
     }
 

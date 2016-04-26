@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.repository.strategies.writeable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.ibm.ws.repository.common.enums.State;
@@ -29,6 +30,18 @@ import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
  * common methods for derived classes to use.
  */
 public abstract class BaseStrategy implements UploadStrategy {
+
+    private static List<String> _vanityUrlLocks = new ArrayList<String>();
+
+    protected static synchronized String getVanityUrlLock(String vanityUrl) {
+        int index = _vanityUrlLocks.indexOf(vanityUrl);
+        if (index == -1) {
+            _vanityUrlLocks.add(vanityUrl);
+            return vanityUrl;
+        } else {
+            return _vanityUrlLocks.get(index);
+        }
+    }
 
     /*
      * Desired states depending of whether a matching asset was found or not.
