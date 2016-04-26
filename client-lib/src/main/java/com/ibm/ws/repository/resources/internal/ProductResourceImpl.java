@@ -73,35 +73,6 @@ public class ProductResourceImpl extends ProductRelatedResourceImpl implements P
     }
 
     @Override
-    protected String getVersionForVanityUrl() {
-        Collection<AppliesToFilterInfo> filters = null;
-        String version = "";
-
-        if (getType().equals(ResourceType.ADDON)) {
-            WlpInformation wlp = _asset.getWlpInformation();
-            if (wlp != null) {
-                filters = wlp.getAppliesToFilterInfo();
-            }
-        } else {
-            filters = AppliesToProcessor.parseAppliesToHeader(getProductId() + "; productEdition="
-                                                              + getProductEdition() +
-                                                              "; productVersion=" + getProductVersion());
-        }
-
-        if (filters != null && !filters.isEmpty()) {
-            AppliesToFilterInfo atfi = filters.iterator().next();
-            if (atfi != null) {
-                FilterVersion ver = atfi.getMinVersion();
-                if (ver != null) {
-                    version = ver.getLabel();
-                }
-            }
-        }
-
-        return version;
-    }
-
-    @Override
     protected String getNameForVanityUrl() {
         String name = getName();
         try {
