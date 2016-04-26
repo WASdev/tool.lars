@@ -40,13 +40,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,8 +66,10 @@ import com.ibm.ws.lars.testutils.fixtures.FileRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.ibm.ws.repository.common.enums.AttachmentLinkType;
 import com.ibm.ws.repository.common.enums.AttachmentType;
+import com.ibm.ws.repository.common.enums.DisplayPolicy;
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.common.enums.State;
+import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.common.utils.internal.HashUtils;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.connections.RepositoryConnectionList;
@@ -83,8 +89,10 @@ import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.Attachmen
 import com.ibm.ws.repository.resources.internal.ResourceFactory;
 import com.ibm.ws.repository.resources.internal.SampleResourceImpl;
 import com.ibm.ws.repository.resources.internal.UpdateType;
+import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
 import com.ibm.ws.repository.strategies.writeable.AddThenDeleteStrategy;
+import com.ibm.ws.repository.strategies.writeable.AddThenHideOldStrategy;
 import com.ibm.ws.repository.strategies.writeable.UpdateInPlaceStrategy;
 import com.ibm.ws.repository.transport.model.Asset;
 import com.ibm.ws.repository.transport.model.WlpInformation;
@@ -1219,6 +1227,51 @@ public class ResourceTest {
     }
 
     /**
+     * Run multi-threaded upload of multiple resources
+     *
+     * @throws RepositoryResourceException
+     * @throws RepositoryBackendException
+     */
+    @Test
+    public void testMultiThreadedUploadAndLocking() throws RepositoryBackendException {
+        final int VANITY_URLS = 3;
+        final int RESOURCES_PER_VANITY_URL = 10;
+        List<EsaResourceImpl> list = createRandomizedListOfResources(VANITY_URLS, RESOURCES_PER_VANITY_URL);
+
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        for (EsaResourceImpl esa : list) {
+            Runnable worker = new WorkerThread(esa);
+            executor.execute(worker);
+        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Finished all threads");
+
+        int countVisible = 0;
+        int countHidden = 0;
+        final String highestVersion = "8.5.5." + RESOURCES_PER_VANITY_URL;
+        Collection<? extends RepositoryResource> resources = assertResourceCount(30);
+        for (RepositoryResource result : resources) {
+            EsaResourceWritable esa = (EsaResourceWritable) result;
+            if (esa.getAppliesTo().contains(highestVersion)) {
+                assertEquals(highestVersion + " should be visible", DisplayPolicy.VISIBLE, esa.getWebDisplayPolicy());
+                countVisible++;
+            } else {
+                assertEquals("other than " + highestVersion + " should be hidden", DisplayPolicy.HIDDEN, esa.getWebDisplayPolicy());
+                countHidden++;
+            }
+        }
+        assertEquals("Wrong number of recources visible: ", VANITY_URLS, countVisible);
+        assertEquals("Wrong number of recources hidden: ", (VANITY_URLS * RESOURCES_PER_VANITY_URL) - VANITY_URLS, countHidden);
+    }
+
+    /**
      * ------------------------------------------------------------------------------------------------
      * HELPER METHODS
      * ------------------------------------------------------------------------------------------------
@@ -1278,6 +1331,89 @@ public class ResourceTest {
         String createdString = " created at "
                                + dateFormater.format(Calendar.getInstance().getTime());
         return createdString;
+    }
+
+    /**
+     * Inner class for multi-threaded testing
+     */
+    public class WorkerThread implements Runnable {
+
+        private final EsaResourceImpl esa;
+
+        public WorkerThread(EsaResourceImpl esa) {
+            this.esa = esa;
+        }
+
+        @Override
+        public void run() {
+            System.out.println(Thread.currentThread().getName() + " Start. resource = " + esa.getName());
+            processCommand();
+            System.out.println(Thread.currentThread().getName() + " End.");
+        }
+
+        private void processCommand() {
+            try {
+                esa.uploadToMassive(new AddThenHideOldStrategy(State.PUBLISHED, State.PUBLISHED));
+            } catch (RepositoryBackendException e) {
+                System.out.println("RepositoryBackendException thrown");
+                e.printStackTrace();
+            } catch (RepositoryResourceException e) {
+                System.out.println("RepositoryResourceException thrown");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Create a list containing a specified number of features in a random order
+     *
+     * @param noOfVanityUrls - the number of different vanityUrl features to create
+     * @param numberOfResourcesPerVanityUrl - how many of each of them
+     * @return
+     */
+    private List<EsaResourceImpl> createRandomizedListOfResources(int noOfVanityUrls, int numberOfItemsPerVanityUrl) {
+        final String APPLIES_TO_STEM = "com.ibm.websphere.appserver; productEdition=\"BASE,BASE_ILAN,DEVELOPERS,EXPRESS,ND,zOS\"; productVersion=8.5.5.";
+        final String FEATURE_NAME_STEM = "dummyEsa";
+        final String VANITY_URL_STEM = "vanityUrl";
+
+        System.out.println("START Creating list");
+        List<EsaResourceImpl> list = new ArrayList<EsaResourceImpl>();
+
+        for (int i = 1; i < noOfVanityUrls + 1; i++) {
+            for (int j = 1; j < numberOfItemsPerVanityUrl + 1; j++) {
+                EsaResourceImpl esa = new EsaResourceImpl(repoConnection);
+                String featureName = FEATURE_NAME_STEM + i + "-v" + j;
+                String providesFeature = "Feature" + i;
+
+                esa.setVisibility(Visibility.PUBLIC);
+                esa.setWebDisplayPolicy(DisplayPolicy.VISIBLE);
+                esa.setProviderName("IBM");
+                esa.setName(featureName);
+                esa.setAppliesTo(APPLIES_TO_STEM + j);
+                esa.setProvideFeature(providesFeature);
+                esa.setVanityURL(VANITY_URL_STEM + i);
+                esa.setDescription(featureName + " on " + providesFeature);
+                list.add(esa);
+                System.out.println("CREATING v855" + j + ", vanityUrl=" + VANITY_URL_STEM + i + ", feature=" + providesFeature + ", name=" + esa.getName());
+            }
+        }
+
+        Collections.shuffle(list);
+        System.out.println("END Creating list");
+        return list;
+    }
+
+    /**
+     * Convenience method for both getting all the resources and checking that the correct number are available
+     *
+     * @param expected - the expected number of resources in the repository
+     * @return Collection<? extends RepositoryResource>
+     * @throws RepositoryBackendException
+     */
+    private Collection<? extends RepositoryResource> assertResourceCount(int expected) throws RepositoryBackendException {
+        Collection<? extends RepositoryResource> countList = new RepositoryConnectionList(repoConnection).getAllResources();
+        assertEquals("Wrong number of resources returned: ", expected, countList.size());
+        return countList;
     }
 
 }
