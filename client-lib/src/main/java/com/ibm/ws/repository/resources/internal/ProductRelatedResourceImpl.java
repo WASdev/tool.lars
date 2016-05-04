@@ -16,6 +16,12 @@
 package com.ibm.ws.repository.resources.internal;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+
+import org.apache.aries.util.manifest.ManifestHeaderProcessor;
+import org.apache.aries.util.manifest.ManifestHeaderProcessor.GenericMetadata;
+import org.osgi.resource.Requirement;
 
 import com.ibm.ws.repository.common.enums.DisplayPolicy;
 import com.ibm.ws.repository.connections.RepositoryConnection;
@@ -90,7 +96,7 @@ public abstract class ProductRelatedResourceImpl extends RepositoryResourceImpl 
 
     /**
      * Get the {@link DisplayPolicy}
-     * 
+     *
      * @return {@link DisplayPolicy} in use
      */
     @Override
@@ -125,6 +131,46 @@ public abstract class ProductRelatedResourceImpl extends RepositoryResourceImpl 
         return _asset.getWlpInformation().getRequireFeature();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Collection<Requirement> getGenericRequirements() {
+        //converts a string format of the generic requirements into a collection of Requirement objects
+        String requirementStr = _asset.getWlpInformation().getGenericRequirements();
+        Collection<Requirement> requirements = new HashSet<Requirement>();
+        List<GenericMetadata> genMetList = ManifestHeaderProcessor.parseRequirementString(requirementStr);
+        for (GenericMetadata genMet : genMetList) {
+            Requirement req = new GenericRequirement(genMet);
+            requirements.add(req);
+        }
+        return requirements;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setGenericRequirements(String genericRequirements) {
+        _asset.getWlpInformation().setGenericRequirements(genericRequirements);
+
+        //If we are setting a osgi.native requirement we also need to increase the WLPInformationVersion so old versions of WDT don't pick up platform specific assets
+        List<GenericMetadata> genMetList = ManifestHeaderProcessor.parseRequirementString(genericRequirements);
+        for (GenericMetadata genMet : genMetList) {
+            if (genMet.getNamespace().equals("osgi.native")) {
+                _asset.getWlpInformation().setWlpInformationVersion(Float.toString(2.0f));
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getPackagedJava() {
+        return _asset.getWlpInformation().getPackagedJava();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setPackagedJava(String packagedJava) {
+        _asset.getWlpInformation().setPackagedJava(packagedJava);
+    }
+
     @Override
     protected void copyFieldsFrom(RepositoryResourceImpl fromResource, boolean includeAttachmentInfo) {
         super.copyFieldsFrom(fromResource, includeAttachmentInfo);
@@ -136,5 +182,7 @@ public abstract class ProductRelatedResourceImpl extends RepositoryResourceImpl 
         setWebDisplayPolicy(prodRes.getWebDisplayPolicy());
         setProvideFeature(prodRes.getProvideFeature());
         setRequireFeature(prodRes.getRequireFeature());
+        setGenericRequirements(prodRes._asset.getWlpInformation().getGenericRequirements());
+        setPackagedJava(prodRes.getPackagedJava());
     }
 }

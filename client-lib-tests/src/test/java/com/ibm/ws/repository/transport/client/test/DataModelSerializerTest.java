@@ -279,16 +279,16 @@ public class DataModelSerializerTest {
             fail("Version 0.9 is too low: exception expected");
         } catch (BadVersionException bvx) {
             assertEquals("1.0", bvx.getMinVersion());
-            assertEquals("2.0", bvx.getMaxVersion());
+            assertEquals("3.0", bvx.getMaxVersion());
             assertEquals("0.9", bvx.getBadVersion());
         }
 
         try {
             test = DataModelSerializer.deserializeObject(
-                                                         new ByteArrayInputStream("{ \"wlpInformationVersion\":\"2.0\"}".getBytes()), WlpInformation.class);
-            fail("Version 2.0 is too high: exception expected");
+                                                         new ByteArrayInputStream("{ \"wlpInformationVersion\":\"3.0\"}".getBytes()), WlpInformation.class);
+            fail("Version 3.0 is too high: exception expected");
         } catch (BadVersionException bvx) {
-            assertEquals("2.0", bvx.getBadVersion());
+            assertEquals("3.0", bvx.getBadVersion());
         }
     }
 

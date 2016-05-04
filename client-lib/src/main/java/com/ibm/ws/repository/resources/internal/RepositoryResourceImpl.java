@@ -853,6 +853,18 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
 
     /** {@inheritDoc} */
     @Override
+    public void setWlpInformationVersion(String wlpInformationVersion) {
+        _asset.getWlpInformation().setWlpInformationVersion(wlpInformationVersion);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getWlpInformationVersion() {
+        return _asset.getWlpInformation().getWlpInformationVersion();
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void setDisplayPolicy(DisplayPolicy policy) {
         _asset.getWlpInformation().setDisplayPolicy(policy);
     }
@@ -1012,6 +1024,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         setFeaturedWeight(fromResource.getFeaturedWeight());
         setDisplayPolicy(fromResource.getDisplayPolicy());
         setVanityURL(fromResource.getVanityURL());
+        setWlpInformationVersion(fromResource.getWlpInformationVersion());
 
         if (includeAttachmentInfo) {
             setMainAttachmentSize(fromResource.getMainAttachmentSize());

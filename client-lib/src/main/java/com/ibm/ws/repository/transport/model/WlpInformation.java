@@ -36,7 +36,7 @@ import com.ibm.ws.repository.transport.exceptions.BadVersionException;
 public class WlpInformation extends AbstractJSON implements VersionableContent, HasBreakingChanges {
 
     public final static float MIN_VERSION = 1.0f;
-    public final static float MAX_VERSION = 2.0f; // up to but not including
+    public final static float MAX_VERSION = 3.0f; // up to but not including
 
     private ResourceTypeLabel typeLabel;
     private String productVersion;
@@ -68,6 +68,8 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
     private Collection<String> supersededByOptional;
     private JavaSEVersionRequirements javaSEVersionRequirements;
     private String mainAttachmentSHA256;
+    private String genericRequirements;
+    private String packagedJava;
 
     public String getFeaturedWeight() {
         return featuredWeight;
@@ -230,7 +232,7 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
 
     /**
      * Sets the short name to the supplied value and also sets a lower case version obtainable via the {@link #getLowerCaseShortName()}.
-     * 
+     *
      * @param shortName
      */
     public void setShortName(String shortName) {
@@ -377,6 +379,22 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
 
     public void setJavaSEVersionRequirements(JavaSEVersionRequirements javaSEVersionRequirements) {
         this.javaSEVersionRequirements = javaSEVersionRequirements;
+    }
+
+    public String getGenericRequirements() {
+        return genericRequirements;
+    }
+
+    public void setGenericRequirements(String genericRequirements) {
+        this.genericRequirements = genericRequirements;
+    }
+
+    public String getPackagedJava() {
+        return packagedJava;
+    }
+
+    public void setPackagedJava(String packagedJava) {
+        this.packagedJava = packagedJava;
     }
 
     @Override
@@ -648,6 +666,22 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
                 return false;
             }
         } else if (!mainAttachmentSHA256.equals(other.mainAttachmentSHA256)) {
+            return false;
+        }
+
+        if (genericRequirements == null) {
+            if (other.genericRequirements != null) {
+                return false;
+            }
+        } else if (!genericRequirements.equals(other.genericRequirements)) {
+            return false;
+        }
+
+        if (packagedJava == null) {
+            if (other.packagedJava != null) {
+                return false;
+            }
+        } else if (!packagedJava.equals(other.packagedJava)) {
             return false;
         }
 
