@@ -920,7 +920,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         return matchingData;
     }
 
-    protected List<RepositoryResourceImpl> performMatching() throws IOException, BadVersionException, RequestFailureException, RepositoryBadDataException, RepositoryBackendException {
+    protected List<RepositoryResourceImpl> performMatching() throws BadVersionException, RequestFailureException, RepositoryBadDataException, RepositoryBackendException {
         List<RepositoryResourceImpl> matching = new ArrayList<RepositoryResourceImpl>();
 
         // connect to massive and find that sample
@@ -992,9 +992,6 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                 }
                 logger.warning(warningMessage.toString());
             }
-        } catch (IOException ioe) {
-            throw new RepositoryBackendIOException("Exception thrown when attempting to find a matching asset to " +
-                                                   getId(), ioe, _repoConnection);
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("BadDataException accessing asset", getId(), bvx);
         } catch (RequestFailureException bfe) {
@@ -1062,14 +1059,14 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         _asset = fromResource._asset;
     }
 
-    public void addAsset() throws RepositoryResourceCreationException, RepositoryBadDataException {
-        // ensure the resource does not have an id - if we read a resource back from massive, change it, then reupload it
+    public void addAsset() throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryBackendIOException {
+        // ensure the resource does not have an id - if we read a resource back from massive, change it, then re-upload it
         // then we need to remove the id as massive won't allow us to push an asset into massive with an id
         resetId();
         try {
             _asset = getWritableClient().addAsset(_asset);
         } catch (IOException ioe) {
-            throw new RepositoryResourceCreationException("Failed to add the asset", getId(), ioe);
+            throw new RepositoryBackendIOException("Failed to add asset " + getId(), ioe, _repoConnection);
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when adding asset", getId(), bvx);
         } catch (RequestFailureException rfe) {
@@ -1084,11 +1081,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     }
 
     public void updateAsset() throws RepositoryResourceUpdateException,
-                    RepositoryResourceValidationException, RepositoryBadDataException {
+                    RepositoryResourceValidationException, RepositoryBadDataException, RepositoryBackendIOException {
         try {
             _asset = getWritableClient().updateAsset(_asset);
         } catch (IOException ioe) {
-            throw new RepositoryResourceUpdateException("Failed to update the asset", getId(), ioe);
+            throw new RepositoryBackendIOException("Failed to update asset " + getId(), ioe, _repoConnection);
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when updating asset", getId(), bvx);
         } catch (RequestFailureException e) {
@@ -1112,14 +1109,14 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     }
 
     public void addAttachment(AttachmentResourceImpl at) throws RepositoryResourceCreationException,
-                    RepositoryBadDataException, RepositoryResourceUpdateException {
+                    RepositoryBadDataException, RepositoryResourceUpdateException, RepositoryBackendIOException {
         // ensure the attachment does not have an id - if we read a resource back from massive, change it, then re-upload it
         // then we need to remove the id as massive won't allow us to push an asset into massive with an id
         at.resetId();
         try {
             getWritableClient().addAttachment(getId(), at);
         } catch (IOException e) {
-            throw new RepositoryResourceCreationException("Failed to add the attachment", getId(), e);
+            throw new RepositoryBackendIOException("Failed to add the attachment" + getId(), e, _repoConnection);
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when adding attachment", getId(), bvx);
         } catch (RequestFailureException rfe) {
@@ -1132,11 +1129,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     }
 
     public void updateAttachment(AttachmentResourceImpl at) throws RepositoryResourceUpdateException,
-                    RepositoryBadDataException {
+                    RepositoryBadDataException, RepositoryBackendIOException {
         try {
             getWritableClient().updateAttachment(getId(), at);
-        } catch (IOException e) {
-            throw new RepositoryResourceUpdateException("Failed to update the attachment", this.getId(), e);
+        } catch (IOException ioe) {
+            throw new RepositoryBackendIOException("Failed to update the attachment " + this.getId(), ioe, _repoConnection);
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when updating attachment", this.getId(), bvx);
         } catch (RequestFailureException e) {
@@ -1144,7 +1141,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         } catch (SecurityException se) {
             throw new RepositoryResourceUpdateException("Failed to update the attachment", this.getId(), se);
         } catch (RepositoryOperationNotSupportedException rbnse) {
-            throw new RepositoryResourceUpdateException("Failed to add the attachment", getId(), rbnse);
+            throw new RepositoryResourceUpdateException("Failed to add the attachment", this.getId(), rbnse);
         }
 
     }
@@ -1203,8 +1200,8 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                     at.setFile(tempFile);
                 } catch (IOException e) {
                     // tried twice, give up :(
-                    throw new RepositoryResourceUpdateException("Exception caught while obtaining attachments for resource " + getName(),
-                                    getId(), e);
+                    throw new RepositoryBackendIOException("Exception caught while obtaining attachments for resource " + getName(),
+                                    e, _repoConnection);
                 }
             }
 
