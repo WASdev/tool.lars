@@ -54,10 +54,8 @@ in the configDropins/overrides directory.
     password="${cloud.services.lars_mongo_svc.connection.password}">
         <hostNames>${cloud.services.lars_mongo_svc.connection.host1}</hostNames>
         <hostNames>${cloud.services.lars_mongo_svc.connection.host2}</hostNames>
-        <hostNames>${cloud.services.lars_mongo_svc.connection.host3}</hostNames>
         <ports>${cloud.services.lars_mongo_svc.connection.port1}</ports>
         <ports>${cloud.services.lars_mongo_svc.connection.port2}</ports>
-        <ports>${cloud.services.lars_mongo_svc.connection.port3}</ports>
     </mongo>
     
     <mongoDB databaseName="${cloud.services.lars_mongo_svc.connection.dbname}" jndiName="mongo/larsDB" mongoRef="mongo"/>
