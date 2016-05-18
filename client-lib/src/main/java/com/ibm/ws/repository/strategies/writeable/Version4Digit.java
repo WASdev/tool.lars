@@ -27,7 +27,7 @@ import org.osgi.framework.Version;
  * the original Version class fails to do.
  * </ul>
  */
-public class Version4Digit {
+public class Version4Digit implements Comparable<Version4Digit> {
     private int major = -1;
     private int minor = -1;
     private int micro = -1;
@@ -79,6 +79,7 @@ public class Version4Digit {
 
     }
 
+    @Override
     public int compareTo(Version4Digit that) {
         if (equals(that)) {
             return 0;
