@@ -167,6 +167,7 @@ subprojects {
 
 task dist(type: Sync) {
     description 'Produce distribution archives, and copy them to the build/distributions directory'
+    group 'distribution'
     into 'build/distributions'
     from subprojects*.getTasksByName('dist', false)
 }
