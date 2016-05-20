@@ -79,7 +79,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAssets(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
+    public void testGetAssets(@Mocked final Logger logger, @Mocked final UriInfo info, @Mocked final SecurityContext context) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
 
         new Expectations() {
             {
@@ -95,7 +95,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().getAssets(info);
+        getRestResource().getAssets(info, context);
     }
 
     @Test

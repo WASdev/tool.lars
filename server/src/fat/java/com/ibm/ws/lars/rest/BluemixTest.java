@@ -23,7 +23,6 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
-import org.junit.Rule;
 import org.junit.Test;
 
 import com.ibm.ws.lars.testutils.FatUtils;
@@ -32,14 +31,6 @@ import com.ibm.ws.lars.testutils.FatUtils;
  * Test the https redirect in the bluemix web.xml
  */
 public class BluemixTest {
-
-    @Rule
-    public final RepositoryContext repository;
-
-    public BluemixTest() {
-        this.repository = new RepositoryContext(FatUtils.BLUEMIX_HTTP_URL,
-                null, null, false, false);
-    }
 
     /**
      * Test that an http request gets a 302 response with a redirect to the equivalent https
@@ -50,7 +41,10 @@ public class BluemixTest {
      */
     @Test
     public void testRedirect() throws ClientProtocolException, IOException {
-        HttpResponse resp = repository.doRawGet("");
+        HttpResponse resp;
+        try (RepositoryContext repository = new RepositoryContext(FatUtils.BLUEMIX_HTTP_URL, null, null, RepositoryContext.Redirects.NO_FOLLOW)) {
+            resp = repository.doRawGet("");
+        }
         StatusLine statusLine = resp.getStatusLine();
         int actualStatusCode = statusLine.getStatusCode();
         assertEquals("The http response code was incorrect", 302, actualStatusCode);

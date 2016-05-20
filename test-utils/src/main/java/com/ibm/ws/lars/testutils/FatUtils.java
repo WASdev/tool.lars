@@ -66,13 +66,13 @@ public class FatUtils {
 
     public static final String DEFAULT_HOST_AND_PORT = "localhost:" + DB_PORT;
 
-    private static final String ADMIN_USERNAME = "admin";
+    public static final String ADMIN_USERNAME = "admin";
 
-    private static final String ADMIN_PASSWORD = "passw0rd";
+    public static final String ADMIN_PASSWORD = "passw0rd";
 
-    private static final String USER_ROLE_USERNAME = "user";
+    public static final String USER_ROLE_USERNAME = "user";
 
-    private static final String USER_ROLE_PASSWORD = "passw0rd";
+    public static final String USER_ROLE_PASSWORD = "passw0rd";
 
     public static final String BASEURL_SERVER_URL = "http://localhost:" + BASEURL_LIBERTY_PORT_HTTP + LARS_APPLICATION_ROOT;
 
