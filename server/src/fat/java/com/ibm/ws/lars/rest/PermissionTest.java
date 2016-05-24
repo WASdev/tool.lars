@@ -16,7 +16,9 @@
 package com.ibm.ws.lars.rest;
 
 import static com.ibm.ws.lars.rest.RepositoryContext.RC_REJECT;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +28,7 @@ import java.util.Collection;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.entity.ContentType;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,6 +39,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
+import com.ibm.ws.lars.rest.matchers.ServerAssetByIdMatcher;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -50,8 +54,15 @@ public class PermissionTest {
     @Rule
     public RepositoryContext adminContext;
 
-    @Rule
-    public RepositoryContext userContext;
+    // This is not a rule, as a rule does setup/tear down which is not wanted.
+    public RepositoryContext testContext;
+
+    @After
+    public void closeUserContext() {
+        if (testContext != null) {
+            testContext.close();
+        }
+    }
 
     /**
      * HTTP URL for the test instance where read operations are restricted to users with the User
@@ -128,7 +139,7 @@ public class PermissionTest {
     }
 
     private Asset testAsset;
-    private Asset createdAsset;
+    private Asset createdPublishedAsset;
 
     private Asset assetWithAttachments;
     private Asset createAssetWithAttachments;
@@ -174,18 +185,19 @@ public class PermissionTest {
      * Process the test parameters and set up the adminContext and userContext.
      */
     public PermissionTest(String url, String username, String password, Role role, String label) {
-        adminContext = RepositoryContext.createAsAdmin(url, true);
-        userContext = new RepositoryContext(url, username, password, false);
+        adminContext = RepositoryContext.createAsAdmin(url);
+        testContext = new RepositoryContext(url, username, password);
         this.role = role;
     }
 
     @Before
     public void setUp() throws IOException, InvalidJsonAssetException {
         testAsset = AssetUtils.getTestAsset();
-        createdAsset = adminContext.addAssetNoAttachments(testAsset);
+        createdPublishedAsset = adminContext.addAndPublishAssetNoAttachments(testAsset);
+        adminContext.addAssetNoAttachments(AssetUtils.getTestAsset());
 
         assetWithAttachments = AssetUtils.getTestAsset();
-        createAssetWithAttachments = adminContext.addAssetNoAttachments(assetWithAttachments);
+        createAssetWithAttachments = adminContext.addAndPublishAssetNoAttachments(assetWithAttachments);
         attachmentName = "nocontent.txt";
         attachmentContent = "I am the content.\nThere is not much content to be had.\n".getBytes(StandardCharsets.UTF_8);
         attachment = AssetUtils.getTestAttachmentWithContent();
@@ -204,11 +216,14 @@ public class PermissionTest {
      */
     @Test
     public void testGetAllAssets() throws InvalidJsonAssetException, ParseException, IOException {
-        if (role.isUser()) {
-            AssetList assets = userContext.doGetAllAssets(200);
+        if (role.isAdmin()) {
+            AssetList assets = testContext.doGetAllAssets(200);
+            assertEquals("Wrong number of assets", 3, assets.size());
+        } else if (role.isUser()) {
+            AssetList assets = testContext.doGetAllAssets(200);
             assertEquals("Wrong number of assets", 2, assets.size());
         } else {
-            userContext.doGetAllAssetsBad(RC_REJECT);
+            testContext.doGetAllAssetsBad(RC_REJECT);
         }
     }
 
@@ -222,10 +237,10 @@ public class PermissionTest {
     public void testPostAsset() throws InvalidJsonAssetException, IOException {
         Asset asset = AssetUtils.getTestAsset();
         if (role.isAdmin()) {
-            Asset returnedAsset = userContext.addAssetNoAttachments(asset);
+            Asset returnedAsset = testContext.addAndPublishAssetNoAttachments(asset);
             AssetUtils.assertUploadedAssetEquivalentToOriginal("Returned asset should match the asset that was uploaded", asset, returnedAsset);
         } else {
-            userContext.addBadAsset(asset, RC_REJECT);
+            testContext.addBadAsset(asset, RC_REJECT);
         }
     }
 
@@ -237,10 +252,10 @@ public class PermissionTest {
     @Test
     public void testGetAsset() throws InvalidJsonAssetException, IOException {
         if (role.isUser()) {
-            Asset returnedAsset = userContext.getAsset(createdAsset.get_id());
+            Asset returnedAsset = testContext.getAsset(createdPublishedAsset.get_id());
             AssetUtils.assertUploadedAssetEquivalentToOriginal("Returned asset should match the asset that was uploaded", testAsset, returnedAsset);
         } else {
-            userContext.getBadAsset(createdAsset.get_id(), RC_REJECT);
+            testContext.getBadAsset(createdPublishedAsset.get_id(), RC_REJECT);
         }
     }
 
@@ -252,9 +267,9 @@ public class PermissionTest {
     @Test
     public void testDeleteAsset() throws IOException {
         if (role.isAdmin()) {
-            userContext.deleteAsset(createdAsset.get_id(), 204);
+            testContext.deleteAsset(createdPublishedAsset.get_id(), 204);
         } else {
-            userContext.deleteAsset(createdAsset.get_id(), RC_REJECT);
+            testContext.deleteAsset(createdPublishedAsset.get_id(), RC_REJECT);
         }
     }
 
@@ -271,9 +286,9 @@ public class PermissionTest {
     public void testPostAttachmentNoContent() throws ClientProtocolException, InvalidJsonAssetException, IOException {
         Attachment attachment = AssetUtils.getTestAttachmentNoContent();
         if (role.isAdmin()) {
-            userContext.doPostAttachmentNoContent(createdAsset.get_id(), "theAttachment", attachment);
+            testContext.doPostAttachmentNoContent(createdPublishedAsset.get_id(), "theAttachment", attachment);
         } else {
-            userContext.doPostBadAttachmentNoContent(createdAsset.get_id(), "theAttachment", attachment, RC_REJECT, null);
+            testContext.doPostBadAttachmentNoContent(createdPublishedAsset.get_id(), "theAttachment", attachment, RC_REJECT, null);
         }
     }
 
@@ -289,13 +304,13 @@ public class PermissionTest {
         String name = "theAttachment";
 
         if (role.isAdmin()) {
-            userContext.doPostAttachmentWithContent(createdAsset.get_id(),
+            testContext.doPostAttachmentWithContent(createdPublishedAsset.get_id(),
                                                     name,
                                                     attachment,
                                                     content,
                                                     ContentType.APPLICATION_OCTET_STREAM);
         } else {
-            userContext.doPostBadAttachmentWithContent(createdAsset.get_id(),
+            testContext.doPostBadAttachmentWithContent(createdPublishedAsset.get_id(),
                                                        "I am the attachment!",
                                                        attachment,
                                                        content,
@@ -313,9 +328,9 @@ public class PermissionTest {
     @Test
     public void testDeleteAttachment() throws ClientProtocolException, IOException {
         if (role.isAdmin()) {
-            userContext.doDeleteAttachment(createdAsset.get_id(), createdAttachment.get_id(), 204);
+            testContext.doDeleteAttachment(createdPublishedAsset.get_id(), createdAttachment.get_id(), 204);
         } else {
-            userContext.doDeleteAttachment(createdAsset.get_id(), createdAttachment.get_id(), RC_REJECT);
+            testContext.doDeleteAttachment(createdPublishedAsset.get_id(), createdAttachment.get_id(), RC_REJECT);
         }
     }
 
@@ -327,10 +342,10 @@ public class PermissionTest {
     @Test
     public void testGetAttachmentContent() throws IOException {
         if (role.isUser()) {
-            byte[] returnedContent = userContext.doGetAttachmentContent(createAssetWithAttachments.get_id(), createdAttachment.get_id(), attachmentName);
+            byte[] returnedContent = testContext.doGetAttachmentContent(createAssetWithAttachments.get_id(), createdAttachment.get_id(), attachmentName);
             Assert.assertArrayEquals("Returned content should be equal to that which was uploaded", attachmentContent, returnedContent);
         } else {
-            userContext.doGetAttachmentContentInError(createAssetWithAttachments.get_id(), createdAttachment.get_id(), attachmentName, RC_REJECT, null);
+            testContext.doGetAttachmentContentInError(createAssetWithAttachments.get_id(), createdAttachment.get_id(), attachmentName, RC_REJECT, null);
         }
     }
 
@@ -343,9 +358,9 @@ public class PermissionTest {
     @Test
     public void testPutAssetState() throws InvalidJsonAssetException, IOException {
         if (role.isAdmin()) {
-            userContext.updateAssetState(createdAsset.get_id(), Asset.StateAction.PUBLISH.getValue(), 200);
+            testContext.updateAssetState(createdPublishedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), 200);
         } else {
-            userContext.updateAssetState(createdAsset.get_id(), Asset.StateAction.PUBLISH.getValue(), RC_REJECT);
+            testContext.updateAssetState(createdPublishedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), RC_REJECT);
         }
     }
 
@@ -357,9 +372,73 @@ public class PermissionTest {
     @Test
     public void testGetAssetSummary() throws Exception {
         if (role.isUser()) {
-            userContext.getAssetSummary("fields=name");
+            testContext.getAssetSummary("fields=name");
         } else {
-            userContext.getBadAssetSummary("fields=name", RC_REJECT);
+            testContext.getBadAssetSummary("fields=name", RC_REJECT);
         }
+    }
+
+    @Test
+    public void testGetFilteredAssets() throws Exception {
+        Asset asset1 = AssetUtils.getTestAsset();
+        asset1.setProperty("type", "feature");
+        Asset publishedAsset1 = adminContext.addAndPublishAssetNoAttachments(asset1);
+
+        Asset asset2 = AssetUtils.getTestAsset();
+        asset2.setProperty("type", "feature");
+        Asset notPublishedAsset2 = adminContext.addAssetNoAttachments(asset2);
+
+        Asset asset3 = AssetUtils.getTestAsset();
+        asset3.setProperty("type", "product");
+        adminContext.addAndPublishAssetNoAttachments(asset3);
+
+        Asset asset4 = AssetUtils.getTestAsset();
+        asset4.setProperty("type", "product");
+        adminContext.addAssetNoAttachments(asset4);
+
+        if (role.isAdmin()) {
+            AssetList assets = testContext.getAllAssets("type=feature");
+            assertEquals("Wrong number of assets", 2, assets.size());
+            assertThat(assets, containsInAnyOrder(ServerAssetByIdMatcher.hasId(publishedAsset1), ServerAssetByIdMatcher.hasId(notPublishedAsset2)));
+        } else if (role.isUser()) {
+            AssetList assets = testContext.getAllAssets("type=feature");
+            assertEquals("Wrong number of assets", 1, assets.size());
+            assertEquals("The wrong asset came back", publishedAsset1.get_id(), assets.get(0).get_id());
+        } else {
+            testContext.doGetAllAssetsBad(RC_REJECT);
+        }
+    }
+
+    @Test
+    public void testSearchAssets() throws Exception {
+
+        Asset asset1 = AssetUtils.getTestAsset();
+        asset1.setProperty("name", "foo one");
+        Asset publishedAsset1 = adminContext.addAndPublishAssetNoAttachments(asset1);
+
+        Asset asset2 = AssetUtils.getTestAsset();
+        asset2.setProperty("name", "foo two");
+        Asset notPublishedAsset2 = adminContext.addAssetNoAttachments(asset2);
+
+        Asset asset3 = AssetUtils.getTestAsset();
+        asset3.setProperty("name", "nofoo three");
+        adminContext.addAndPublishAssetNoAttachments(asset3);
+
+        Asset asset4 = AssetUtils.getTestAsset();
+        asset4.setProperty("name", "nofoo four");
+        adminContext.addAssetNoAttachments(asset4);
+
+        if (role.isAdmin()) {
+            AssetList assets = testContext.getAllAssets("q=foo");
+            assertEquals("Wrong number of assets", 2, assets.size());
+            assertThat(assets, containsInAnyOrder(ServerAssetByIdMatcher.hasId(publishedAsset1), ServerAssetByIdMatcher.hasId(notPublishedAsset2)));
+        } else if (role.isUser()) {
+            AssetList assets = testContext.getAllAssets("q=foo");
+            assertEquals("Wrong number of assets", 1, assets.size());
+            assertEquals("The wrong asset came back", publishedAsset1.get_id(), assets.get(0).get_id());
+        } else {
+            testContext.doGetAllAssetsBad(RC_REJECT);
+        }
+
     }
 }

@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ibm.ws.lars.rest.Condition.Operation;
 import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
 import com.ibm.ws.lars.rest.exceptions.InvalidIdException;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
@@ -118,7 +121,7 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAssets(@Context UriInfo info) throws JsonProcessingException, InvalidParameterException {
+    public Response getAssets(@Context UriInfo info, @Context SecurityContext context) throws JsonProcessingException, InvalidParameterException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssets called with query parameters: " + info.getRequestUri().getRawQuery());
@@ -126,7 +129,13 @@ public class RepositoryRESTResource {
 
         AssetQueryParameters params = AssetQueryParameters.create(info);
 
-        AssetList assets = assetService.retrieveAllAssets(params.getFilters(), params.getSearchTerm(), params.getPagination(), params.getSortOptions());
+        Collection<AssetFilter> filters = params.getFilters();
+        if (!context.isUserInRole(ADMIN_ROLE)) {
+            AssetFilter publishedFilter = new AssetFilter(Asset.STATE, Collections.<Condition> singletonList(new Condition(Operation.EQUALS, Asset.State.PUBLISHED.getValue())));
+            filters.add(publishedFilter);
+        }
+
+        AssetList assets = assetService.retrieveAllAssets(filters, params.getSearchTerm(), params.getPagination(), params.getSortOptions());
         String json = assets.toJson();
         return Response.ok(json).build();
     }

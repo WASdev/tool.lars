@@ -31,7 +31,7 @@ import com.ibm.ws.lars.testutils.FatUtils;
 public class BaseUrlTest {
 
     @Rule
-    public RepositoryContext baseUrlRepo = new RepositoryContext(FatUtils.BASEURL_SERVER_URL, "admin", "passw0rd", true);
+    public RepositoryContext baseUrlRepo = new RepositoryContext(FatUtils.BASEURL_SERVER_URL, FatUtils.ADMIN_USERNAME, FatUtils.ADMIN_PASSWORD);
 
     @Test
     public void testBaseUrl() throws Exception {

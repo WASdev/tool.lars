@@ -16,6 +16,7 @@ package com.ibm.ws.lars.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -89,8 +90,7 @@ import com.ibm.ws.lars.testutils.FatUtils;
  * (host, port, protocol, user, password etc). Some tests may use more than one RepositoryContext
  * (for example, security tests that need to log on as more than one user).
  */
-public class RepositoryContext extends ExternalResource {
-    private final boolean cleanRepository;
+public class RepositoryContext extends ExternalResource implements Closeable {
 
     private final String hostname;
     private final int portNumber;
@@ -104,25 +104,35 @@ public class RepositoryContext extends ExternalResource {
     private final String password;
     private UsernamePasswordCredentials credentials;
 
-    private final boolean followRedirects;
+    private final Redirects followRedirects;
 
     private HttpHost targetHost;
     private HttpClientContext context;
 
     private final static ObjectMapper jsonReader = new ObjectMapper();
 
-    /* package */enum Protocol {
+    enum Protocol {
         HTTP, HTTPS
     }
 
-    @SuppressWarnings("serial")
-    /* package */static final Map<Protocol, String> DEFAULT_URLS = new HashMap<Protocol, String>() {
-        {
-            {
-                put(Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + FatUtils.LARS_APPLICATION_ROOT);
-                put(Protocol.HTTPS, "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS + FatUtils.LARS_APPLICATION_ROOT);
-            }
+    enum Redirects {
+        FOLLOW, NO_FOLLOW
+    }
+
+    @Override
+    public void close() {
+        try {
+            httpClient.close();
+        } catch (IOException e) {
+            // Don't care
         }
+    }
+
+    static final Map<Protocol, String> DEFAULT_URLS;
+    static {
+        DEFAULT_URLS = new HashMap<Protocol, String>();
+        DEFAULT_URLS.put(Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + FatUtils.LARS_APPLICATION_ROOT);
+        DEFAULT_URLS.put(Protocol.HTTPS, "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS + FatUtils.LARS_APPLICATION_ROOT);
     };
 
     /**
@@ -133,12 +143,26 @@ public class RepositoryContext extends ExternalResource {
 
     @Override
     protected void before() throws InvalidJsonAssetException, IOException, KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+        cleanRepo();
+    }
 
+    @Override
+    protected void after() {
+        try {
+            cleanRepo();
+            httpClient.close();
+        } catch (IOException | InvalidJsonAssetException e) {
+            e.printStackTrace();
+            fail("Unexpected exception cleaning repository or closing httpClient: " + e);
+        }
+    }
+
+    private void setupClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
         targetHost = new HttpHost(hostname, portNumber, protocol);
 
         /* Create the HTTPClient that we use to make all HTTP calls */
         HttpClientBuilder b = HttpClientBuilder.create();
-        if (!this.followRedirects) {
+        if (followRedirects == Redirects.NO_FOLLOW) {
             b.disableRedirectHandling();
         }
 
@@ -177,33 +201,9 @@ public class RepositoryContext extends ExternalResource {
             context.setAuthCache(authCache);
         }
 
-        /* Clean the repository but only if the client asked us to. */
-        if (cleanRepository) {
-            cleanRepo();
-        }
     }
 
-    @Override
-    protected void after() {
-        // Clean the repository if the client asked us to when creating this HTTPContext
-        if (cleanRepository) {
-            try {
-                cleanRepo();
-            } catch (InvalidJsonAssetException | IOException e) {
-                fail("TODO");
-            }
-        }
-
-        try {
-            httpClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail("Unexpected exception closing httpClient: " + e);
-        }
-    }
-
-    public RepositoryContext(String url, String user, String password, boolean cleanRepository, boolean followRedirects) {
-        this.cleanRepository = cleanRepository;
+    public RepositoryContext(String url, String user, String password, Redirects followRedirects) {
 
         URI uri;
         try {
@@ -213,8 +213,6 @@ public class RepositoryContext extends ExternalResource {
             throw new RuntimeException(ex);
         }
 
-        // Ultimately, these parameters may vary and therefore may need to be
-        // passed in. For now, they are hardcoded.
         this.protocol = uri.getScheme();
         this.hostname = uri.getHost();
         this.portNumber = uri.getPort();
@@ -223,22 +221,30 @@ public class RepositoryContext extends ExternalResource {
         this.followRedirects = followRedirects;
 
         fullURL = uri.toString();
+
+        try {
+            setupClient();
+        } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
+            // Not much to be done here, this is tots foobar.
+            throw new RuntimeException("Couldn't construct the repository connection", e);
+        }
+
     }
 
-    public RepositoryContext(String url, String user, String password, boolean cleanRepository) {
-        this(url, user, password, cleanRepository, true);
+    public RepositoryContext(String url, String user, String password) {
+        this(url, user, password, Redirects.FOLLOW);
     }
 
-    protected static RepositoryContext createAsAdmin(String url, boolean cleanRepository) {
-        return new RepositoryContext(url, "admin", "passw0rd", cleanRepository);
+    protected static RepositoryContext createAsAdmin(String url) {
+        return new RepositoryContext(url, FatUtils.ADMIN_USERNAME, FatUtils.ADMIN_PASSWORD);
     }
 
-    protected static RepositoryContext createAsAdmin(boolean cleanRepository, Protocol protocol) {
+    protected static RepositoryContext createAsAdmin(Protocol protocol) {
         String url = DEFAULT_URLS.get(protocol);
         if (url == null) {
             throw new AssertionError("This should never happen. Didn't find url for " + protocol);
         }
-        return createAsAdmin(url, cleanRepository);
+        return createAsAdmin(url);
     }
 
     protected static RepositoryContext createAsUser(Protocol protocol) {
@@ -246,7 +252,11 @@ public class RepositoryContext extends ExternalResource {
         if (url == null) {
             throw new AssertionError("This should never happen. Didn't find url for " + protocol);
         }
-        return new RepositoryContext(url, "user", "passw0rd", false);
+        return new RepositoryContext(url, FatUtils.USER_ROLE_USERNAME, FatUtils.USER_ROLE_PASSWORD);
+    }
+
+    protected static RepositoryContext toUserContext(RepositoryContext adminContext) {
+        return new RepositoryContext(adminContext.fullURL, FatUtils.USER_ROLE_USERNAME, FatUtils.USER_ROLE_PASSWORD);
     }
 
     /**
@@ -614,6 +624,15 @@ public class RepositoryContext extends ExternalResource {
     protected Asset addAssetNoAttachments(Asset toAdd) throws IOException, InvalidJsonAssetException {
         String assetJson = doPost("/assets", toAdd.toJson(), 200);
         return Asset.deserializeAssetFromJson(assetJson);
+    }
+
+    protected Asset addAndPublishAssetNoAttachments(Asset toAdd) throws IOException, InvalidJsonAssetException {
+        String assetJson = doPost("/assets", toAdd.toJson(), 200);
+        Asset result = Asset.deserializeAssetFromJson(assetJson);
+        updateAssetState(result.get_id(), Asset.StateAction.PUBLISH.getValue(), 200);
+        updateAssetState(result.get_id(), Asset.StateAction.APPROVE.getValue(), 200);
+        // return an updated version of the asset to ensure the state is correct.
+        return getAsset(result.get_id());
     }
 
     String updateAssetState(String id, String stateAction, int expectedStatusCode) throws IOException, InvalidJsonAssetException {

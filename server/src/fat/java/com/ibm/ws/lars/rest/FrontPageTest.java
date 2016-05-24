@@ -52,7 +52,7 @@ public class FrontPageTest {
     private final String baseUrl;
 
     public FrontPageTest(Protocol protocol, String url) {
-        this.repository = RepositoryContext.createAsAdmin(true, protocol);
+        this.repository = RepositoryContext.createAsAdmin(protocol);
         this.baseUrl = url;
     }
 

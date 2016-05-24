@@ -92,7 +92,7 @@ public class ApiTest {
     }
 
     public ApiTest(Protocol protocol) {
-        this.repository = RepositoryContext.createAsAdmin(true, protocol);
+        this.repository = RepositoryContext.createAsAdmin(protocol);
     }
 
     @Before
@@ -130,6 +130,20 @@ public class ApiTest {
         assertEquals("Wrong number of attachments", 1, attachmentsList.size());
         Map<?, ?> attachmentMap = (Map<?, ?>) attachmentsList.get(0);
         assertEquals("", createdAttachment.get_id(), attachmentMap.get("_id"));
+    }
+
+    @Test
+    public void testGetUnpublishedAssets() throws ClientProtocolException, IOException, InvalidJsonAssetException {
+        repository.addAssetNoAttachments(AssetUtils.getTestAsset());
+        Asset publishedAsset = repository.addAndPublishAssetNoAttachments(AssetUtils.getTestAsset());
+        AssetList assets = repository.doGetAllAssets();
+        assertEquals("Wrong number of assets", 2, assets.size());
+        RepositoryContext userRepository = RepositoryContext.toUserContext(repository);
+        AssetList userAssets = userRepository.doGetAllAssets();
+        userRepository.close();
+        assertEquals("Wrong number of assets", 1, userAssets.size());
+        assertEquals("The wrong asset was retrieved", publishedAsset.get_id(), userAssets.get(0).get_id());
+
     }
 
     @Test
