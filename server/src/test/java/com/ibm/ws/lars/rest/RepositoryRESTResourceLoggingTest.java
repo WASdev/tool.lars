@@ -101,7 +101,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testCountAssets(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, InvalidParameterException {
+    public void testCountAssets(@Mocked final Logger logger, @Mocked final UriInfo info, @Mocked SecurityContext sc) throws URISyntaxException, InvalidParameterException {
 
         new Expectations() {
             {
@@ -117,7 +117,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().countAssets(info);
+        getRestResource().countAssets(info, sc);
     }
 
     @Test

@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,31 +31,21 @@ import java.util.List;
 
 public class AssetFilter {
 
-    public AssetFilter() {}
-
     public AssetFilter(String key, List<Condition> conditions) {
         this.key = key;
-        this.conditions = conditions;
+        this.conditions = Collections.unmodifiableList(conditions);
     }
 
-    private String key;
+    private final String key;
 
     public String getKey() {
         return key;
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    private List<Condition> conditions;
+    private final List<Condition> conditions;
 
     public List<Condition> getConditions() {
         return conditions;
-    }
-
-    public void setConditions(List<Condition> conditions) {
-        this.conditions = conditions;
     }
 
     /** {@inheritDoc} */

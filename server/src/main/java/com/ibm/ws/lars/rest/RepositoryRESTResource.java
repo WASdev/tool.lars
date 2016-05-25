@@ -97,6 +97,8 @@ public class RepositoryRESTResource {
 
     private static final ObjectMapper jsonMapper = new ObjectMapper();
 
+    private static final AssetFilter ASSET_IS_PUBLISHED = new AssetFilter(Asset.STATE, Collections.<Condition> singletonList(new Condition(Operation.EQUALS, Asset.State.PUBLISHED.getValue())));
+
     @Inject
     private AssetServiceLayer assetService;
 
@@ -131,8 +133,7 @@ public class RepositoryRESTResource {
 
         Collection<AssetFilter> filters = params.getFilters();
         if (!context.isUserInRole(ADMIN_ROLE)) {
-            AssetFilter publishedFilter = new AssetFilter(Asset.STATE, Collections.<Condition> singletonList(new Condition(Operation.EQUALS, Asset.State.PUBLISHED.getValue())));
-            filters.add(publishedFilter);
+            filters.add(ASSET_IS_PUBLISHED);
         }
 
         AssetList assets = assetService.retrieveAllAssets(filters, params.getSearchTerm(), params.getPagination(), params.getSortOptions());
@@ -142,15 +143,19 @@ public class RepositoryRESTResource {
 
     @HEAD
     @Path("/assets")
-    public Response countAssets(@Context UriInfo info) throws InvalidParameterException {
+    public Response countAssets(@Context UriInfo info, @Context SecurityContext sc) throws InvalidParameterException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("countAssets called with query parameters: " + info.getRequestUri().getRawQuery());
         }
 
         AssetQueryParameters params = AssetQueryParameters.create(info);
 
-        int count = assetService.countAllAssets(params.getFilters(), params.getSearchTerm());
+        Collection<AssetFilter> filters = params.getFilters();
+        if (!sc.isUserInRole(ADMIN_ROLE)) {
+            filters.add(ASSET_IS_PUBLISHED);
+        }
 
+        int count = assetService.countAllAssets(filters, params.getSearchTerm());
         return Response.noContent().header("count", count).build();
     }
 
