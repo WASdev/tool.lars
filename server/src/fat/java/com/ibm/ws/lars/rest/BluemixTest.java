@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 
 import org.apache.http.Header;
-import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.junit.Test;
 
 import com.ibm.ws.lars.testutils.FatUtils;
@@ -41,17 +41,16 @@ public class BluemixTest {
      */
     @Test
     public void testRedirect() throws ClientProtocolException, IOException {
-        HttpResponse resp;
-        try (RepositoryContext repository = new RepositoryContext(FatUtils.BLUEMIX_HTTP_URL, null, null, RepositoryContext.Redirects.NO_FOLLOW)) {
-            resp = repository.doRawGet("");
-        }
-        StatusLine statusLine = resp.getStatusLine();
-        int actualStatusCode = statusLine.getStatusCode();
-        assertEquals("The http response code was incorrect", 302, actualStatusCode);
-        Header[] headers = resp.getHeaders("Location");
-        assertEquals("The number of location headers was wrong.", 1, headers.length);
-        assertEquals("The redirect in the location header is pointing to the wrong place",
-                     FatUtils.BLUEMIX_HTTPS_URL, headers[0].getValue());
-    }
+        RepositoryContext repository = new RepositoryContext(FatUtils.BLUEMIX_HTTP_URL, null, null, RepositoryContext.Redirects.NO_FOLLOW);
+        try (CloseableHttpResponse resp = repository.doRawGet("")) {
 
+            StatusLine statusLine = resp.getStatusLine();
+            int actualStatusCode = statusLine.getStatusCode();
+            assertEquals("The http response code was incorrect", 302, actualStatusCode);
+            Header[] headers = resp.getHeaders("Location");
+            assertEquals("The number of location headers was wrong.", 1, headers.length);
+            assertEquals("The redirect in the location header is pointing to the wrong place",
+                         FatUtils.BLUEMIX_HTTPS_URL, headers[0].getValue());
+        }
+    }
 }

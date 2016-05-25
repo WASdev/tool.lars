@@ -28,7 +28,6 @@ import java.util.Collection;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.entity.ContentType;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,13 +55,6 @@ public class PermissionTest {
 
     // This is not a rule, as a rule does setup/tear down which is not wanted.
     public RepositoryContext testContext;
-
-    @After
-    public void closeUserContext() {
-        if (testContext != null) {
-            testContext.close();
-        }
-    }
 
     /**
      * HTTP URL for the test instance where read operations are restricted to users with the User
