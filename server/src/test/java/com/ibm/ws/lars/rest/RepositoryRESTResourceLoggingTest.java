@@ -65,17 +65,19 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAsset(@Mocked final Logger logger) throws InvalidIdException, NonExistentArtefactException {
+    public void testGetAsset(@Mocked final Logger logger, @Mocked final SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
 
         new Expectations() {
             {
                 logger.isLoggable(Level.FINE);
                 result = true;
                 logger.fine("getAsset called with id of 'ffffffffffffffffffffffff'");
+                sc.isUserInRole("Administrator");
+                result = true;
             }
         };
 
-        getRestResource().getAsset(NON_EXISTENT_ID, dummyUriInfo);
+        getRestResource().getAsset(NON_EXISTENT_ID, dummyUriInfo, sc);
     }
 
     @Test

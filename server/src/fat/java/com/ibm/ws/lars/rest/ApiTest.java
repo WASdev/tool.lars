@@ -143,7 +143,6 @@ public class ApiTest {
         userRepository.close();
         assertEquals("Wrong number of assets", 1, userAssets.size());
         assertEquals("The wrong asset was retrieved", publishedAsset.get_id(), userAssets.get(0).get_id());
-
     }
 
     @Test
@@ -167,6 +166,45 @@ public class ApiTest {
                      "asset not found for id: ffffffffffffffffffffffff",
                      repository.parseErrorObject(message));
         return;
+    }
+
+    /**
+     * Test that only an admin user can GET an asset that is not published.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testGetAssetUnpublished() throws Exception {
+        Asset original = AssetUtils.getTestAsset();
+        Asset unpublishedAsset = repository.addAssetNoAttachments(original);
+        String id = unpublishedAsset.get_id();
+        RepositoryContext userRepository = RepositoryContext.toUserContext(repository);
+
+        Asset fetchedAsset = repository.getAsset(id);
+        AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
+        // in state draft
+        userRepository.getBadAsset(id, 404);
+
+        repository.updateAssetState(id, Asset.StateAction.PUBLISH, 200);
+        fetchedAsset = repository.getAsset(id);
+        AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
+        // in state awaiting approval
+        userRepository.getBadAsset(id, 404);
+
+        repository.updateAssetState(id, Asset.StateAction.NEED_MORE_INFO, 200);
+        fetchedAsset = repository.getAsset(id);
+        AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
+        // in state need more info
+        userRepository.getBadAsset(id, 404);
+
+        repository.updateAssetState(id, Asset.StateAction.PUBLISH, 200);
+        repository.updateAssetState(id, Asset.StateAction.APPROVE, 200);
+        fetchedAsset = repository.getAsset(id);
+        AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
+        // in state published
+        fetchedAsset = userRepository.getAsset(id);
+        AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
+
     }
 
     /**
@@ -241,7 +279,7 @@ public class ApiTest {
     @Test
     public void testPutStateBadState() throws Exception {
         Asset newAsset = repository.addAssetNoAttachments(AssetUtils.getTestAsset());
-        String message = repository.updateAssetState(newAsset.get_id(), "no state", 400);
+        String message = repository.updateAssetStateBad(newAsset.get_id(), "no state", 400);
         String expectedError = "Either the supplied JSON was badly formed, or it did not contain a valid 'action' field: {\"action\":\"no state\"}";
         assertEquals("Unexpected error message from server", expectedError, repository.parseErrorObject(message));
         repository.deleteAsset(newAsset.get_id(), -1);
@@ -250,7 +288,7 @@ public class ApiTest {
     @Test
     public void testPutStateInvalidAction() throws Exception {
         Asset newAsset = repository.addAssetNoAttachments(AssetUtils.getTestAsset());
-        String message = repository.updateAssetState(newAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), 400);
+        String message = repository.updateAssetState(newAsset.get_id(), Asset.StateAction.UNPUBLISH, 400);
         String expectedError = "Invalid action " + Asset.StateAction.UNPUBLISH.getValue() +
                                " performed on the asset with state " + newAsset.getState().getValue();
         assertEquals("Unexpected error message from server", expectedError, repository.parseErrorObject(message));
@@ -259,7 +297,7 @@ public class ApiTest {
 
     @Test
     public void testPutStateNonExistentId() throws Exception {
-        String message = repository.updateAssetState(NON_EXISTENT_ID, Asset.StateAction.UNPUBLISH.getValue(), 404);
+        String message = repository.updateAssetState(NON_EXISTENT_ID, Asset.StateAction.UNPUBLISH, 404);
         assertEquals("Unexpected error message from server",
                      "asset not found for id: ffffffffffffffffffffffff",
                      repository.parseErrorObject(message));
@@ -296,7 +334,7 @@ public class ApiTest {
         AssetUtils.assertAssetsEqual("Asset has been modified", testAsset, gotAsset);
         assertEquals("Asset was not created in draft state", Asset.State.DRAFT, gotAsset.getState());
 
-        repository.updateAssetState(id, Asset.StateAction.PUBLISH.getValue(), 200);
+        repository.updateAssetState(id, Asset.StateAction.PUBLISH, 200);
         Asset publishedAsset = repository.getAsset(id);
         assertEquals("The asset is not in the expected state", Asset.State.AWAITING_APPROVAL, publishedAsset.getState());
 
@@ -960,7 +998,7 @@ public class ApiTest {
 
         // Attempt to update the state of the 'asset'. This should fail and cause
         // a 500 error
-        String message = repository.updateAssetState(retrievedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), 500);
+        String message = repository.updateAssetState(retrievedAsset.get_id(), Asset.StateAction.UNPUBLISH, 500);
         assertEquals("Message was wrong", "Internal server error, please contact the server administrator", repository.parseErrorObject(message));
 
         // Remove dodgy data from the database for the next test. Don't drop anything
