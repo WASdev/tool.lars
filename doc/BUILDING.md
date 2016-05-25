@@ -6,8 +6,7 @@ newer versions may work but this is what we've tested with)
 * [gradle v2.0](http://gradle.org/downloads) 
 * [mongoDB v2.6](https://www.mongodb.org/downloads#previous)
 * [WAS Liberty Profile 8.5.5.6](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-8.5.5-wlp-runtime).
-  * Your Liberty runtime must contain the following features several features, which can be installed using `installUtility` as follows:
-    bin/installUtility install cdi-1.0 servlet-3.0 mongodb-2.0 jaxrs-1.1 cdi-1.0 servlet-3.0 mongodb-2.0 jaxrs-1.1
+  * Your Liberty runtime must contain the following features several features, which can be installed using `installUtility` as follows: `bin/installUtility install cdi-1.0 servlet-3.0 mongodb-2.0 jaxrs-1.1`
 
 * [Liberty MongoDB Integration 2.0 Feature](https://developer.ibm.com/assets/wasdev/#asset/features-com.ibm.websphere.appserver.mongodb-2.0)
 * A Java 7 JDK
