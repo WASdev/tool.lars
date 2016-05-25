@@ -183,19 +183,19 @@ public class ApiTest {
         Asset fetchedAsset = repository.getAsset(id);
         AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
         // in state draft
-        userRepository.getBadAsset(unpublishedAsset.get_id(), 404);
+        userRepository.getBadAsset(id, 404);
 
         repository.updateAssetState(id, Asset.StateAction.PUBLISH, 200);
         fetchedAsset = repository.getAsset(id);
         AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
         // in state awaiting approval
-        userRepository.getBadAsset(unpublishedAsset.get_id(), 404);
+        userRepository.getBadAsset(id, 404);
 
         repository.updateAssetState(id, Asset.StateAction.NEED_MORE_INFO, 200);
         fetchedAsset = repository.getAsset(id);
         AssetUtils.assertUploadedAssetEquivalentToOriginal("The retrieved asset is not as expected", original, fetchedAsset);
         // in state need more info
-        userRepository.getBadAsset(unpublishedAsset.get_id(), 404);
+        userRepository.getBadAsset(id, 404);
 
         repository.updateAssetState(id, Asset.StateAction.PUBLISH, 200);
         repository.updateAssetState(id, Asset.StateAction.APPROVE, 200);
