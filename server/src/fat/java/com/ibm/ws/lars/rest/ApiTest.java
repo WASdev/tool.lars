@@ -876,22 +876,41 @@ public class ApiTest {
     @SuppressWarnings("unused")
     @Test
     public void countAllAssets() throws Exception {
-        Asset bigFoo = addLittleAsset("name", "Big Foo", "category", "foo", "size", "20");
-        Asset smallFoo = addLittleAsset("name", "Small Foo", "category", "foo", "size", "10");
+        RepositoryContext userContext = RepositoryContext.toUserContext(repository);
+
+        Asset bigFoo = addLittleAssetWithState(Asset.State.PUBLISHED,
+                                               "name", "Big Foo", "category", "foo", "size", "20");
+        Asset draftFoo = addLittleAssetWithState(Asset.State.DRAFT,
+                                                 "name", "Draft Foo", "category", "foo", "size", "20");
+        Asset moreInfoFoo = addLittleAssetWithState(Asset.State.NEED_MORE_INFO,
+                                                    "name", "More Info Foo", "category", "foo", "size", "10");
+        Asset waitingApprovalFoo = addLittleAssetWithState(Asset.State.AWAITING_APPROVAL,
+                                                           "name", "Waiting Approval Foo", "category", "foo", "size", "20");
+        Asset smallFoo = addLittleAssetWithState(Asset.State.PUBLISHED,
+                                                 "name", "Small Foo", "category", "foo", "size", "10");
         Asset giantBar = addLittleAsset("name", "Giant Bar", "category", "bar", "size", "40");
         Asset smallBar = addLittleAsset("name", "Small Bar", "category", "bar", "size", "10");
 
         int result = repository.getAssetCount("");
-        assertEquals(4, result);
+        assertEquals(7, result);
+        result = userContext.getAssetCount("");
+        assertEquals(2, result);
 
         result = repository.getAssetCount("category=foo");
+        assertEquals(5, result);
+        result = userContext.getAssetCount("category=foo");
         assertEquals(2, result);
 
         result = repository.getAssetCount("q=foo");
+        assertEquals(5, result);
+        result = userContext.getAssetCount("q=foo");
         assertEquals(2, result);
 
         result = repository.getAssetCount("q=foo&size=10");
+        assertEquals(2, result);
+        result = userContext.getAssetCount("q=foo&size=10");
         assertEquals(1, result);
+
     }
 
     @SuppressWarnings("unchecked")
@@ -932,13 +951,45 @@ public class ApiTest {
         repository.getBadAssetSummary("", 400);
     }
 
-    // Add and asset with an extra properties
+    // Add an asset with an extra properties
     private Asset addLittleAsset(String... values) throws IOException, InvalidJsonAssetException {
         Asset littleAsset = AssetUtils.getTestAsset();
         for (int i = 0; i < values.length; i = i + 2) {
             littleAsset.setProperty(values[i], values[i + 1]);
         }
         return repository.addAssetNoAttachments(littleAsset);
+    }
+
+    /**
+     * Add an asset with optional extra properties, and specify its target state after adding.
+     */
+    private Asset addLittleAssetWithState(Asset.State targetState, String... values) throws IOException, InvalidJsonAssetException {
+        Asset littleAsset = AssetUtils.getTestAsset();
+        for (int i = 0; i < values.length; i = i + 2) {
+            littleAsset.setProperty(values[i], values[i + 1]);
+        }
+        Asset added = repository.addAssetNoAttachments(littleAsset);
+
+        switch (targetState) {
+            case DRAFT:
+                // nothing to do
+                break;
+            case AWAITING_APPROVAL:
+                repository.updateAssetState(added.get_id(), Asset.StateAction.PUBLISH, 200);
+                break;
+            case PUBLISHED:
+                repository.updateAssetState(added.get_id(), Asset.StateAction.PUBLISH, 200);
+                repository.updateAssetState(added.get_id(), Asset.StateAction.APPROVE, 200);
+                break;
+            case NEED_MORE_INFO:
+                repository.updateAssetState(added.get_id(), Asset.StateAction.PUBLISH, 200);
+                repository.updateAssetState(added.get_id(), Asset.StateAction.NEED_MORE_INFO, 200);
+                break;
+            default:
+
+        }
+
+        return repository.getAsset(added.get_id());
     }
 
     /**
