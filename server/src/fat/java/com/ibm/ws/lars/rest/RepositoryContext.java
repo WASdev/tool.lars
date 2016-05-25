@@ -629,13 +629,27 @@ public class RepositoryContext extends ExternalResource implements Closeable {
     protected Asset addAndPublishAssetNoAttachments(Asset toAdd) throws IOException, InvalidJsonAssetException {
         String assetJson = doPost("/assets", toAdd.toJson(), 200);
         Asset result = Asset.deserializeAssetFromJson(assetJson);
-        updateAssetState(result.get_id(), Asset.StateAction.PUBLISH.getValue(), 200);
-        updateAssetState(result.get_id(), Asset.StateAction.APPROVE.getValue(), 200);
+        updateAssetState(result.get_id(), Asset.StateAction.PUBLISH, 200);
+        updateAssetState(result.get_id(), Asset.StateAction.APPROVE, 200);
         // return an updated version of the asset to ensure the state is correct.
         return getAsset(result.get_id());
     }
 
-    String updateAssetState(String id, String stateAction, int expectedStatusCode) throws IOException, InvalidJsonAssetException {
+    String updateAssetState(String id, Asset.StateAction stateAction, int expectedStatusCode) throws IOException, InvalidJsonAssetException {
+        String json = "{\"action\":\"" + stateAction.getValue() + "\"}";
+
+        String response = doPut("/assets/" + id + "/state", json, expectedStatusCode);
+
+        // A state update will get back nothing for a good request, or an error
+        // for a bad one
+        return response;
+    }
+
+    /**
+     * Used to test requesting a bad state update. Normally
+     * {@link #updateAssetState(String, Asset.StateAction, int)} should be used.
+     */
+    String updateAssetStateBad(String id, String stateAction, int expectedStatusCode) throws IOException, InvalidJsonAssetException {
         String json = "{\"action\":\"" + stateAction + "\"}";
 
         String response = doPut("/assets/" + id + "/state", json, expectedStatusCode);

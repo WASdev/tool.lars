@@ -358,9 +358,9 @@ public class PermissionTest {
     @Test
     public void testPutAssetState() throws InvalidJsonAssetException, IOException {
         if (role.isAdmin()) {
-            testContext.updateAssetState(createdPublishedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), 200);
+            testContext.updateAssetState(createdPublishedAsset.get_id(), Asset.StateAction.UNPUBLISH, 200);
         } else {
-            testContext.updateAssetState(createdPublishedAsset.get_id(), Asset.StateAction.UNPUBLISH.getValue(), RC_REJECT);
+            testContext.updateAssetState(createdPublishedAsset.get_id(), Asset.StateAction.UNPUBLISH, RC_REJECT);
         }
     }
 

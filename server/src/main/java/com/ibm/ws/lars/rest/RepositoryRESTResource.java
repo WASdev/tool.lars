@@ -183,7 +183,7 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets/{assetId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAsset(@PathParam("assetId") String assetId, @Context UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
+    public Response getAsset(@PathParam("assetId") String assetId, @Context UriInfo uriInfo, @Context SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAsset called with id of '" + assetId + "'");
@@ -192,6 +192,12 @@ public class RepositoryRESTResource {
         sanitiseId(assetId, ArtefactType.ASSET);
 
         Asset asset = assetService.retrieveAsset(assetId, uriInfo);
+
+        if (!sc.isUserInRole(ADMIN_ROLE)) {
+            if (asset.getState() != Asset.State.PUBLISHED) {
+                throw new NonExistentArtefactException();
+            }
+        }
 
         return Response.ok(asset.toJson()).build();
     }
