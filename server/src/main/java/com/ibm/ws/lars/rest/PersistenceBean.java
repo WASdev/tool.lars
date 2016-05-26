@@ -108,7 +108,7 @@ public class PersistenceBean implements Persistor {
         Object objectIdObject = obj.get(ID);
         if ((objectIdObject != null) && (objectIdObject instanceof ObjectId)) {
             ObjectId objId = (ObjectId) objectIdObject;
-            String hex = objId.toStringMongod();
+            String hex = objId.toHexString();
             obj.put(ID, hex);
         }
     }
@@ -432,7 +432,7 @@ public class PersistenceBean implements Persistor {
         if (idObject instanceof String) {
             id = (String) idObject;
         } else if (idObject instanceof ObjectId) {
-            id = ((ObjectId) idObject).toStringMongod();
+            id = ((ObjectId) idObject).toHexString();
         } else {
             throw new AssertionError("_id should be either String of ObjectId");
         }
@@ -512,7 +512,7 @@ public class PersistenceBean implements Persistor {
     /** {@inheritDoc} */
     @Override
     public String allocateNewId() {
-        return new ObjectId().toStringMongod();
+        return new ObjectId().toHexString();
     }
 
     /** {@inheritDoc} */
