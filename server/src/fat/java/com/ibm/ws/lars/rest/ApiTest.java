@@ -69,9 +69,6 @@ import com.mongodb.WriteConcern;
  * against both, as LARS intends to do the 'right' thing in error cases, where this doesn't break
  * existing clients
  *
- * Tests required: GET,POST,PUT,DELETE ON /assets GET,POST,PUT,DELETE ON /assets/{asset_id}
- *
- * With variations for good/error cases
  */
 @RunWith(Parameterized.class)
 public class ApiTest {
@@ -135,7 +132,7 @@ public class ApiTest {
     @Test
     public void testGetUnpublishedAssets() throws ClientProtocolException, IOException, InvalidJsonAssetException {
         repository.addAssetNoAttachments(AssetUtils.getTestAsset());
-        Asset publishedAsset = repository.addAndPublishAssetNoAttachments(AssetUtils.getTestAsset());
+        Asset publishedAsset = repository.addAssetNoAttachmentsWithState(AssetUtils.getTestAsset(), Asset.State.PUBLISHED);
         AssetList assets = repository.doGetAllAssets();
         assertEquals("Wrong number of assets", 2, assets.size());
         RepositoryContext userRepository = RepositoryContext.toUserContext(repository);
@@ -662,6 +659,77 @@ public class ApiTest {
         repository.doDeleteAttachment(returnedAsset.get_id(), NON_EXISTENT_ID);
     }
 
+    /**
+     * Test for /ma/v1/assets/{asset id}/attachments
+     */
+    @Test
+    public void testGetAttachments() throws ClientProtocolException, IOException, InvalidJsonAssetException {
+        Asset testAsset = AssetUtils.getTestAsset();
+        Asset returnedAsset = repository.addAssetNoAttachments(testAsset);
+        AttachmentList attachments = repository.doGetAllAttachmentsForAsset(returnedAsset.get_id());
+        assertEquals("The wrong number of attachments was found", 0, attachments.size());
+
+        Attachment attachmentNoContent = AssetUtils.getTestAttachmentNoContent();
+        String attachmentName = "nocontent.txt";
+        Attachment createdAttachment = repository.doPostAttachmentNoContent(returnedAsset.get_id(),
+                                                                            attachmentName,
+                                                                            attachmentNoContent);
+
+        attachments = repository.doGetAllAttachmentsForAsset(returnedAsset.get_id());
+        assertEquals("The wrong number of attachments was found", 1, attachments.size());
+        Attachment one = attachments.get(0);
+        AssetUtils.assertAttachmentNoContentMetadataEquivalent(one, returnedAsset.get_id(),
+                                                               createdAttachment.get_id(), "nocontent.txt", attachmentNoContent);
+
+        Attachment attachmentNoContent2 = AssetUtils.getTestAttachmentNoContent();
+        String attachmentName2 = "nocontent2.txt";
+        repository.doPostAttachmentNoContent(returnedAsset.get_id(), attachmentName2, attachmentNoContent2);
+
+        attachments = repository.doGetAllAttachmentsForAsset(returnedAsset.get_id());
+        assertEquals("The wrong number of attachments was found", 2, attachments.size());
+
+        String response = repository.doGetAllAttachmentsForAssetBad(NON_EXISTENT_ID, 404);
+        assertEquals("Unexpected error message returned from server",
+                     "asset not found for id: " + NON_EXISTENT_ID, repository.parseErrorObject(response));
+
+        response = repository.doGetAllAttachmentsForAssetBad("foo_bar_asset_id", 400);
+        assertEquals("Unexpected error message returned from server",
+                     "Invalid asset id: foo_bar_asset_id", repository.parseErrorObject(response));
+
+    }
+
+    /**
+     * Test for /ma/v1/assets/{asset id}/attachments
+     */
+    @Test
+    public void testGetAttachmentsUnpublished() throws ClientProtocolException, IOException, InvalidJsonAssetException {
+
+        RepositoryContext userRepo = RepositoryContext.toUserContext(repository);
+
+        Asset draftAsset = AssetUtils.getTestAsset();
+        Asset returnedDraftAsset = repository.addAssetNoAttachmentsWithState(draftAsset, Asset.State.DRAFT);
+        String response = userRepo.doGetAllAttachmentsForAssetBad(returnedDraftAsset.get_id(), 404);
+        assertEquals("Unexpected error message returned from server",
+                     "asset not found for id: " + returnedDraftAsset.get_id(), repository.parseErrorObject(response));
+
+        Asset waitingAsset = AssetUtils.getTestAsset();
+        Asset returnedWaitingAsset = repository.addAssetNoAttachmentsWithState(waitingAsset, Asset.State.AWAITING_APPROVAL);
+        response = userRepo.doGetAllAttachmentsForAssetBad(returnedWaitingAsset.get_id(), 404);
+        assertEquals("Unexpected error message returned from server",
+                     "asset not found for id: " + returnedWaitingAsset.get_id(), repository.parseErrorObject(response));
+
+        Asset moreInfoAsset = AssetUtils.getTestAsset();
+        Asset returnedMoreInfoAsset = repository.addAssetNoAttachmentsWithState(moreInfoAsset, Asset.State.NEED_MORE_INFO);
+        response = userRepo.doGetAllAttachmentsForAssetBad(returnedMoreInfoAsset.get_id(), 404);
+        assertEquals("Unexpected error message returned from server",
+                     "asset not found for id: " + returnedMoreInfoAsset.get_id(), repository.parseErrorObject(response));
+
+        Asset publishedAsset = AssetUtils.getTestAsset();
+        Asset returnedPublishedAsset = repository.addAssetNoAttachmentsWithState(publishedAsset, Asset.State.PUBLISHED);
+        AttachmentList attachments = userRepo.doGetAllAttachmentsForAsset(returnedPublishedAsset.get_id());
+        assertEquals("The wrong number of attachments was found", 0, attachments.size());
+    }
+
     @Test
     public void testGetAllAssetsFiltered() throws IOException, InvalidJsonAssetException {
 
@@ -916,39 +984,72 @@ public class ApiTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testGetAssetSummary() throws Exception {
-        addLittleAsset("weather", "hot", "ground", "flat", "description", "lovely");
+        addLittleAssetWithState(Asset.State.PUBLISHED,
+                                "weather", "hot", "ground", "flat", "description", "lovely");
         addLittleAsset("weather", "hot", "ground", "hilly", "description", "ok");
         addLittleAsset("weather", "hot", "ground", "mountainous", "description", "exhausting");
         addLittleAsset("weather", "cold", "ground", "flat", "description", "bleak");
-        addLittleAsset("weather", "cold", "ground", "hilly", "description", "ok");
+        addLittleAssetWithState(Asset.State.PUBLISHED,
+                                "weather", "cold", "ground", "hilly", "description", "ok");
         addLittleAsset("weather", "cold", "ground", "mountainous");
         addLittleAsset("weather", "warm", "ground", "flat");
         addLittleAsset("weather", "warm", "ground", "hilly", "description", "dull");
         addLittleAsset("weather", "warm", "ground", "mountainous");
 
         List<Map<String, Object>> result;
+        RepositoryContext userRepo = RepositoryContext.toUserContext(repository);
+
         result = repository.getAssetSummary("fields=weather");
         assertThat(result, contains(summaryResult("weather", "hot", "cold", "warm")));
+        result = userRepo.getAssetSummary("fields=weather");
+        assertThat(result, contains(summaryResult("weather", "hot", "cold")));
 
         result = repository.getAssetSummary("fields=weather,ground");
         assertThat(result, containsInAnyOrder(summaryResult("weather", "hot", "cold", "warm"),
                                               summaryResult("ground", "flat", "hilly", "mountainous")));
+        result = userRepo.getAssetSummary("fields=weather,ground");
+        assertThat(result, containsInAnyOrder(summaryResult("weather", "hot", "cold"),
+                                              summaryResult("ground", "flat", "hilly")));
 
         result = repository.getAssetSummary("fields=description&ground=flat");
         assertThat(result, contains(summaryResult("description", "lovely", "bleak")));
+        result = userRepo.getAssetSummary("fields=description&ground=flat");
+        assertThat(result, contains(summaryResult("description", "lovely")));
 
         result = repository.getAssetSummary("fields=description&ground=mountainous");
         assertThat(result, contains(summaryResult("description", "exhausting")));
+        result = userRepo.getAssetSummary("fields=description&ground=mountainous");
+        assertThat(result, contains(summaryResult("description")));
 
         result = repository.getAssetSummary("fields=weather&q=ok");
         assertThat(result, contains(summaryResult("weather", "hot", "cold")));
+        result = userRepo.getAssetSummary("fields=weather&q=ok");
+        assertThat(result, contains(summaryResult("weather", "cold")));
 
         result = repository.getAssetSummary("fields=foo");
+        assertThat(result, contains(summaryResult("foo")));
+        result = userRepo.getAssetSummary("fields=foo");
         assertThat(result, contains(summaryResult("foo")));
 
         repository.getBadAssetSummary("fields=", 400);
 
         repository.getBadAssetSummary("", 400);
+    }
+
+    @Test
+    public void testGetAssetSummaryUnpublished() throws Exception {
+        addLittleAssetWithState(Asset.State.DRAFT,
+                                "weather", "cold", "ground", "flat", "description", "lovely");
+        addLittleAssetWithState(Asset.State.AWAITING_APPROVAL,
+                                "weather", "warm", "ground", "hilly", "description", "ok");
+        addLittleAssetWithState(Asset.State.NEED_MORE_INFO,
+                                "weather", "quite hot", "ground", "mountainous", "description", "exhausting");
+        addLittleAssetWithState(Asset.State.PUBLISHED,
+                                "weather", "hot", "ground", "flat", "description", "bleak");
+
+        RepositoryContext userRepo = RepositoryContext.toUserContext(repository);
+        List<Map<String, Object>> result = userRepo.getAssetSummary("fields=weather");
+        assertThat(result, contains(summaryResult("weather", "hot")));
     }
 
     // Add an asset with an extra properties
@@ -969,25 +1070,7 @@ public class ApiTest {
             littleAsset.setProperty(values[i], values[i + 1]);
         }
         Asset added = repository.addAssetNoAttachments(littleAsset);
-
-        switch (targetState) {
-            case DRAFT:
-                // nothing to do
-                break;
-            case AWAITING_APPROVAL:
-                repository.updateAssetState(added.get_id(), Asset.StateAction.PUBLISH, 200);
-                break;
-            case PUBLISHED:
-                repository.updateAssetState(added.get_id(), Asset.StateAction.PUBLISH, 200);
-                repository.updateAssetState(added.get_id(), Asset.StateAction.APPROVE, 200);
-                break;
-            case NEED_MORE_INFO:
-                repository.updateAssetState(added.get_id(), Asset.StateAction.PUBLISH, 200);
-                repository.updateAssetState(added.get_id(), Asset.StateAction.NEED_MORE_INFO, 200);
-                break;
-            default:
-
-        }
+        repository.moveAssetFromDraftToState(added.get_id(), targetState);
 
         return repository.getAsset(added.get_id());
     }
