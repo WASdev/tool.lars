@@ -164,7 +164,7 @@ public class AssetServiceLayer {
     public Asset updateAsset(String assetId, Asset asset) throws InvalidJsonAssetException, NonExistentArtefactException {
         Asset existingAsset = persistenceBean.retrieveAsset(assetId);
         if (existingAsset == null) {
-            throw new NonExistentArtefactException(assetId, "asset");
+            throw new NonExistentArtefactException(assetId, RepositoryRESTResource.ArtefactType.ASSET);
         }
         return persistenceBean.updateAsset(assetId, asset);
     }
@@ -209,14 +209,6 @@ public class AssetServiceLayer {
 
         // Delete the asset itself
         persistenceBean.deleteAsset(assetId);
-    }
-
-    public AttachmentList retrieveAttachmentsForAsset(String assetId, UriInfo uriInfo) {
-        AttachmentList list = persistenceBean.findAttachmentsForAsset(assetId);
-        for (Attachment attachment : list) {
-            computeAttachmentURL(attachment, uriInfo);
-        }
-        return list;
     }
 
     private Attachment createAttachment(String assetId, String name, Attachment originalAttachmentMetadata, String contentType,

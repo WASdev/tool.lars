@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -106,7 +105,7 @@ public class RepositoryRESTResource {
         // constructor left intentionally blank
     }
 
-    enum ArtefactType {
+    public enum ArtefactType {
         ASSET("asset"), ATTACHMENT("attachment");
         String value;
 
@@ -200,7 +199,7 @@ public class RepositoryRESTResource {
 
         if (!sc.isUserInRole(ADMIN_ROLE)) {
             if (asset.getState() != Asset.State.PUBLISHED) {
-                throw new NonExistentArtefactException();
+                throw new NonExistentArtefactException(assetId, ArtefactType.ASSET);
             }
         }
 
@@ -227,7 +226,7 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets/summary")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAssetFieldSummary(@Context UriInfo uriInfo) throws InvalidParameterException {
+    public Response getAssetFieldSummary(@Context UriInfo uriInfo, @Context SecurityContext sc) throws InvalidParameterException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssetFieldSummary called with query parameters: " + uriInfo.getRequestUri().getRawQuery());
@@ -235,14 +234,17 @@ public class RepositoryRESTResource {
 
         AssetQueryParameters params = AssetQueryParameters.create(uriInfo);
         String fieldsString = params.getFields();
-
         if (fieldsString == null || fieldsString.isEmpty()) {
             throw new InvalidParameterException("The fields parameter was not provided");
         }
-
         List<String> fields = Arrays.asList(fieldsString.split(","));
 
-        List<Map<String, Object>> summary = assetService.summarizeAssets(fields, params.getFilters(), params.getSearchTerm());
+        Collection<AssetFilter> filters = params.getFilters();
+        if (!sc.isUserInRole(ADMIN_ROLE)) {
+            filters.add(ASSET_IS_PUBLISHED);
+        }
+
+        List<Map<String, Object>> summary = assetService.summarizeAssets(fields, filters, params.getSearchTerm());
 
         String resultJson;
         try {
@@ -324,16 +326,23 @@ public class RepositoryRESTResource {
     @Path("/assets/{assetId}/attachments")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ ADMIN_ROLE, USER_ROLE })
-    public Response getAttachments(@PathParam("assetId") String assetId,
-                                   @Context UriInfo uriInfo) throws IOException, ServletException, InvalidJsonAssetException, InvalidIdException {
+    public Response getAttachments(@PathParam("assetId") String assetId, @Context UriInfo uriInfo, @Context SecurityContext sc)
+            throws InvalidIdException, NonExistentArtefactException, JsonProcessingException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAttachments called for assetId: " + assetId);
         }
 
         sanitiseId(assetId, ArtefactType.ASSET);
 
-        AttachmentList attachments = assetService.retrieveAttachmentsForAsset(assetId, uriInfo);
+        Asset asset = assetService.retrieveAsset(assetId, uriInfo);
 
+        if (!sc.isUserInRole(ADMIN_ROLE)) {
+            if (asset.getState() != Asset.State.PUBLISHED) {
+                throw new NonExistentArtefactException(assetId, ArtefactType.ASSET);
+            }
+        }
+
+        AttachmentList attachments = asset.getAttachments();
         return Response.ok(attachments.toJson()).build();
     }
 

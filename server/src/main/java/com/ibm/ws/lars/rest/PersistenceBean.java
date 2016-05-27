@@ -326,7 +326,7 @@ public class PersistenceBean implements Persistor {
         BasicDBObject query = new BasicDBObject(ID, assetId);
         DBObject resultObj = getAssetCollection().findOne(query);
         if (resultObj == null) {
-            throw new NonExistentArtefactException(assetId.toString(), "asset");
+            throw new NonExistentArtefactException(assetId.toString(), RepositoryRESTResource.ArtefactType.ASSET);
         }
         convertObjectIdToHexString(resultObj);
         // All entries in a Mongo document have string keys, this is part of
@@ -448,7 +448,7 @@ public class PersistenceBean implements Persistor {
         BasicDBObject query = new BasicDBObject(ID, new ObjectId(attachmentId));
         DBObject resultObj = getAttachmentCollection().findOne(query);
         if (resultObj == null) {
-            throw new NonExistentArtefactException(attachmentId, "attachment");
+            throw new NonExistentArtefactException(attachmentId, RepositoryRESTResource.ArtefactType.ATTACHMENT);
         }
         convertObjectIdToHexString(resultObj);
 

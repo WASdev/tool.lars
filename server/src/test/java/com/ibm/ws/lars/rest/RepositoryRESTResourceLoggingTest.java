@@ -15,13 +15,11 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
@@ -81,7 +79,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAssets(@Mocked final Logger logger, @Mocked final UriInfo info, @Mocked final SecurityContext context) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
+    public void testGetAssets(@Mocked final Logger logger, @Mocked final UriInfo info, @Mocked SecurityContext context) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
 
         new Expectations() {
             {
@@ -184,18 +182,19 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAttachments(@Mocked final Logger logger) throws InvalidJsonAssetException, InvalidIdException, IOException, ServletException {
+    public void testGetAttachments(@Mocked final Logger logger, @Mocked final SecurityContext sc) throws Exception {
 
         new Expectations() {
             {
                 logger.isLoggable(Level.FINE);
                 result = true;
-
                 logger.fine("getAttachments called for assetId: " + NON_EXISTENT_ID);
+                sc.isUserInRole("Administrator");
+                result = true;
             }
         };
 
-        getRestResource().getAttachments(NON_EXISTENT_ID, dummyUriInfo);
+        getRestResource().getAttachments(NON_EXISTENT_ID, dummyUriInfo, sc);
     }
 
     @Test
@@ -262,7 +261,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAssetFieldSummary(@Mocked final Logger logger, @Mocked final UriInfo info) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
+    public void testGetAssetFieldSummary(@Mocked final Logger logger, @Mocked final UriInfo info, @Mocked SecurityContext sc) throws URISyntaxException, JsonProcessingException, InvalidParameterException {
 
         final MultivaluedMapImpl<String, String> parameters = new MultivaluedMapImpl<>();
         parameters.add("fields", "xyz");
@@ -282,7 +281,7 @@ public class RepositoryRESTResourceLoggingTest {
             }
         };
 
-        getRestResource().getAssetFieldSummary(info);
+        getRestResource().getAssetFieldSummary(info, sc);
 
     }
 

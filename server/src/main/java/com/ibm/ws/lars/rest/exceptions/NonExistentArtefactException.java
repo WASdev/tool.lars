@@ -19,6 +19,8 @@ package com.ibm.ws.lars.rest.exceptions;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.ibm.ws.lars.rest.RepositoryRESTResource;
+
 public class NonExistentArtefactException extends RepositoryClientException {
 
     private static final long serialVersionUID = 1L;
@@ -27,8 +29,8 @@ public class NonExistentArtefactException extends RepositoryClientException {
         super("Asset not found");
     }
 
-    public NonExistentArtefactException(String id, String type) {
-        super(type + " not found for id: " + id);
+    public NonExistentArtefactException(String id, RepositoryRESTResource.ArtefactType type) {
+        super(type.getValue() + " not found for id: " + id);
     }
 
     public NonExistentArtefactException(String message) {

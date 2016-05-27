@@ -193,11 +193,11 @@ public class PermissionTest {
     @Before
     public void setUp() throws IOException, InvalidJsonAssetException {
         testAsset = AssetUtils.getTestAsset();
-        createdPublishedAsset = adminContext.addAndPublishAssetNoAttachments(testAsset);
+        createdPublishedAsset = adminContext.addAssetNoAttachmentsWithState(testAsset, Asset.State.PUBLISHED);
         adminContext.addAssetNoAttachments(AssetUtils.getTestAsset());
 
         assetWithAttachments = AssetUtils.getTestAsset();
-        createAssetWithAttachments = adminContext.addAndPublishAssetNoAttachments(assetWithAttachments);
+        createAssetWithAttachments = adminContext.addAssetNoAttachmentsWithState(assetWithAttachments, Asset.State.PUBLISHED);
         attachmentName = "nocontent.txt";
         attachmentContent = "I am the content.\nThere is not much content to be had.\n".getBytes(StandardCharsets.UTF_8);
         attachment = AssetUtils.getTestAttachmentWithContent();
@@ -237,7 +237,7 @@ public class PermissionTest {
     public void testPostAsset() throws InvalidJsonAssetException, IOException {
         Asset asset = AssetUtils.getTestAsset();
         if (role.isAdmin()) {
-            Asset returnedAsset = testContext.addAndPublishAssetNoAttachments(asset);
+            Asset returnedAsset = testContext.addAssetNoAttachmentsWithState(asset, Asset.State.PUBLISHED);
             AssetUtils.assertUploadedAssetEquivalentToOriginal("Returned asset should match the asset that was uploaded", asset, returnedAsset);
         } else {
             testContext.addBadAsset(asset, RC_REJECT);
@@ -382,7 +382,7 @@ public class PermissionTest {
     public void testGetFilteredAssets() throws Exception {
         Asset asset1 = AssetUtils.getTestAsset();
         asset1.setProperty("type", "feature");
-        Asset publishedAsset1 = adminContext.addAndPublishAssetNoAttachments(asset1);
+        Asset publishedAsset1 = adminContext.addAssetNoAttachmentsWithState(asset1, Asset.State.PUBLISHED);
 
         Asset asset2 = AssetUtils.getTestAsset();
         asset2.setProperty("type", "feature");
@@ -390,7 +390,7 @@ public class PermissionTest {
 
         Asset asset3 = AssetUtils.getTestAsset();
         asset3.setProperty("type", "product");
-        adminContext.addAndPublishAssetNoAttachments(asset3);
+        adminContext.addAssetNoAttachmentsWithState(asset3, Asset.State.PUBLISHED);
 
         Asset asset4 = AssetUtils.getTestAsset();
         asset4.setProperty("type", "product");
@@ -414,7 +414,7 @@ public class PermissionTest {
 
         Asset asset1 = AssetUtils.getTestAsset();
         asset1.setProperty("name", "foo one");
-        Asset publishedAsset1 = adminContext.addAndPublishAssetNoAttachments(asset1);
+        Asset publishedAsset1 = adminContext.addAssetNoAttachmentsWithState(asset1, Asset.State.PUBLISHED);
 
         Asset asset2 = AssetUtils.getTestAsset();
         asset2.setProperty("name", "foo two");
@@ -422,7 +422,7 @@ public class PermissionTest {
 
         Asset asset3 = AssetUtils.getTestAsset();
         asset3.setProperty("name", "nofoo three");
-        adminContext.addAndPublishAssetNoAttachments(asset3);
+        adminContext.addAssetNoAttachmentsWithState(asset3, Asset.State.PUBLISHED);
 
         Asset asset4 = AssetUtils.getTestAsset();
         asset4.setProperty("name", "nofoo four");

@@ -562,6 +562,10 @@ public class RepositoryContext extends ExternalResource implements Closeable {
         return AttachmentList.jsonToAttachmentList(response.getBytes(StandardCharsets.UTF_8));
     }
 
+    protected String doGetAllAttachmentsForAssetBad(String assetId, int expectedStatusCode) throws ClientProtocolException, IOException {
+        return doGet("/assets/" + assetId + "/attachments/", expectedStatusCode);
+    }
+
     /**
      * If an asset has only one attachment, this method retrieves it, asserts that its id is correct
      * and then returns it.
@@ -626,13 +630,33 @@ public class RepositoryContext extends ExternalResource implements Closeable {
         return Asset.deserializeAssetFromJson(assetJson);
     }
 
-    protected Asset addAndPublishAssetNoAttachments(Asset toAdd) throws IOException, InvalidJsonAssetException {
+    protected Asset addAssetNoAttachmentsWithState(Asset toAdd, Asset.State targetState) throws IOException, InvalidJsonAssetException {
         String assetJson = doPost("/assets", toAdd.toJson(), 200);
         Asset result = Asset.deserializeAssetFromJson(assetJson);
-        updateAssetState(result.get_id(), Asset.StateAction.PUBLISH, 200);
-        updateAssetState(result.get_id(), Asset.StateAction.APPROVE, 200);
+        moveAssetFromDraftToState(result.get_id(), targetState);
         // return an updated version of the asset to ensure the state is correct.
         return getAsset(result.get_id());
+    }
+
+    protected void moveAssetFromDraftToState(String id, Asset.State targetState) throws InvalidJsonAssetException, IOException {
+        switch (targetState) {
+            case DRAFT:
+                // nothing to do
+                break;
+            case AWAITING_APPROVAL:
+                updateAssetState(id, Asset.StateAction.PUBLISH, 200);
+                break;
+            case PUBLISHED:
+                updateAssetState(id, Asset.StateAction.PUBLISH, 200);
+                updateAssetState(id, Asset.StateAction.APPROVE, 200);
+                break;
+            case NEED_MORE_INFO:
+                updateAssetState(id, Asset.StateAction.PUBLISH, 200);
+                updateAssetState(id, Asset.StateAction.NEED_MORE_INFO, 200);
+                break;
+            default:
+
+        }
     }
 
     String updateAssetState(String id, Asset.StateAction stateAction, int expectedStatusCode) throws IOException, InvalidJsonAssetException {
