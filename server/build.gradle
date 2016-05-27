@@ -93,7 +93,7 @@ clean {
     doFirst {
         // Clean will delete the server configuration
         // so make sure we stop it first
-        [serverName,testServerName].each{ theServerName ->
+        [serverName,testServerName,baseUrlServerName].each{ theServerName ->
             if (isServerRunning(theServerName)) {
                 println("Stopping liberty server " + theServerName);
                 ant.server(operation: 'stop',
