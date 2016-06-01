@@ -7,6 +7,7 @@ build
 # Eclipse stuff
 */.settings/**
 !*/.settings/org.eclipse.*.prefs
+*/.settings/org.eclipse.buildship.*.prefs
 */.classpath
 */.project
 */bin
