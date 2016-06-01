@@ -16,7 +16,6 @@ package com.ibm.ws.lars.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -46,6 +45,8 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -90,7 +91,7 @@ import com.ibm.ws.lars.testutils.FatUtils;
  * (host, port, protocol, user, password etc). Some tests may use more than one RepositoryContext
  * (for example, security tests that need to log on as more than one user).
  */
-public class RepositoryContext extends ExternalResource implements Closeable {
+public class RepositoryContext extends ExternalResource {
 
     private final String hostname;
     private final int portNumber;
@@ -98,7 +99,7 @@ public class RepositoryContext extends ExternalResource implements Closeable {
 
     private final String fullURL;
 
-    private CloseableHttpClient httpClient;
+    private static final CloseableHttpClient httpClient;
 
     private final String user;
     private final String password;
@@ -107,7 +108,8 @@ public class RepositoryContext extends ExternalResource implements Closeable {
     private final Redirects followRedirects;
 
     private HttpHost targetHost;
-    private HttpClientContext context;
+    private HttpClientContext httpClientContext;
+    private RequestConfig requestConfig;
 
     private final static ObjectMapper jsonReader = new ObjectMapper();
 
@@ -117,15 +119,6 @@ public class RepositoryContext extends ExternalResource implements Closeable {
 
     enum Redirects {
         FOLLOW, NO_FOLLOW
-    }
-
-    @Override
-    public void close() {
-        try {
-            httpClient.close();
-        } catch (IOException e) {
-            // Don't care
-        }
     }
 
     static final Map<Protocol, String> DEFAULT_URLS;
@@ -150,38 +143,43 @@ public class RepositoryContext extends ExternalResource implements Closeable {
     protected void after() {
         try {
             cleanRepo();
-            httpClient.close();
         } catch (IOException | InvalidJsonAssetException e) {
             e.printStackTrace();
             fail("Unexpected exception cleaning repository or closing httpClient: " + e);
         }
     }
 
-    private void setupClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
-        targetHost = new HttpHost(hostname, portNumber, protocol);
-
+    static {
         /* Create the HTTPClient that we use to make all HTTP calls */
         HttpClientBuilder b = HttpClientBuilder.create();
-        if (followRedirects == Redirects.NO_FOLLOW) {
-            b.disableRedirectHandling();
-        }
+
+        b.disableCookieManagement();
 
         // Trust all certificates
-        SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-            @Override
-            public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-                return true;
-            }
-        }).build();
-        b.setSslcontext(sslContext);
+        SSLContext sslContext;
+        try {
+            sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+                @Override
+                public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    return true;
+                }
+            }).build();
+            b.setSslcontext(sslContext);
+        } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
+            throw new RuntimeException(e);
+        }
 
         // By default, it will verify the hostname in the certificate, which should be localhost
         // and therefore should match. If we start running these tests against a LARS server on
         // a different host then we may need disable hostname verification.
 
-        context = HttpClientContext.create();
-
         httpClient = b.build();
+    }
+
+    private void setupHttpClient() {
+        targetHost = new HttpHost(hostname, portNumber, protocol);
+
+        httpClientContext = HttpClientContext.create();
 
         /*
          * Create the HTTPClientContext with the appropriate credentials. We'll use this whenever we
@@ -197,10 +195,14 @@ public class RepositoryContext extends ExternalResource implements Closeable {
             BasicScheme basicAuth = new BasicScheme();
             authCache.put(targetHost, basicAuth);
 
-            context.setCredentialsProvider(credsProvider);
-            context.setAuthCache(authCache);
+            httpClientContext.setCredentialsProvider(credsProvider);
+            httpClientContext.setAuthCache(authCache);
         }
 
+        // Set up the config to be used for each request by this instance
+        requestConfig = RequestConfig.custom()
+                .setRedirectsEnabled(followRedirects == Redirects.FOLLOW ? true : false)
+                .build();
     }
 
     public RepositoryContext(String url, String user, String password, Redirects followRedirects) {
@@ -222,13 +224,7 @@ public class RepositoryContext extends ExternalResource implements Closeable {
 
         fullURL = uri.toString();
 
-        try {
-            setupClient();
-        } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
-            // Not much to be done here, this is tots foobar.
-            throw new RuntimeException("Couldn't construct the repository connection", e);
-        }
-
+        setupHttpClient();
     }
 
     public RepositoryContext(String url, String user, String password) {
@@ -288,9 +284,10 @@ public class RepositoryContext extends ExternalResource implements Closeable {
         return doRequest(get, expectedStatusCode);
     }
 
-    public HttpResponse doRawGet(String url) throws ClientProtocolException, IOException {
+    public CloseableHttpResponse doRawGet(String url) throws ClientProtocolException, IOException {
         HttpGet get = new HttpGet(fullURL + url);
-        return httpClient.execute(targetHost, get, context);
+        get.setConfig(requestConfig);
+        return httpClient.execute(targetHost, get, httpClientContext);
     }
 
     public String doDelete(String url, int expectedStatusCode)
@@ -299,10 +296,11 @@ public class RepositoryContext extends ExternalResource implements Closeable {
         return doRequest(delete, expectedStatusCode);
     }
 
-    public HttpResponse doHead(String url, int expectedStatusCode)
+    public CloseableHttpResponse doHead(String url, int expectedStatusCode)
             throws ClientProtocolException, IOException {
         HttpHead head = new HttpHead(fullURL + url);
-        HttpResponse response = httpClient.execute(targetHost, head, context);
+        head.setConfig(requestConfig);
+        CloseableHttpResponse response = httpClient.execute(targetHost, head, httpClientContext);
 
         assertStatusCode(expectedStatusCode, response);
         return response;
@@ -339,22 +337,25 @@ public class RepositoryContext extends ExternalResource implements Closeable {
     public String doRequest(HttpRequestBase request, int expectedStatusCode)
             throws ClientProtocolException, IOException {
 
-        HttpResponse response = httpClient.execute(targetHost, request, context);
+        request.setConfig(requestConfig);
 
-        assertStatusCode(expectedStatusCode, response);
-
-        HttpEntity responseEntity = response.getEntity();
-        String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
-        return responseString;
+        try (CloseableHttpResponse response = httpClient.execute(targetHost, request, httpClientContext)) {
+            assertStatusCode(expectedStatusCode, response);
+            HttpEntity responseEntity = response.getEntity();
+            String responseString = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
+            return responseString;
+        }
     }
 
     public byte[] doGetAsByteArray(String url, int expectedStatusCode)
             throws ClientProtocolException, IOException {
         HttpGet get = new HttpGet(fullURL + url);
-        HttpResponse response = httpClient.execute(targetHost, get, context);
+        get.setConfig(requestConfig);
 
-        assertStatusCode(expectedStatusCode, response);
-        return EntityUtils.toByteArray(response.getEntity());
+        try (CloseableHttpResponse response = httpClient.execute(targetHost, get, httpClientContext)) {
+            assertStatusCode(expectedStatusCode, response);
+            return EntityUtils.toByteArray(response.getEntity());
+        }
     }
 
     private void assertStatusCode(int expectedStatusCode, HttpResponse response) throws ParseException, IOException {
@@ -485,8 +486,9 @@ public class RepositoryContext extends ExternalResource implements Closeable {
     }
 
     int getAssetCount(String parameters) throws IOException {
-        HttpResponse response = doHead("/assets?" + parameters, HttpStatus.SC_NO_CONTENT);
-        return Integer.parseInt(response.getFirstHeader("count").getValue());
+        try (CloseableHttpResponse response = doHead("/assets?" + parameters, HttpStatus.SC_NO_CONTENT)) {
+            return Integer.parseInt(response.getFirstHeader("count").getValue());
+        }
     }
 
     protected Attachment doPostAttachmentNoContent(String assetId, String name, Attachment attachment) throws ClientProtocolException, IOException, InvalidJsonAssetException {

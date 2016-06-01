@@ -137,7 +137,6 @@ public class ApiTest {
         assertEquals("Wrong number of assets", 2, assets.size());
         RepositoryContext userRepository = RepositoryContext.toUserContext(repository);
         AssetList userAssets = userRepository.doGetAllAssets();
-        userRepository.close();
         assertEquals("Wrong number of assets", 1, userAssets.size());
         assertEquals("The wrong asset was retrieved", publishedAsset.get_id(), userAssets.get(0).get_id());
     }
