@@ -213,7 +213,7 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAttachmentContent(@Mocked final Logger logger) throws InvalidIdException, NonExistentArtefactException {
+    public void testGetAttachmentContent(@Mocked final Logger logger, @Mocked final SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
 
         new Expectations() {
             {
@@ -222,10 +222,12 @@ public class RepositoryRESTResourceLoggingTest {
 
                 logger.fine("getAttachmentContent called for assetId: " + NON_EXISTENT_ID
                             + " attachmentId: " + NON_EXISTENT_ID + " name: " + "no_name");
+                sc.isUserInRole("Administrator");
+                result = true;
             }
         };
 
-        getRestResource().getAttachmentContent(NON_EXISTENT_ID, NON_EXISTENT_ID, "no_name", dummyUriInfo);
+        getRestResource().getAttachmentContent(NON_EXISTENT_ID, NON_EXISTENT_ID, "no_name", dummyUriInfo, sc);
     }
 
     @Test
@@ -286,16 +288,18 @@ public class RepositoryRESTResourceLoggingTest {
     }
 
     @Test
-    public void testGetAssetReviews(@Mocked final Logger logger) throws InvalidIdException, NonExistentArtefactException {
+    public void testGetAssetReviews(@Mocked final Logger logger, @Mocked final SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
 
         new Expectations() {
             {
                 logger.isLoggable(Level.FINE);
                 result = true;
                 logger.fine("getAssetReviews called with id of 'ffffffffffffffffffffffff'");
+                sc.isUserInRole("Administrator");
+                result = true;
             }
         };
 
-        getRestResource().getAssetReviews(NON_EXISTENT_ID, dummyUriInfo);
+        getRestResource().getAssetReviews(NON_EXISTENT_ID, dummyUriInfo, sc);
     }
 }
