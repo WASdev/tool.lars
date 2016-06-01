@@ -45,6 +45,8 @@ in the configDropins/overrides directory.
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
         <file name="${shared.resource.dir}/libs/mongo-java-driver-2.13.0.jar"/>
     </library>
+    
+    <webAppSecurity singleSignonEnabled="false"/>
 
     <!--  These will be overwritten by bluemix -->
     <httpEndpoint httpPort="80" httpsPort="443" id="defaultHttpEndpoint"/>
