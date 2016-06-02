@@ -19,6 +19,8 @@ package com.ibm.ws.repository.resources.internal;
 import java.util.Collection;
 import java.util.List;
 
+import org.osgi.resource.Requirement;
+
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
@@ -69,6 +71,13 @@ public class ProductResourceImpl extends ProductRelatedResourceImpl implements P
                 // This should only be thrown if validate editions is set to true, for us its set to false
             }
         }
+
+        for (Requirement requirement : getGenericRequirements()) {
+            if (requirement.getNamespace().equals("osgi.native")) {
+                matchingData.setPlatformInfo(requirement.getDirectives().get("filter"));
+            }
+        }
+
         return matchingData;
     }
 

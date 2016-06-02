@@ -213,9 +213,25 @@ public class ProductResourceTest {
         addon1.setName("addon1");
 
         ProductResourceImpl addon2 = new ProductResourceImpl(null);
-        addon2.setType(ResourceType.INSTALL);
-        addon2.setName("addon1");
+        addon2.setType(ResourceType.ADDON);
+        addon2.setName("addon2");
 
         assertFalse(addon1.createMatchingData().equals(addon2.createMatchingData()));
+    }
+
+    /**
+     * Test assets with different platform info don't match
+     */
+    @Test
+    public void testDifferentPlatformInfoDontMatch() {
+        ProductResourceImpl windows = new ProductResourceImpl(null);
+        windows.setType(INSTALL);
+        windows.setGenericRequirements("osgi.native; filter:=\"(&(osgi.native.processor=x86-64)(osgi.native.osname=Win32))\"");
+
+        ProductResourceImpl linux = new ProductResourceImpl(null);
+        linux.setType(INSTALL);
+        linux.setGenericRequirements("osgi.native; filter:=\"(&(osgi.native.processor=x86-64)(osgi.native.osname=Linux))\"");
+
+        assertFalse(windows.createMatchingData().equals(linux.createMatchingData()));
     }
 }
