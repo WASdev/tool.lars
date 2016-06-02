@@ -26,6 +26,7 @@ public class ExtendedMatchingData extends RepositoryResourceMatchingData {
     String provideFeature;
     String version;
     Collection<AppliesToFilterInfo> atfi;
+    String platformInfo;
 
     /**
      * @return the provideFeature
@@ -69,6 +70,20 @@ public class ExtendedMatchingData extends RepositoryResourceMatchingData {
         this.atfi = atfi;
     }
 
+    /**
+     * @return the platformInfo
+     */
+    public String getPlatformInfo() {
+        return platformInfo;
+    }
+
+    /**
+     * @param platformInfo the platformInfo to set
+     */
+    public void setPlatformInfo(String platformInfo) {
+        this.platformInfo = platformInfo;
+    }
+
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
@@ -77,6 +92,7 @@ public class ExtendedMatchingData extends RepositoryResourceMatchingData {
         result = prime * result + ((provideFeature == null) ? 0 : provideFeature.hashCode());
         result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
+        result = prime * result + ((platformInfo == null) ? 0 : platformInfo.hashCode());
         return result;
     }
 
@@ -122,6 +138,12 @@ public class ExtendedMatchingData extends RepositoryResourceMatchingData {
                     return false;
             }
         }
+
+        if (platformInfo == null) {
+            if (other.platformInfo != null)
+                return false;
+        } else if (!platformInfo.equals(other.platformInfo))
+            return false;
 
         return true;
     }
