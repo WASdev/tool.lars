@@ -20,7 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -51,6 +53,20 @@ public class BasicChecks {
         assertNotNull("No main attachment", res.getMainAttachment());
         assertEquals("Wrong file size", res.getMainAttachmentSize(), res
                 .getMainAttachment().getSize());
+    }
+
+    /**
+     * Reads the specified InputStream and returns a byte array containing all the bytes read.
+     */
+    public static byte[] slurp(InputStream is) throws IOException {
+        byte[] buffer = new byte[1024];
+        int length;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        while ((length = is.read(buffer)) != -1) {
+            baos.write(buffer, 0, length);
+        }
+    
+        return baos.toByteArray();
     }
 
     /**

@@ -120,8 +120,6 @@ task bluemixWar(type: War) {
 assemble.dependsOn bluemixWar
 
 test {
-    dependsOn 'startTestMongod'
-    finalizedBy 'stopTestMongod'
     File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
     jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
 }
