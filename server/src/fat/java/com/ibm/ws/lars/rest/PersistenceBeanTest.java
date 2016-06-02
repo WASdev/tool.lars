@@ -18,7 +18,7 @@ package com.ibm.ws.lars.rest;
 
 import static com.ibm.ws.lars.rest.SortOptions.SortOrder.ASCENDING;
 import static com.ibm.ws.lars.rest.SortOptions.SortOrder.DESCENDING;
-import static com.ibm.ws.lars.rest.TestUtils.assertAssetList;
+import static com.ibm.ws.lars.rest.matchers.ServerAssetByIdMatcher.assetsWithIds;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
@@ -52,6 +52,7 @@ import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
+import com.ibm.ws.lars.testutils.BasicChecks;
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
@@ -195,7 +196,7 @@ public class PersistenceBeanTest {
         assertEquals(content.length, contentMetadata.length);
 
         try (InputStream contentStream = persistenceBean.retrieveAttachmentContent(contentMetadata.filename).getContentStream()) {
-            byte[] returnedContent = TestUtils.slurp(contentStream);
+            byte[] returnedContent = BasicChecks.slurp(contentStream);
             assertTrue(Arrays.equals(content, returnedContent));
         }
     }
@@ -371,7 +372,7 @@ public class PersistenceBeanTest {
         List<AssetFilter> emptyFilters = Collections.emptyList();
         AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null, null, null);
         assertEquals("Unexpected number of assets returned", 9, allAssets.size());
-        assertAssetList(allAssets, asset1, asset2, asset3, asset4, asset5, asset6, asset7, asset8, asset9);
+        assertThat(allAssets, containsInAnyOrder(assetsWithIds(asset1, asset2, asset3, asset4, asset5, asset6, asset7, asset8, asset9)));
 
         List<AssetFilter> filters;
 
@@ -379,28 +380,28 @@ public class PersistenceBeanTest {
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         AssetList result1 = persistenceBean.retrieveAllAssets(filters, null, null, null);
-        assertAssetList(result1, asset1, asset2, asset3, asset7, asset8, asset9);
+        assertThat(result1, containsInAnyOrder(assetsWithIds(asset1, asset2, asset3, asset7, asset8, asset9)));
 
         // OR with NOT
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         filters.add(new AssetFilter("ground", Arrays.asList(neq("mountainous"))));
         AssetList result2 = persistenceBean.retrieveAllAssets(filters, null, null, null);
-        assertAssetList(result2, asset1, asset2, asset7, asset8);
+        assertThat(result2, containsInAnyOrder(assetsWithIds(asset1, asset2, asset7, asset8)));
 
         // Two ORs
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         filters.add(new AssetFilter("ground", Arrays.asList(eq("hilly"), eq("mountainous"))));
         AssetList result3 = persistenceBean.retrieveAllAssets(filters, null, null, null);
-        assertAssetList(result3, asset2, asset3, asset8, asset9);
+        assertThat(result3, containsInAnyOrder(assetsWithIds(asset2, asset3, asset8, asset9)));
 
         // OR with NOT and searchTerm
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         filters.add(new AssetFilter("ground", Arrays.asList(neq("mountainous"))));
         AssetList result4 = persistenceBean.retrieveAllAssets(filters, "long", null, null);
-        assertAssetList(result4, asset1, asset2, asset7);
+        assertThat(result4, containsInAnyOrder(assetsWithIds(asset1, asset2, asset7)));
     }
 
     @Test

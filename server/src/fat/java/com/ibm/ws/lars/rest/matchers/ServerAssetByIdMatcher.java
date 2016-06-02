@@ -15,8 +15,12 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest.matchers;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
+import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
 import com.ibm.ws.lars.rest.model.Asset;
@@ -57,6 +61,15 @@ public class ServerAssetByIdMatcher extends TypeSafeMatcher<Asset> {
     @Factory
     public static ServerAssetByIdMatcher hasId(Asset asset) {
         return new ServerAssetByIdMatcher(asset.get_id());
+    }
+
+    @Factory
+    public static Collection<Matcher<? super Asset>> assetsWithIds(Asset... assets) {
+        ArrayList<Matcher<? super Asset>> matchers = new ArrayList<>();
+        for (Asset asset : assets) {
+            matchers.add(hasId(asset));
+        }
+        return matchers;
     }
 
 }

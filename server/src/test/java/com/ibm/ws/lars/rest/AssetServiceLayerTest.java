@@ -44,6 +44,7 @@ import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.RepositoryObject;
 import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
+import com.ibm.ws.lars.testutils.BasicChecks;
 
 /**
  *
@@ -259,7 +260,7 @@ public class AssetServiceLayerTest {
 
         try (InputStream is = service.retrieveAttachmentContent(returnedAsset.get_id(), createdAttachment.get_id(), "AttachmentWithContent.txt", dummyUriInfo)
                 .getContentStream()) {
-            byte[] returnedContent = TestUtils.slurp(is);
+            byte[] returnedContent = BasicChecks.slurp(is);
             assertTrue(Arrays.equals(attachmentContent, returnedContent));
         }
 
