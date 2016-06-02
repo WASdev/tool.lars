@@ -16,6 +16,7 @@
 package com.ibm.ws.lars.rest;
 
 import static com.ibm.ws.lars.rest.RepositoryContext.RC_REJECT;
+import static com.ibm.ws.lars.rest.matchers.ServerAssetByIdMatcher.assetsWithIds;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -38,7 +39,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
-import com.ibm.ws.lars.rest.matchers.ServerAssetByIdMatcher;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
@@ -391,7 +391,7 @@ public class PermissionTest {
         if (role.isAdmin()) {
             AssetList assets = testContext.getAllAssets("type=feature");
             assertEquals("Wrong number of assets", 2, assets.size());
-            assertThat(assets, containsInAnyOrder(ServerAssetByIdMatcher.hasId(publishedAsset1), ServerAssetByIdMatcher.hasId(notPublishedAsset2)));
+            assertThat(assets, containsInAnyOrder(assetsWithIds(publishedAsset1, notPublishedAsset2)));
         } else if (role.isUser()) {
             AssetList assets = testContext.getAllAssets("type=feature");
             assertEquals("Wrong number of assets", 1, assets.size());
@@ -423,7 +423,7 @@ public class PermissionTest {
         if (role.isAdmin()) {
             AssetList assets = testContext.getAllAssets("q=foo");
             assertEquals("Wrong number of assets", 2, assets.size());
-            assertThat(assets, containsInAnyOrder(ServerAssetByIdMatcher.hasId(publishedAsset1), ServerAssetByIdMatcher.hasId(notPublishedAsset2)));
+            assertThat(assets, containsInAnyOrder(assetsWithIds(publishedAsset1, notPublishedAsset2)));
         } else if (role.isUser()) {
             AssetList assets = testContext.getAllAssets("q=foo");
             assertEquals("Wrong number of assets", 1, assets.size());
