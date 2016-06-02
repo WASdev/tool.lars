@@ -462,6 +462,15 @@ public class RepositoryContext extends ExternalResource {
         return jsonReader.readValue(resultJson, new TypeReference<List<Map<String, Object>>>() {});
     }
 
+    void getAssetReviewsBad(String id, int expectedStatusCode, String expectedMessage) throws IOException {
+        String message = doGet("/assets/" + id + "/assetreviews", expectedStatusCode);
+
+        if (expectedMessage != null) {
+            String errorMessage = parseErrorObject(message.toString());
+            assertEquals("Unexpected message from server", expectedMessage, errorMessage);
+        }
+    }
+
     /**
      * Get asset with the expectation that it will fail
      */

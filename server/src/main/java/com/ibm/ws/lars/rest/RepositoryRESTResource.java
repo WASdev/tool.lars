@@ -370,7 +370,8 @@ public class RepositoryRESTResource {
     public Response getAttachmentContent(@PathParam("assetId") String assetId,
                                          @PathParam("attachmentId") String attachmentId,
                                          @PathParam("name") String name,
-                                         @Context UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
+                                         @Context UriInfo uriInfo,
+                                         @Context SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAttachmentContent called for assetId: " + assetId
@@ -379,6 +380,12 @@ public class RepositoryRESTResource {
 
         sanitiseId(assetId, ArtefactType.ASSET);
         sanitiseId(attachmentId, ArtefactType.ATTACHMENT);
+        Asset asset = assetService.retrieveAsset(assetId, uriInfo);
+        if (!sc.isUserInRole(ADMIN_ROLE)) {
+            if (asset.getState() != Asset.State.PUBLISHED) {
+                throw new NonExistentArtefactException(assetId, ArtefactType.ASSET);
+            }
+        }
 
         AttachmentContentResponse contentResponse = assetService.retrieveAttachmentContent(assetId, attachmentId, name, uriInfo);
         if (contentResponse != null) {
@@ -419,13 +426,19 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets/{assetId}/assetreviews")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAssetReviews(@PathParam("assetId") String assetId, @Context UriInfo uriInfo) throws InvalidIdException, NonExistentArtefactException {
+    public Response getAssetReviews(@PathParam("assetId") String assetId, @Context UriInfo uriInfo, @Context SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssetReviews called with id of '" + assetId + "'");
         }
 
         sanitiseId(assetId, ArtefactType.ASSET);
-        assetService.retrieveAsset(assetId, uriInfo);
+        Asset asset = assetService.retrieveAsset(assetId, uriInfo);
+
+        if (!sc.isUserInRole(ADMIN_ROLE)) {
+            if (asset.getState() != Asset.State.PUBLISHED) {
+                throw new NonExistentArtefactException(assetId, ArtefactType.ASSET);
+            }
+        }
 
         // Story 165844, for now just return an empty JSON array
         return Response.ok("[]").build();

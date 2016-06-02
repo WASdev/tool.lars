@@ -52,6 +52,7 @@ import org.junit.runners.Parameterized.Parameters;
 import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.model.Asset;
+import com.ibm.ws.lars.rest.model.Asset.StateAction;
 import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentList;
@@ -384,6 +385,68 @@ public class ApiTest {
     }
 
     /**
+     * Test getting the content of an attachment with the parent asset in various states
+     */
+    @Test
+    public void testGetAttachmentContentUnpublished() throws Exception {
+
+        RepositoryContext userRepo = RepositoryContext.toUserContext(repository);
+        Asset testAsset = AssetUtils.getTestAsset();
+        Asset returnedAsset = repository.addAssetNoAttachments(testAsset);
+        Attachment attachmentWithContent = AssetUtils.getTestAttachmentWithContent();
+        String attachmentName = "attachment.txt";
+        byte[] content = "This is the content.\nIt is quite short.".getBytes("UTF-8");
+        String assetId = returnedAsset.get_id();
+        Attachment createdAttachment = repository.doPostAttachmentWithContent(assetId,
+                                                                              attachmentName,
+                                                                              attachmentWithContent,
+                                                                              content,
+                                                                              ContentType.APPLICATION_OCTET_STREAM);
+
+        // In state draft
+        repository.doGetAttachmentContent(returnedAsset.get_id(),
+                                          createdAttachment.get_id(),
+                                          attachmentName);
+        userRepo.doGetAttachmentContentInError(returnedAsset.get_id(),
+                                               createdAttachment.get_id(),
+                                               attachmentName,
+                                               404,
+                                               "asset not found for id: " + assetId);
+
+        // put into awaiting approval
+        repository.updateAssetState(assetId, StateAction.PUBLISH, 200);
+        repository.doGetAttachmentContent(returnedAsset.get_id(),
+                                          createdAttachment.get_id(),
+                                          attachmentName);
+        userRepo.doGetAttachmentContentInError(returnedAsset.get_id(),
+                                               createdAttachment.get_id(),
+                                               attachmentName,
+                                               404,
+                                               "asset not found for id: " + assetId);
+
+        // put into need more info
+        repository.updateAssetState(assetId, StateAction.NEED_MORE_INFO, 200);
+        repository.doGetAttachmentContent(returnedAsset.get_id(),
+                                          createdAttachment.get_id(),
+                                          attachmentName);
+        userRepo.doGetAttachmentContentInError(returnedAsset.get_id(),
+                                               createdAttachment.get_id(),
+                                               attachmentName,
+                                               404,
+                                               "asset not found for id: " + assetId);
+
+        // put into published
+        repository.updateAssetState(assetId, StateAction.PUBLISH, 200);
+        repository.updateAssetState(assetId, StateAction.APPROVE, 200);
+        repository.doGetAttachmentContent(returnedAsset.get_id(),
+                                          createdAttachment.get_id(),
+                                          attachmentName);
+        userRepo.doGetAttachmentContent(returnedAsset.get_id(),
+                                        createdAttachment.get_id(),
+                                        attachmentName);
+    }
+
+    /**
      * Tries to upload an attachment that has both content and a url and verifies that the returns
      * HTTP 400 Bad Request.
      */
@@ -616,8 +679,7 @@ public class ApiTest {
                                                  createdAttachment.get_id(),
                                                  attachmentName,
                                                  404,
-                                                 "Asset " + NON_EXISTENT_ID + " has no associated attachment with id " + createdAttachment.get_id());
-
+                                                 "asset not found for id: " + NON_EXISTENT_ID);
     }
 
     /**
@@ -1146,11 +1208,11 @@ public class ApiTest {
     @Test
     public void testAssetReviews() throws InvalidJsonAssetException, IOException {
         Asset a = addLittleAsset("weather", "hot", "ground", "flat", "description", "lovely");
-        List<?> ars = repository.getAssetReviews(a.get_id());
+        List<Map<String, Object>> ars = repository.getAssetReviews(a.get_id());
         // Story 165844, for now assetreviews just returns an empty JSON array
-        assertEquals(
-                     "Should be an empty List",
-                     0, ars.size());
+        assertEquals("Should be an empty List", 0, ars.size());
+        RepositoryContext userRepo = RepositoryContext.toUserContext(repository);
+        userRepo.getAssetReviewsBad(a.get_id(), 404, "asset not found for id: " + a.get_id());
     }
 
     /**
@@ -1158,11 +1220,6 @@ public class ApiTest {
      */
     @Test
     public void testAssetReviewsNonExistent() throws InvalidJsonAssetException, IOException {
-        try {
-            repository.getAssetReviews("bla-NonExistent");
-        } catch (AssertionError e) {
-            assertTrue(e.getMessage().contains("Unexpected status code: 400"));
-        }
-
+        repository.getAssetReviewsBad("bla-NonExistent", 400, "Invalid asset id: bla-NonExistent");
     }
 }
