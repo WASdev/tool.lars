@@ -23,8 +23,8 @@ import java.util.Calendar;
 import java.util.List;
 
 import com.ibm.ws.repository.common.enums.LicenseType;
-import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.transport.client.JSONIgnore;
 
 public class Asset extends AbstractJSON {
@@ -53,7 +53,6 @@ public class Asset extends AbstractJSON {
     private String marketplaceId = null;
     private String marketplaceName = null;
     private String inMyStore = null;
-    private PublishedInformation published = null;
     private Privacy privacy;
     @JSONIncludeForFile
     private String version = null;
@@ -258,14 +257,6 @@ public class Asset extends AbstractJSON {
         this.inMyStore = inMyStore;
     }
 
-    public PublishedInformation getPublished() {
-        return published;
-    }
-
-    public void setPublished(PublishedInformation published) {
-        this.published = published;
-    }
-
     public Privacy getPrivacy() {
         return privacy;
     }
@@ -361,12 +352,6 @@ public class Asset extends AbstractJSON {
             if (other.marketplaceName != null)
                 return false;
         } else if (!marketplaceName.equals(other.marketplaceName))
-            return false;
-
-        if (published == null) {
-            if (other.published != null)
-                return false;
-        } else if (!published.equals(other.published))
             return false;
 
         if (inMyStore == null) {
