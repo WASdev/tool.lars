@@ -39,8 +39,8 @@ import java.util.Locale;
 import org.junit.Test;
 
 import com.ibm.ws.repository.common.enums.LicenseType;
-import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.common.enums.ResourceType;
+import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.transport.client.JSONAssetConverter;
 import com.ibm.ws.repository.transport.model.AbstractJSON;
 import com.ibm.ws.repository.transport.model.AppliesToFilterInfo;
@@ -55,7 +55,6 @@ import com.ibm.ws.repository.transport.model.FilterVersion;
 import com.ibm.ws.repository.transport.model.ImageDetails;
 import com.ibm.ws.repository.transport.model.Link;
 import com.ibm.ws.repository.transport.model.Provider;
-import com.ibm.ws.repository.transport.model.PublishedInformation;
 import com.ibm.ws.repository.transport.model.Reviewed;
 import com.ibm.ws.repository.transport.model.SalesContact;
 import com.ibm.ws.repository.transport.model.StateUpdateAction;
@@ -80,11 +79,6 @@ public class AssetTest {
     @Test
     public void testFeedbackEquals() throws Throwable {
         checkEqualsOnClass(new Feedback(), new Feedback());
-    }
-
-    @Test
-    public void testPublishedInformationEquals() throws Throwable {
-        checkEqualsOnClass(new PublishedInformation(), new PublishedInformation());
     }
 
     @Test
@@ -178,7 +172,6 @@ public class AssetTest {
         ass.setName("wibble");
         ass.setPrivacy(Privacy.PRIVATE);
         ass.setProvider(new Provider());
-        ass.setPublished(new PublishedInformation());
         ass.setReviewed(new Reviewed());
         ass.setShortDescription("short desc");
         ass.setState(State.DRAFT);
@@ -205,7 +198,6 @@ public class AssetTest {
         chk.check("Name", true);
         chk.check("Privacy", false);
         chk.check("Provider", true);
-        chk.check("Published", false);
         chk.check("Reviewed", false);
         chk.check("ShortDescription", true);
         chk.check("State", false);
@@ -408,9 +400,9 @@ public class AssetTest {
 
     /*
      * --------------------------------------------------------------------------
-     * 
+     *
      * METHODS TO CHECK EQUALS ON DIFFERENT TYPES
-     * 
+     *
      * --------------------------------------------------------------------------
      */
 
