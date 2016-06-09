@@ -75,14 +75,10 @@ public abstract class StrategyTestBaseClass {
 
     @Test
     public void checkLifeCycleOnUpdate() throws RepositoryBackendException, RepositoryResourceException {
-        int featured = 0;
         _testRes.uploadToMassive(new UpdateInPlaceStrategy());
         for (State startingState : State.values()) {
             for (State targetState : getValidTargetStates(startingState)) {
                 _testRes.moveToState(startingState);
-                // Increment featured weight to force an update
-                featured++;
-                _testRes.setFeaturedWeight("" + featured);
                 _testRes.uploadToMassive(createStrategy(targetState, targetState));
                 SampleResourceImpl readBack = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
                 assertEquals("Make sure state was set to target state", targetState, readBack.getState());

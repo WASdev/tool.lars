@@ -184,6 +184,9 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
                     }
                 }
             }
+
+            // Finally, make sure the existing asset is in the desired state
+            resource.moveToState(getTargetState(firstMatch));
         }
         resource.refreshFromMassive();
     }
