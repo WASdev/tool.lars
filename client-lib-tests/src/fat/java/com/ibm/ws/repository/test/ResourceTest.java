@@ -229,6 +229,10 @@ public class ResourceTest {
         assertTrue("The resource uploaded is not equivalent to the one extracted from massive",
                    sampleRes.equivalent(readBack));
 
+        sampleRes.moveToState(PUBLISHED);
+        assertTrue("The resource is not equivalent after being published",
+                   sampleRes.equivalent(readBack));
+
         sampleRes.setDescription("new description");
         assertFalse("The resource has been updated and shouldn't be equivalent to the one obtained from massive",
                     sampleRes.equivalent(readBack));

@@ -360,6 +360,12 @@ public class Asset extends AbstractJSON {
         } else if (!inMyStore.equals(other.inMyStore))
             return false;
 
+        if (reviewed == null) {
+            if (other.reviewed != null)
+                return false;
+        } else if (!reviewed.equals(other.reviewed))
+            return false;
+
         if (state == null) {
             if (other.state != null)
                 return false;
@@ -444,12 +450,6 @@ public class Asset extends AbstractJSON {
             if (other.provider != null)
                 return false;
         } else if (!provider.equals(other.provider))
-            return false;
-
-        if (reviewed == null) {
-            if (other.reviewed != null)
-                return false;
-        } else if (!reviewed.equals(other.reviewed))
             return false;
 
         if (type == null) {
