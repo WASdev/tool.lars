@@ -83,8 +83,8 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * Adds a new RepositoryConnection - the userAgent of the LoginInfo object will automatically be pushed into
-     * the LoginInfoEntry {@inheritDoc}
+     * Adds a new RepositoryConnection - the userAgent of this collection will automatically be pushed into
+     * the connection if it is a RestRepositoryConnection {@inheritDoc}
      */
     @Override
     public boolean add(RepositoryConnection repoConnection) {
@@ -103,10 +103,10 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * This object is used to hold a collection of {@link RepositoryConnection} objects, calling this method will set the userAgent into all the
-     * the LoginInfoEntrys in the collection.
+     * This object is used to hold a collection of {@link RepositoryConnection} objects, calling
+     * this method will set the userAgent into ALL the RestRepositoryConnection objects in the collection.
      *
-     * @param userId The userAgent to put into the first LoginInfoEntry in the collection
+     * @param userAgent The userAgent to put into the first LoginInfoEntry in the collection
      */
     public void setUserAgent(String userAgent) {
         _userAgent = userAgent;
@@ -117,7 +117,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
         }
     }
 
-    /**
+    /*
      * ------------------------------------------------------------------------------------------------
      * The following methods all iterate through the list of repository connections and perform
      * the same action on each, merging the results together
@@ -154,7 +154,6 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
      * Find the features that match the supplied search string, ProductDefinition and Visibility
      *
      * @param searchString
-     * @param loginInfo
      * @param definition
      * @param visible
      * @return a collection of matching feature resources
@@ -181,7 +180,6 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
      * Get all features in the repositories that match the provided ProductDefinition (normally of the machine you are on)
      * and the supplied visibility setting.
      *
-     * @param loginInfo
      * @param definition
      * @param visible
      * @return A collection of matching features
@@ -199,7 +197,6 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This will obtain the addons from the repository that match the specified product definition
      *
-     * @param loginInfo The connection information where the resources should be obtained from.
      * @param definition The product definition to match against
      * @return Returns a Collection of {@link ProductResourceImpl} objects that represent the addons that match the product
      *         definition supplied
@@ -218,12 +215,12 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * This will return any ESAs that match the supplied <code>identifier</code>. The matching is done on the same attributes as can be used in the name on a string passed to the
-     * {@link MassiveResolver#resolve(String)} method, namely it is either the symbolic name, short name or lower case short name of the resource.
+     * This will return any ESAs that match the supplied <code>identifier</code>.
+     * The matching is done on any of the symbolic name, short name or lower case short name
+     * of the resource.
      *
      * @param attribute The attribute to match against
      * @param identifier The identifier to look for
-     * @param loginInfo The repository login information to load the resources from
      * @return The EsaResources that match the identifier
      * @throws RepositoryBackendException
      */
@@ -238,12 +235,12 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * This will return any ESAs that match the supplied <code>identifier</code>. The matching is done on the same attributes as can be used in the name on a string passed to the
-     * {@link MassiveResolver#resolve(String)} method, namely it is either the symbolic name, short name or lower case short name of the resource.
+     * This will return any ESAs that match the supplied <code>identifier</code>.
+     * The matching is done on any of the symbolic name, short name or lower case short name
+     * of the resource.
      *
      * @param attribute The attribute to match against
      * @param identifier The identifier to look for
-     * @param loginInfo The repository login information to load the resources from
      * @return The EsaResources that match the identifier
      * @throws RepositoryBackendException
      */
@@ -324,7 +321,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * Gets all resources of the specified type from Massive
+     * Gets all resources of the specified type from the repositories.
      *
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
@@ -341,7 +338,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * Gets all resources of the specified type from Massive
+     * Gets all resources of the specified type from the repositories.
      *
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
@@ -358,10 +355,10 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * Gets all resources of the specified type and license type from Massive
+     * Gets all resources of the specified type and license type from the repositories.
      *
      * @param licenseType The {@link LicenseType} of the resources to obtain
-     * @param type The {@link RepositoryResourceImpl.ResourceType} of resource to obtain
+     * @param type The {@link ResourceType} of resource to obtain
      * @return A {@link Collection} of {@link RepositoryResourceImpl} object
      * @throws RepositoryBackendException
      */
@@ -397,7 +394,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * This methods returns a list of all features in the supplied repositories
      *
-     * @return A list of resources representing the features in massive
+     * @return A list of resources representing the features in the repositories.
      * @throws RepositoryBackendException
      */
     @SuppressWarnings("unchecked")
@@ -410,7 +407,7 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
      * with the specified license type.
      *
      * @Param licenseType the type of license in question - IPLA, ILAN, etc
-     * @return A list of resources representing the features in massive
+     * @return A list of resources representing the features in the repositories
      *         with the requested license type
      * @throws RepositoryBackendException
      */
@@ -448,11 +445,8 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * Get all products with a given license type
      *
-     * @param License type
-     * @param userId
-     * @param password
-     * @param apiKey
-     * @throws RepositoryException
+     * @param licenseType
+     * @throws RepositoryBackendException
      */
     @SuppressWarnings("unchecked")
     public Collection<ProductResourceImpl> getAllProducts(LicenseType licenseType) throws RepositoryBackendException {
@@ -484,9 +478,6 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
 
     /**
      *
-     * @param userId
-     * @param password
-     * @param apiKey
      * @throws RepositoryBackendException
      */
     @SuppressWarnings("unchecked")
@@ -497,11 +488,8 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     /**
      * Get all products with a given license type
      *
-     * @param License type
-     * @param userId
-     * @param password
-     * @param apiKey
-     * @throws RepositoryException
+     * @param licenseType
+     * @throws RepositoryBackendException
      */
     @SuppressWarnings("unchecked")
     public Collection<ToolResource> getAllTools(LicenseType licenseType) throws RepositoryBackendException {
@@ -534,14 +522,13 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
     }
 
     /**
-     * Gets all resources of the specified <code>types</code> from Massive returning only those that are relevant to the <code>productDefinitions</code>.
+     * Gets all resources of the specified <code>types</code> from the repositories returning only those that are relevant to the <code>productDefinitions</code>.
      *
      * @param productDefinitions The products that these resources will be installed into. Can be <code>null</code> or empty indicating resources for any product should be obtained
      *            (they will just be filtered by type).
-     * @param types The {@link RepositoryResourceImpl.ResourceType} of resource to obtain. <code>null</code> indicates that all types should be obtained.
+     * @param types The {@link ResourceType} of resource to obtain. <code>null</code> indicates that all types should be obtained.
      * @param visibility The {@link Visibility} of resources to obtain. <code>null</code> indicates that resources with any visibility should be obtained. This is only relevant if
      *            {@link ResourceType#FEATURE} is one of the <code>types</code> being obtained, it is ignored for other types.
-     * @param RepositoryConnectionList the login information for the repository. Must not be <code>null</code>.
      * @return A Map mapping the type to the {@link Collection} of {@link RepositoryResourceImpl} object. There may be a <code>null</code> collection for a supplied type, this
      *         indicates
      *         no assets of that type were found
@@ -591,10 +578,9 @@ public class RepositoryConnectionList extends ArrayList<RepositoryConnection> {
      * @param searchTerm The word(s) to search for.
      * @param productDefinitions The products that these resources will be installed into. Can be <code>null</code> or empty indicating resources for any product should be obtained
      *            (they will just be filtered by type).
-     * @param types The {@link RepositoryResourceImpl.ResourceType} of resource to obtain. <code>null</code> indicates that all types should be obtained.
+     * @param types The {@link ResourceType} of resource to obtain. <code>null</code> indicates that all types should be obtained.
      * @param visibility The {@link Visibility} of resources to obtain. <code>null</code> indicates that resources with any visibility should be obtained. This is only relevant if
      *            {@link ResourceType#FEATURE} is one of the <code>types</code> being obtained, it is ignored for other types.
-     * @param RepositoryConnectionList the login information for the repository. Must not be <code>null</code>.
      * @return A LinkedHashSet of resources that match the search term for this product. They will be ordered according to the order returned from the repository which should be in
      *         priority order.
      * @throws RepositoryBackendException If there is an error connecting to one of the repositories.
