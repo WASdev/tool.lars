@@ -49,14 +49,34 @@ public class AddThenDeleteStrategyTest extends StrategyTestBaseClass {
         SampleResourceImpl readBack = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
         assertTrue("The read back resource should be equivalent to the one we put in", readBack.equivalent(_testRes));
 
-        // Make sure there has not been a new asset uploaded (this strategy will mean an upload will
-        // always create a new asset, hence new id which would make equiv fail).
+        // Upload again, making sure that the asset is not replaced
+        // (the strategy should notice there is no change and not create a new asset)
         _testRes.uploadToMassive(new AddThenDeleteStrategy());
         SampleResourceImpl readBack2 = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
         checkSame(readBack, readBack2, _testRes, true, true);
 
         _testRes.setFeaturedWeight("5");
         _testRes.uploadToMassive(new AddThenDeleteStrategy());
+        SampleResourceImpl readBack3 = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
+        checkUpdated(readBack2, readBack3, _testRes, false);
+    }
+
+    @Test
+    public void testAddingToRepoUsingAddThenDeleteStrategyStrategyWithStateChange() throws RepositoryBackendException, RepositoryResourceException {
+        _testRes.uploadToMassive(new AddThenDeleteStrategy());
+        SampleResourceImpl readBack = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
+        assertTrue("The read back resource should be equivalent to the one we put in", readBack.equivalent(_testRes));
+
+        // Upload again, with a new state, making sure that the asset is not replaced
+        // and the new state is applied.
+        _testRes.uploadToMassive(new AddThenDeleteStrategy(State.PUBLISHED, State.PUBLISHED, false));
+        SampleResourceImpl readBack2 = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
+        checkSame(readBack, readBack2, _testRes, true, false);
+        assertEquals(State.PUBLISHED, readBack2.getState());
+
+        // Making a change should result in a new, non-equivalent asset
+        _testRes.setFeaturedWeight("5");
+        _testRes.uploadToMassive(new AddThenDeleteStrategy(State.PUBLISHED, State.PUBLISHED, false));
         SampleResourceImpl readBack3 = (SampleResourceImpl) repoConnection.getResource(_testRes.getId());
         checkUpdated(readBack2, readBack3, _testRes, false);
     }

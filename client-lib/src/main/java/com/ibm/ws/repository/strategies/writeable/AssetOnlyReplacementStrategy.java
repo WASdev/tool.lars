@@ -27,7 +27,9 @@ import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 
 /**
- *
+ * Perform a direct update of an asset, ignoring any attachments.
+ * <p>
+ * Requires the server to support updates.
  */
 public class AssetOnlyReplacementStrategy extends BaseStrategy {
 
@@ -47,7 +49,7 @@ public class AssetOnlyReplacementStrategy extends BaseStrategy {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * @throws RepositoryResourceException
      * @throws RepositoryBackendException
      */
@@ -57,13 +59,6 @@ public class AssetOnlyReplacementStrategy extends BaseStrategy {
         RepositoryResourceImpl firstMatch = (matchingResources == null || matchingResources.isEmpty()) ? null : matchingResources.get(0);
         if (firstMatch == null) {
             throw new RepositoryResourceUpdateException("No matching resource found when one should have been for " + resource.getName(), null);
-        }
-
-        State initialState = firstMatch.getState();
-
-        // We need to unpublish in order to overwrite
-        if (firstMatch.getState() == State.PUBLISHED) {
-            firstMatch.unpublish();
         }
 
         if (_forceReplace) {
@@ -83,18 +78,23 @@ public class AssetOnlyReplacementStrategy extends BaseStrategy {
                     break;
             }
         }
-        resource.moveToState(initialState);
     }
 
     /**
      * Update the asset (but not attachments)
-     * 
+     *
      * @param resource The new resource to use
      * @param firstMatch The asset to replace
      * @throws RepositoryBackendException
      * @throws RepositoryResourceException
      */
     private void update(RepositoryResourceImpl resource, RepositoryResourceImpl firstMatch) throws RepositoryBackendException, RepositoryResourceException {
+        State initialState = firstMatch.getState();
+        // We need to unpublish in order to overwrite
+        if (firstMatch.getState() == State.PUBLISHED) {
+            firstMatch.unpublish();
+        }
+
         // Partial updates don't work so copy our data into the one
         // we found in massive and then set our asset to point to that
         // merged asset
@@ -102,6 +102,8 @@ public class AssetOnlyReplacementStrategy extends BaseStrategy {
         resource.updateAsset();
         // Read back from massive to get the fields massive generated into our resource
         resource.refreshFromMassive();
+
+        resource.moveToState(initialState);
     }
 
     @Override
