@@ -18,7 +18,6 @@ package com.ibm.ws.massive.esa;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.InvalidParameterException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -197,14 +196,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         String provider = feature.getHeader("Subsystem-Vendor");
         if (provider != null && !provider.isEmpty()) {
             resource.setProviderName(provider);
-            if ("IBM".equals(provider)) {
-                resource.setProviderUrl("http://www.ibm.com");
-            }
-
-        } else {
-            // Massive breaks completely if the provider is not filled in so
-            // make sure it is!
-            throw new InvalidParameterException("Subsystem-Vendor must be set in the manifest headers");
         }
 
         // Add custom attributes for WLP
@@ -296,8 +287,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         String attachmentName = symbolicName + ".esa";
         addContent(resource, esa, attachmentName, artifactMetadata, contentUrl);
 
-        // Set the license type if we're using the feature terms agreement so that we know later
-        // that there won't be a license information file.
+        // Set the license type if we're using the feature terms agreement
         String subsystemLicense = feature.getHeader("Subsystem-License");
         if (subsystemLicense != null && subsystemLicense.equals("http://www.ibm.com/licenses/wlp-featureterms-v1")) {
             resource.setLicenseType(LicenseType.UNSPECIFIED);
@@ -308,7 +298,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         }
 
         // Now look for LI, LA files inside the .esa
-        // We expect to find them in wlp/lafiles/LI_{Locale} or /LA_{Locale}
         try {
             processLAandLI(esa, resource, feature);
         } catch (IOException e) {

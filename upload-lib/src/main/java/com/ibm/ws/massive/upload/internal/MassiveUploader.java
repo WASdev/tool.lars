@@ -479,25 +479,12 @@ public abstract class MassiveUploader {
     /*
      * LAHeader typical value: "wlp/lafiles/LA" typical files names are of the form
      * "wlp/lafiles/LA_en"
-     *
-     * Both must be present unless GenerateEsas.specialFeatureTermsApply() which equates to
-     * Subsystem-License: http://www.ibm.com/licenses/wlp-featureterms-v1 However by this point it's
-     * very difficult to determine whether we're processing a resource that need only contain LA and
-     * not LI files.
      */
     protected void processLAandLI(File archive, RepositoryResourceWritable resource,
                                   String LAHeader, String LIHeader) throws IOException,
             RepositoryException {
         if (LAHeader == null && LIHeader == null) {
             return;
-        }
-
-        if (resource.getLicenseType() == LicenseType.UNSPECIFIED) {
-            if (LAHeader == null || LIHeader != null) {
-                throw new RepositoryException(
-                        "New licenseTerms require LA and no LI. "
-                                + archive.getCanonicalPath());
-            }
         }
 
         // Note: we allow the user to upload a feature whose manifest has
