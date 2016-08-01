@@ -18,17 +18,10 @@ package com.ibm.ws.massive.esa;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.InvalidParameterException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipException;
 
 import com.ibm.ws.massive.esa.internal.EsaManifest;
@@ -43,11 +36,8 @@ import com.ibm.ws.repository.common.enums.InstallPolicy;
 import com.ibm.ws.repository.common.enums.LicenseType;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.connections.RepositoryConnection;
-import com.ibm.ws.repository.connections.RepositoryConnectionList;
-import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
-import com.ibm.ws.repository.exceptions.RepositoryResourceException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.resources.EsaResource;
 import com.ibm.ws.repository.resources.internal.AppliesToProcessor;
@@ -55,7 +45,6 @@ import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
 import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 import com.ibm.ws.repository.resources.writeable.WritableResourceFactory;
 import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
-import com.ibm.ws.repository.transport.model.Asset;
 
 /**
  * <p>
@@ -63,11 +52,6 @@ import com.ibm.ws.repository.transport.model.Asset;
  * </p>
  */
 public class MassiveEsa extends MassiveUploader implements RepositoryUploader<EsaResourceWritable> {
-
-    /** Map of symbolic name to asset to make finding other features easy */
-    private final Map<EsaIdentifier, EsaResource> allFeatures;
-
-    private final Logger logger = Logger.getLogger(MassiveEsa.class.getName());
 
     /**
      * Construct a new instance and load all of the existing features inside MaaSive.
@@ -80,20 +64,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
     public MassiveEsa(RepositoryConnection repoConnection)
         throws RepositoryException {
         super(repoConnection);
-
-        /*
-         * Find all of the features that are already in MaaSive so we can set the enabled
-         * information for them
-         */
-        Collection<EsaResource> allEsas = new RepositoryConnectionList(repoConnection).getAllFeatures();
-        this.allFeatures = new HashMap<>();
-        for (EsaResource res : allEsas) {
-            // All features must provide a single symbolic name so no
-            // null/size check
-            logger.log(Level.FINE, "Resource features " + res.getProvideFeature());
-            EsaIdentifier identifier = new EsaIdentifier(res.getProvideFeature(), res.getVersion(), res.getAppliesTo());
-            allFeatures.put(identifier, res);
-        }
     }
 
     /**
@@ -153,8 +123,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         EsaResourceWritable resource = WritableResourceFactory.createEsa(repoConnection);
         String symbolicName = feature.getSymbolicName();
         String version = feature.getVersion().toString();
-        String appliesTo = feature.getHeader("IBM-AppliesTo");
-        EsaIdentifier identifier = new EsaIdentifier(symbolicName, version, appliesTo);
 
         // Massive assets are always English, find the best name
         String subsystemName = feature.getHeader("Subsystem-Name",
@@ -197,14 +165,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         String provider = feature.getHeader("Subsystem-Vendor");
         if (provider != null && !provider.isEmpty()) {
             resource.setProviderName(provider);
-            if ("IBM".equals(provider)) {
-                resource.setProviderUrl("http://www.ibm.com");
-            }
-
-        } else {
-            // Massive breaks completely if the provider is not filled in so
-            // make sure it is!
-            throw new InvalidParameterException("Subsystem-Vendor must be set in the manifest headers");
         }
 
         // Add custom attributes for WLP
@@ -296,8 +256,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         String attachmentName = symbolicName + ".esa";
         addContent(resource, esa, attachmentName, artifactMetadata, contentUrl);
 
-        // Set the license type if we're using the feature terms agreement so that we know later
-        // that there won't be a license information file.
+        // Set the license type if we're using the feature terms agreement
         String subsystemLicense = feature.getHeader("Subsystem-License");
         if (subsystemLicense != null && subsystemLicense.equals("http://www.ibm.com/licenses/wlp-featureterms-v1")) {
             resource.setLicenseType(LicenseType.UNSPECIFIED);
@@ -308,7 +267,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         }
 
         // Now look for LI, LA files inside the .esa
-        // We expect to find them in wlp/lafiles/LI_{Locale} or /LA_{Locale}
         try {
             processLAandLI(esa, resource, feature);
         } catch (IOException e) {
@@ -322,7 +280,6 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         } catch (RepositoryException re) {
             throw re;
         }
-        this.allFeatures.put(identifier, resource);
         return resource;
     }
 
@@ -384,208 +341,9 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         }
     }
 
-    /**
-     * Utility method to delete all the features in MaaSive.
-     * 
-     * @throws RepositoryBackendException
-     *
-     * @throws IOException
-     */
-    public void deleteAllFeatures() throws RepositoryResourceException, RepositoryBackendException {
-        Iterator<EsaResource> featureIterator = this.allFeatures
-                .values().iterator();
-        while (featureIterator.hasNext()) {
-            EsaResourceWritable featureResource = (EsaResourceWritable) featureIterator.next();
-            logger.log(Level.INFO, "Deleting " + featureResource.getId());
-            featureResource.delete();
-            featureIterator.remove();
-        }
-    }
-
-    /**
-     * Utility method to delete certain features in MaaSive. All versions of the feature will be
-     * deleted.
-     *
-     * @param featureNames The feature symbolic names or IBM short names to delete
-     * @throws RepositoryResourceCreationException
-     * @throws RepositoryResourceUpdateException
-     */
-    public void deleteFeatures(Collection<String> featureNames)
-            throws IOException, RepositoryException {
-        Iterator<EsaResource> featureIterator = this.allFeatures
-                .values().iterator();
-
-        /*
-         * When we delete a feature we will also need to remove any enabling information that
-         * reference it so keep track of which other assets we will need to update at the end.
-         */
-        //Collection<EsaResource> assetsForUpdating = new HashSet<EsaResource>();
-        while (featureIterator.hasNext()) {
-            EsaResourceWritable featureResource = (EsaResourceWritable) featureIterator.next();
-            String symbolicName = featureResource.getProvideFeature();
-            if (featureNames.contains(symbolicName)
-                || featureNames.contains(featureResource.getShortName())) {
-                //   removeEnablingInformationForFeature(featureResource, assetsForUpdating);
-                featureResource.delete();
-                featureIterator.remove();
-            }
-        }
-
-        /*
-         * There is an edge case where the removeEnablingInformationForFeature method is over
-         * zealous at removing enabling information so run through the add just in case it needs
-         * adding back in. This will also process all of the assets that we need to update in
-         * Massive. First make sure we haven't deleted the assets we thought needed updating!
-         */
-        //assetsForUpdating.retainAll(this.allFeatures.values());
-        //  addEnablingInformation(assetsForUpdating);
-
-    }
-
-    /**
-     * Returns the first feature with the supplied symbolic name. Unlike {@link #getAllFeatures()}
-     * this returns the complete feature with attachments.
-     *
-     * @param symbolicName The symbolic name of the feature to get
-     * @return The Asset representing the feature in MaaSive or <code>null</code> if one doesn't
-     *         exist
-     * @throws IOException
-     * @throws RepositoryException
-     */
-    public EsaResource getFeature(String symbolicName) throws IOException, RepositoryException {
-        EsaResource summaryResource = findFeature(symbolicName);
-        if (summaryResource != null) {
-            return (EsaResource) repoConnection.getResource(summaryResource.getId());
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Returns the feature with the supplied symbolic name and version. Unlike
-     * {@link #getAllFeatures()} this returns the complete feature with attachments.
-     *
-     * @param symbolicName The symbolic name of the feature to get
-     * @param version The version of the feature to get
-     * @return The EsaResource representing the feature in Massive or <code>null</code> if one
-     *         doesn't exist
-     * @throws IOException
-     * @throws RepositoryException
-     */
-    public EsaResource getFeature(String symbolicName, String version, String appliesTo) throws IOException, RepositoryException {
-        EsaResource summaryResource = this.allFeatures.get(new EsaIdentifier(symbolicName, version, appliesTo));
-        if (summaryResource != null) {
-            return (EsaResource) repoConnection.getResource(summaryResource.getId());
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Returns all features inside Massive. Note that these are just the summary of features
-     * returned from Massive's GET all request. Most of the fields will be filled in but the
-     * attachments will not be. In order to get the attachments as well call
-     * {@link #getFeature(String)}.
-     *
-     * @return A collection of {@link Asset}s representing the features in Massive or an empty
-     *         collection if none exists
-     */
-    public Collection<EsaResource> getAllFeatures() {
-        /*
-         * A map's values() collection is backed by the map so if someone clears it we'll be in
-         * trouble... stop them!
-         */
-        return Collections.unmodifiableCollection(this.allFeatures.values());
-    }
-
-    /**
-     * Finds a feature with the provided symbolic name
-     *
-     * @param symbolicName The symbolic name to look for, must not be <code>null</code>
-     * @return the first EsaResource with the provided symbolicName that is found or
-     *         <code>null</code> if none is found
-     */
-    private EsaResource findFeature(String symbolicName) {
-        for (EsaResource esa : this.allFeatures.values()) {
-            if (symbolicName.equals(esa.getProvideFeature())) {
-                return esa;
-            }
-        }
-        return null;
-    }
-
     @Override
     protected void checkRequiredProperties(ArtifactMetadata artifact) throws RepositoryArchiveInvalidEntryException {
         checkPropertySet(PROP_DESCRIPTION, artifact);
-    }
-
-    /**
-     * This class holds identification information about an ESA to uniquely identify it and
-     * implements equals and hash code so it can be used as a lookup key.
-     */
-    private static class EsaIdentifier {
-
-        private final String symbolicName;
-        private final String version;
-        private final String appliesTo;
-
-        /**
-         * @param symbolicName The symbolic name of the ESA
-         * @param version The version of the ESA
-         */
-        public EsaIdentifier(String symbolicName, String version, String appliesTo) {
-            this.symbolicName = symbolicName;
-            this.version = version;
-            this.appliesTo = appliesTo;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((symbolicName == null) ? 0 : symbolicName.hashCode());
-            result = prime * result + ((version == null) ? 0 : version.hashCode());
-            result = prime * result + ((appliesTo == null) ? 0 : appliesTo.hashCode());
-            return result;
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            EsaIdentifier other = (EsaIdentifier) obj;
-            if (symbolicName == null) {
-                if (other.symbolicName != null)
-                    return false;
-            } else if (!symbolicName.equals(other.symbolicName))
-                return false;
-            if (version == null) {
-                if (other.version != null)
-                    return false;
-            } else if (!version.equals(other.version))
-                return false;
-            if (appliesTo == null) {
-                if (other.appliesTo != null)
-                    return false;
-            } else if (!appliesTo.equals(other.appliesTo))
-                return false;
-            return true;
-        }
-
     }
 
 }

@@ -549,51 +549,6 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Tests that you can delete a feature in Massive
-     *
-     * @throws Throwable
-     */
-    @Test
-    public void testDeleteFeature() throws Throwable {
-        File simpleEsa = new File(esaDir, "simple.esa");
-        // Don't use the uploadAsset util as we are going to delete the feature
-        // ourself
-        massiveEsa.addEsasToMassive(Collections
-                .singleton(simpleEsa), UploadStrategy.DEFAULT_STRATEGY);
-        EsaResource featureInMassive = massiveEsa
-                .getFeature("com.ibm.ws.test.simple");
-        assertNotNull("The asset should have been created to start with!",
-                      featureInMassive);
-        massiveEsa.deleteFeatures(Collections
-                .singleton("com.ibm.ws.test.simple"));
-        featureInMassive = massiveEsa
-                .getFeature("com.ibm.ws.test.simple");
-        assertNull("The asset should have been deleted", featureInMassive);
-    }
-
-    /**
-     * Tests that you can delete a feature in Massive
-     *
-     * @throws Throwable
-     */
-    @Test
-    public void testDeleteFeatureByShortName() throws Throwable {
-        File simpleEsa = new File(esaDir, "simple.with.short.name.esa");
-        // Don't use the uploadAsset util as we are going to delete the feature
-        // ourself
-        massiveEsa.uploadFile(simpleEsa, UploadStrategy.DEFAULT_STRATEGY, null);
-        EsaResource featureInMassive = massiveEsa
-                .getFeature("com.ibm.ws.test.simple.with.short.name");
-        assertNotNull("The asset should have been created to start with!",
-                      featureInMassive);
-        massiveEsa.deleteFeatures(Collections
-                .singleton("simple.with.short.name"));
-        featureInMassive = massiveEsa
-                .getFeature("com.ibm.ws.test.simple.with.short.name");
-        assertNull("The asset should have been deleted", featureInMassive);
-    }
-
-    /**
      * Tests that you can update an existing asset
      *
      * @throws Throwable
