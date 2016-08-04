@@ -18,7 +18,9 @@ package com.ibm.ws.lars.rest;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -27,6 +29,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.ibm.ws.lars.rest.Condition.Operation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -44,20 +51,23 @@ public class FrontPage extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setContentType(MediaType.TEXT_HTML);
+        resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        PrintWriter printWriter = resp.getWriter();
 
-        int count = serviceLayer.countAllAssets(Collections.<AssetFilter> emptyList(), null);
+        List<AssetFilter> filters = new ArrayList<>();
+        filters.add(new AssetFilter("state", Arrays.asList(new Condition[] { new Condition(Operation.EQUALS, "published") })));
+        int assetCount = serviceLayer.countAllAssets(filters, null);
 
-        PrintWriter out = resp.getWriter();
-        out.println("<!DOCTYPE html>");
-        out.println("<html>");
-        out.println("<head><title>LARS is running</title></head>");
-        out.println("<body>");
-        out.println("<h1>LARS is running</h1>");
-        out.println("<p>The repository is running with " + count + " assets</p>");
-        out.println("</body>");
-        out.println("</html>");
+        JsonGenerator frontPageJsonGenerator = new JsonFactory().createGenerator(printWriter);
+        frontPageJsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter());
+
+        frontPageJsonGenerator.writeStartObject();
+        frontPageJsonGenerator.writeStringField("serverName", "LARS");
+        frontPageJsonGenerator.writeNumberField("assetCount", assetCount);
+        frontPageJsonGenerator.writeEndObject();
+
+        frontPageJsonGenerator.flush();
+        frontPageJsonGenerator.close();
     }
-
 }
