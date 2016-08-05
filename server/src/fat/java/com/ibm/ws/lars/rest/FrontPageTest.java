@@ -16,9 +16,9 @@
 package com.ibm.ws.lars.rest;
 
 import static com.ibm.ws.lars.rest.AssetUtils.getTestAsset;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -29,7 +29,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
+import com.ibm.ws.lars.rest.model.Asset.State;
 import com.ibm.ws.lars.testutils.FatUtils;
 
 /**
@@ -58,18 +63,51 @@ public class FrontPageTest {
 
     @Test
     public void testFrontPage() throws Exception {
-        HttpGet req = new HttpGet(baseUrl + "/");
-        String text = repository.doRequest(req, 200);
-        assertThat(text, containsString("The repository is running with 0 assets"));
+        JsonParser frontPageJsonParser = getJsonParser();
+
+        String serverName = null;
+        int assetCount = -1;
+
+        while (frontPageJsonParser.nextToken() != JsonToken.END_OBJECT) {
+            String fieldName = frontPageJsonParser.getCurrentName();
+            if (("serverName").equals(fieldName)) {
+                frontPageJsonParser.nextToken();
+                serverName = frontPageJsonParser.getValueAsString();
+            }
+            else if (("assetCount").equals(fieldName)) {
+                frontPageJsonParser.nextToken();
+                assetCount = frontPageJsonParser.getIntValue();
+            }
+        }
+        assertEquals("LARS front page JSON server name", "LARS", serverName);
+        assertEquals("LARS front page asset count", 0, assetCount);
     }
 
     @Test
     public void testCorrectCount() throws Exception {
-        repository.addAssetNoAttachments(getTestAsset());
-        repository.addAssetNoAttachments(getTestAsset());
-        HttpGet req = new HttpGet(baseUrl + "/");
-        String text = repository.doRequest(req, 200);
-        assertThat(text, containsString("The repository is running with 2 assets"));
+        repository.addAssetNoAttachmentsWithState(getTestAsset(), State.PUBLISHED);
+        repository.addAssetNoAttachmentsWithState(getTestAsset(), State.AWAITING_APPROVAL);
+        repository.addAssetNoAttachmentsWithState(getTestAsset(), State.DRAFT);
+        repository.addAssetNoAttachmentsWithState(getTestAsset(), State.NEED_MORE_INFO);
+
+        JsonParser frontPageJsonParser = getJsonParser();
+
+        int assetCount = -1;
+
+        while (frontPageJsonParser.nextToken() != JsonToken.END_OBJECT) {
+            String fieldName = frontPageJsonParser.getCurrentName();
+            if (("assetCount").equals(fieldName)) {
+                frontPageJsonParser.nextToken();
+                assetCount = frontPageJsonParser.getIntValue();
+            }
+        }
+        assertEquals("LARS front page asset count", 1, assetCount);
     }
 
+    private JsonParser getJsonParser() throws JsonParseException, IOException {
+        HttpGet req = new HttpGet(baseUrl + "/");
+        String fpText = repository.doRequest(req, 200);
+        JsonParser jsonParser = new JsonFactory().createParser(fpText);
+        return jsonParser;
+    }
 }
