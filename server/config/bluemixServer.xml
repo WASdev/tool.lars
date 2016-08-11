@@ -53,7 +53,8 @@ in the configDropins/overrides directory.
 
     <mongo id="mongo" libraryRef="mongo-lib" writeConcern="MAJORITY" 
     user="${cloud.services.lars_mongo_svc.connection.user}"
-    password="${cloud.services.lars_mongo_svc.connection.password}">
+    password="${cloud.services.lars_mongo_svc.connection.password}"
+    socketKeepAlive="true" >
         <hostNames>${cloud.services.lars_mongo_svc.connection.host1}</hostNames>
         <hostNames>${cloud.services.lars_mongo_svc.connection.host2}</hostNames>
         <ports>${cloud.services.lars_mongo_svc.connection.port1}</ports>
