@@ -75,7 +75,6 @@ import com.ibm.ws.repository.resources.AttachmentResource;
 import com.ibm.ws.repository.resources.internal.AppliesToProcessor.AppliesToEntry;
 import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
 import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
-import com.ibm.ws.repository.strategies.writeable.AssetOnlyReplacementStrategy;
 import com.ibm.ws.repository.strategies.writeable.UploadStrategy;
 import com.ibm.ws.repository.transport.client.RepositoryReadableClient;
 import com.ibm.ws.repository.transport.client.RepositoryWriteableClient;
@@ -1152,7 +1151,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         updateGeneratedFields(strategy.performEditionChecking());
         // If the asset has already been uploaded to massive (i.e. it has an id) then read and copy any
         // attachment stored in massive
-        if (getId() != null && !(strategy instanceof AssetOnlyReplacementStrategy)) {
+        if (getId() != null) {
             copyAttachments();
         }
         List<RepositoryResourceImpl> matching = strategy.findMatchingResources(this);
