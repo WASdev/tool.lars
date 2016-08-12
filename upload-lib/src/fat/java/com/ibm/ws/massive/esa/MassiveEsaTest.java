@@ -1485,6 +1485,18 @@ public class MassiveEsaTest {
         featureResource.approve();
     }
 
+    /**
+     * Verify that the LARS uploader doesn't complain if a feature has an odd combination of license
+     * headers
+     */
+    @Test
+    public void testFeatureWithLALIFeatureTerms() throws Throwable {
+        File featureFile = new File(esaDir, "li-la-header-featureterms.esa");
+
+        EsaResourceImpl featureResource = (EsaResourceImpl) uploadAsset(featureFile);
+        featureResource.approve();
+    }
+
     @Test
     public void testFeatureWithNoSymbolicNameAttributes() throws Throwable {
         File featureFile = new File(esaDir, "no-symbolic-name-attributes.esa");
