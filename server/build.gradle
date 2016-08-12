@@ -125,8 +125,8 @@ test {
 }
 
 testFat {
-	dependsOn 'startBaseUrlServer'
-	finalizedBy 'stopBaseUrlServer'
+    dependsOn 'startBaseUrlServer'
+    finalizedBy 'stopBaseUrlServer'
 }
 
 task initAnt << {
@@ -373,7 +373,7 @@ task testLarsPackage(type: JavaExec) {
     description "Test that 'java -jar larsServerPackage.jar' will at least run and fail in an expected manner, and some limited check on the jar contents"
     String badDirName = "jibberjibberjibberfoogogogo";
     ignoreExitValue = true // Expecting this to fail
-    workingDir '.'
+    workingDir 'build'
     main = '-jar'
     standardOutput = new ByteArrayOutputStream() // Hide the stdout from the screen.
     errorOutput = new ByteArrayOutputStream()
@@ -404,7 +404,7 @@ task testJarContents {
 }
 
 task packageBluemixLars(type: Zip) {
-	
+
     description 'Create a liberty packaged server zip of LARS ready for pushing to bluemix'
 
     from(configurations.sharedLibs) {
