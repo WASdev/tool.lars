@@ -324,9 +324,13 @@ task createLarsPackage {
     dependsOn 'createPackageUsrDir'
     
 
-    def packageJarFileDest = 'build/distributions/' + archivesBaseName + 'Package.jar'
+    def packageJarFileDest = 'build/distributions/' + archivesBaseName + 'Package.jar' 
     
     outputs.file packageJarFileDest
+
+    inputs.file 'config/server.xml'
+    inputs.files rootProject.file('LICENSE'), rootProject.file('LA_en')
+    inputs.files(war.getOutputs().getFiles())
 
     doLast {
         mkdir('build/distributions')
