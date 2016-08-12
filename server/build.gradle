@@ -373,6 +373,9 @@ task testLarsPackage(type: JavaExec) {
     // with a non-existent destination
     
     dependsOn 'createLarsPackage'
+    outputs.upToDateWhen {
+        !createLarsPackage.didWork
+    }
     
     description "Test that 'java -jar larsServerPackage.jar' will at least run and fail in an expected manner, and some limited check on the jar contents"
     String badDirName = "jibberjibberjibberfoogogogo";
