@@ -332,7 +332,11 @@ public class Main {
                     output.println("done");
                 }
             } catch (RepositoryException ex) {
-                throw new ClientException("An error occurred while uploading " + file.toString() + ": " + ex.getMessage(), 1, HelpDisplay.NO_HELP, ex);
+                if (!file.getPath().endsWith(".esa")) {
+                    throw new ClientException("\nAn error occurred while uploading " + file.toString() + ": "
+                                              + "file does not appear to be an esa file.", 1, HelpDisplay.NO_HELP, ex);
+                } else
+                    throw new ClientException("\nAn error occurred while uploading " + file.toString() + ": " + ex.getMessage(), 1, HelpDisplay.NO_HELP, ex);
             }
         }
     }

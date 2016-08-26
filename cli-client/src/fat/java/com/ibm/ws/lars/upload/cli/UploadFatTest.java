@@ -201,4 +201,28 @@ public class UploadFatTest {
                                       hasProperty("name", equalTo("com.ibm.ws.test.userFeature")),
                                       hasProperty("name", equalTo("com.ibm.ws.test.versionrange"))));
     }
+
+    @Test
+    public void testNonEsa() throws Exception {
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
+
+        TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
+                                                       "upload",
+                                                       "--url=" + FatUtils.SERVER_URL,
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
+                                                       "resources/nonEsa.txt"));
+        tp.run();
+
+        tp.assertReturnCode(1);
+
+        // Use a File object that is non esa
+        String fileName = new File("resources/nonEsa.txt").toString();
+
+        tp.assertOutputContains("An error occurred while uploading " + fileName + ": file does not appear to be an esa file.");
+
+        assertEquals("Incorrect resource count", 0, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 0, connectionList.getAllFeatures().size());
+    }
 }
