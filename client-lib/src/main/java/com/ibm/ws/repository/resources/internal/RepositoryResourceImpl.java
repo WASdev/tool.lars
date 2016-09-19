@@ -559,6 +559,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         return versions;
     }
 
+    @Override
+    public Calendar getLastUpdatedOn() {
+        return _asset.getLastUpdatedOn();
+    }
+
     /**
      * ------------------------------------------------------------------------------------------------
      * Attachment Methods

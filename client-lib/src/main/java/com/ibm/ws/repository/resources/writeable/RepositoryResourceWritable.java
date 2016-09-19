@@ -16,6 +16,7 @@
 package com.ibm.ws.repository.resources.writeable;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Locale;
 
@@ -335,5 +336,11 @@ public interface RepositoryResourceWritable extends RepositoryResource {
      * @return String - the asset URL
      */
     public String getAssetURL();
+
+    /**
+     * Returns the date and time when the asset was last updated.
+     *
+     */
+    public Calendar getLastUpdatedOn();
 
 }
