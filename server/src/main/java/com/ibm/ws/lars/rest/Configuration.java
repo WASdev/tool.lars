@@ -16,9 +16,13 @@
 
 package com.ibm.ws.lars.rest;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.UriInfo;
 
 /**
@@ -26,6 +30,11 @@ import javax.ws.rs.core.UriInfo;
  */
 @ApplicationScoped
 public class Configuration {
+
+    private final static String HTTP_SCHEME = "http";
+    private final static int HTTP_PORT = 80;
+    private final static String HTTPS_SCHEME = "https";
+    private final static int HTTPS_PORT = 443;
 
     private final String urlBase;
 
@@ -56,7 +65,7 @@ public class Configuration {
         if (urlBase != null) {
             return urlBase;
         } else {
-            return uriInfo.getBaseUri().toString();
+            return stripDefaultPort(uriInfo.getBaseUri()).toString();
         }
     }
 
@@ -80,5 +89,26 @@ public class Configuration {
         }
         b.append("ma/v1/");
         return b.toString();
+    }
+
+    /**
+     * Removes the port from a URI, if it is an HTTP or HTTPS URI and explicitly specifies the
+     * default port for that protocol.
+     *
+     * @param uri the URI
+     * @return either {@code uri} with the port removed, or {@code uri} unchanged.
+     */
+    private static URI stripDefaultPort(URI uri) {
+        if ((uri.getPort() == HTTP_PORT && HTTP_SCHEME.equalsIgnoreCase(uri.getScheme()))
+            || (uri.getPort() == HTTPS_PORT && HTTPS_SCHEME.equalsIgnoreCase(uri.getScheme()))) {
+            try {
+                // Copy uri but strip port
+                uri = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), -1, uri.getPath(), uri.getQuery(), uri.getFragment());
+            } catch (URISyntaxException e) {
+                // certainly should not happen
+                throw new WebApplicationException(e);
+            }
+        }
+        return uri;
     }
 }
