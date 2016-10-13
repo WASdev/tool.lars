@@ -19,6 +19,7 @@ package com.ibm.ws.lars.rest;
 import static com.ibm.ws.lars.testutils.matchers.SummaryResultMatcher.summaryResult;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -49,6 +50,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.ws.lars.rest.RepositoryContext.Protocol;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.model.Asset;
@@ -78,6 +82,7 @@ public class ApiTest {
     public static final String NON_EXISTENT_ID = "ffffffffffffffffffffffff";
 
     private static final long RANDOM_SEED = 0xACEDEADBEEFL;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private Random random;
 
     @Rule
@@ -1200,6 +1205,64 @@ public class ApiTest {
         // as it will remove the database indexing.
         assetCollection.remove(new BasicDBObject());
         mongoClient.close();
+    }
+
+    @Test
+    public void testRuntimeException() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error/runtime", 500);
+        assertJsonErrorResponse(500, "Internal server error, please contact the server administrator", response);
+    }
+
+    @Test
+    public void testRepositoryException() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error/repository", 500);
+        assertJsonErrorResponse(500, "Internal server error, please contact the server administrator", response);
+    }
+
+    @Test
+    public void testClientException() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error/client", 500);
+        assertJsonErrorResponse(500, "Test exception", response);
+    }
+
+    @Test
+    public void testServletException() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error-servlet", 500);
+        assertJsonErrorResponse(500, "Internal server error, please contact the server administrator", response);
+    }
+
+    @Test
+    public void testServletRuntimeException() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error-servlet?type=runtime", 500);
+        assertJsonErrorResponse(500, "Internal server error, please contact the server administrator", response);
+    }
+
+    @Test
+    public void testServletSend500() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error-servlet?type=500", 500);
+        assertJsonErrorResponse(500, "Internal server error, please contact the server administrator", response);
+    }
+
+    @Test
+    public void testServletSend404() throws ClientProtocolException, IOException {
+        String response = repository.doGet("/provoke-error-servlet?type=404", 404);
+        assertThat(response, containsString("Test Error"));
+    }
+
+    /**
+     * Assert that a JSON error response is correct
+     */
+    private void assertJsonErrorResponse(int expectedStatusCode, String expectedMessage, String response) throws IOException {
+        try {
+            Map<?, ?> parseResponse = MAPPER.readValue(response, Map.class);
+            String message = (String) parseResponse.get("message");
+            int statusCode = (Integer) parseResponse.get("statusCode");
+
+            assertEquals("statusCode", expectedStatusCode, statusCode);
+            assertEquals("message", expectedMessage, message);
+        } catch (JsonMappingException | JsonParseException e) {
+            fail("Response did not parse as JSON. Response: " + response);
+        }
     }
 
     /**

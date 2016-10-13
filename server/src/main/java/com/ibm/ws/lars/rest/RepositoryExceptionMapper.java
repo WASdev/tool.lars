@@ -21,6 +21,7 @@ import java.io.StringWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -44,6 +45,7 @@ public class RepositoryExceptionMapper implements ExceptionMapper<RepositoryExce
         }
 
         return Response.status(Status.INTERNAL_SERVER_ERROR)
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .entity(RepositoryClientExceptionMapper.getErrorJson(Status.INTERNAL_SERVER_ERROR, "Internal server error, please contact the server administrator"))
                 .build();
     }

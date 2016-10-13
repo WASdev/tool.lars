@@ -61,6 +61,14 @@ configurations {
     sharedLibs
     providedCompile.extendsFrom sharedLibs
     antTasks
+    fatDeployedCompile.extendsFrom providedCompile
+}
+
+sourceSets {
+    fatDeployed {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
 }
 
 dependencies {
@@ -118,6 +126,14 @@ task bluemixWar(type: War) {
     webXml = file('config/bluemixWeb.xml')   
 }
 assemble.dependsOn bluemixWar
+
+task fatWar(type: War) {
+    dependsOn fatDeployedClasses
+    baseName='larsServerFat'
+    into ('WEB-INF/classes') {
+        from sourceSets.fatDeployed.output
+    }
+}
 
 test {
     File jmockitJar = configurations.testCompile.find({it.name.startsWith("jmockit")})
@@ -193,6 +209,10 @@ task createTestUsrDir (type: Copy) {
     // Add the bluemix war as a separate app, so that the https redirection
     // in the web.xml can be tested    
     from(bluemixWar) {
+        into "servers/${testServerName}/apps"
+    }
+    
+    from(fatWar) {
         into "servers/${testServerName}/apps"
     }
     

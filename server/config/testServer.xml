@@ -59,7 +59,7 @@ limitations under the License.
     
     <mongoDB databaseName="@TEST_DB_NAME@" jndiName="mongo/larsDB" mongoRef="mongo"/>
 
-    <webApplication id="com.ibm.ws.lars.rest" location="larsServer.war" name="com.ibm.ws.lars.rest" contextRoot="/">
+    <webApplication id="com.ibm.ws.lars.rest" location="larsServerFat.war" name="com.ibm.ws.lars.rest" contextRoot="/">
          <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>
          <application-bnd>
              <security-role name="User">
@@ -73,7 +73,7 @@ limitations under the License.
     
     <!-- An additional deployment on a different context root with the User role mapped to EVERYONE -->
     <!-- This doesn't quite work properly as both instances share the DB connection and base URL but it works well enough to test permissions. -->
-    <webApplication id="lars.noauth" location="larsServer.war" name="lars.noauth" contextRoot="/unrestricted">
+    <webApplication id="lars.noauth" location="larsServerFat.war" name="lars.noauth" contextRoot="/unrestricted">
         <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>
         <application-bnd>
         <security-role name="User">

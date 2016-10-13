@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -36,6 +37,7 @@ public class RepositoryClientExceptionMapper implements ExceptionMapper<Reposito
     @Override
     public Response toResponse(RepositoryClientException e) {
         return Response.status(e.getResponseStatus())
+                .type(MediaType.APPLICATION_JSON_TYPE)
                 .entity(getErrorJson(e.getResponseStatus(), e.getMessage()))
                 .build();
     }
