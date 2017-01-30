@@ -65,8 +65,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.WriteConcern;
 
 /**
  * Tests for the LARS REST API, which is designed to be compatible with the legacy Massive server.
@@ -1173,11 +1171,8 @@ public class ApiTest {
     public void test500Mapping() throws InvalidJsonAssetException, ParseException, IOException {
 
         // First, make a direct connection to the database, and insert a dodgy asset
-
         String ID = "_id";
-        MongoClient mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
-        mongoClient.setWriteConcern(WriteConcern.JOURNAL_SAFE);
-        DB db = mongoClient.getDB(FatUtils.TEST_DB_NAME);
+        DB db = FatUtils.getMongoDB();
         DBCollection assetCollection = db.getCollection("assets");
         DBObject obj = new BasicDBObject();
         obj.put("foo", "bar");
@@ -1204,7 +1199,6 @@ public class ApiTest {
         // Remove dodgy data from the database for the next test. Don't drop anything
         // as it will remove the database indexing.
         assetCollection.remove(new BasicDBObject());
-        mongoClient.close();
     }
 
     @Test

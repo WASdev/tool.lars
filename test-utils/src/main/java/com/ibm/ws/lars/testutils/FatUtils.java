@@ -18,6 +18,7 @@ package com.ibm.ws.lars.testutils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -25,6 +26,9 @@ import java.util.Properties;
 import com.ibm.ws.lars.testutils.fixtures.LarsRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.MassiveRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
+import com.mongodb.DB;
+import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 
 public class FatUtils {
 
@@ -84,6 +88,8 @@ public class FatUtils {
 
     public static final RepositoryFixture FAT_REPO = LarsRepositoryFixture.createFixture(SERVER_URL, "1", ADMIN_USERNAME, ADMIN_PASSWORD, USER_ROLE_USERNAME, USER_ROLE_PASSWORD);
 
+    private static DB fatDB = null;
+
     public static int countLines(String input) {
         int lines = 0;
         // If the last character isn't \n, add one, as that will make
@@ -132,5 +138,28 @@ public class FatUtils {
 
         MassiveRepositoryFixture fixture = MassiveRepositoryFixture.createFixture(repositoryUrlString, apiKey, adminId, adminPassword);
         return fixture;
+    }
+
+    /**
+     * Returns a connection to the mongo database used for fat tests.
+     * <p>
+     * The same connection instance is returned to all tests.
+     * <p>
+     * We never explicitly close the client and rely on the connection being closed when the JVM
+     * exits.
+     */
+    public static synchronized DB getMongoDB() {
+        if (fatDB == null) {
+            MongoClient mongoClient;
+            try {
+                mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
+                mongoClient.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+                fatDB = mongoClient.getDB(FatUtils.TEST_DB_NAME);
+            } catch (UnknownHostException e) {
+                throw new RuntimeException("Unknown hostname connecting to Mongo DB", e);
+            }
+        }
+
+        return fatDB;
     }
 }
