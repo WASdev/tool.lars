@@ -388,6 +388,33 @@ public class ApiTest {
     }
 
     /**
+     * Test that deleting an asset deletes its attachments
+     */
+    @Test
+    public void testDeleteAssetWithAttachments() throws Exception {
+        Asset testAsset = AssetUtils.getTestAsset();
+        Asset returnedAsset = repository.addAssetNoAttachments(testAsset);
+
+        Attachment att1 = AssetUtils.getTestAttachmentNoContent();
+        att1 = repository.doPostAttachmentNoContent(returnedAsset.get_id(), "att1", att1);
+
+        Attachment att2 = AssetUtils.getTestAttachmentWithContent();
+        byte[] content = "Att2 test content".getBytes("UTF-8");
+        att2 = repository.doPostAttachmentWithContent(returnedAsset.get_id(),
+                                                      "att2",
+                                                      att2,
+                                                      content,
+                                                      ContentType.APPLICATION_OCTET_STREAM);
+
+        repository.deleteAsset(returnedAsset.get_id(), -1);
+
+        assertEquals("There should be no assets", 0, repository.doGetAllAssets().size());
+
+        DB db = FatUtils.getMongoDB();
+        assertEquals("There should be no remaining attachments", 0, db.getCollection("attachments").count());
+    }
+
+    /**
      * Test getting the content of an attachment with the parent asset in various states
      */
     @Test

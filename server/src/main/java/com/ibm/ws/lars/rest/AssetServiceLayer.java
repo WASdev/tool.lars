@@ -200,10 +200,11 @@ public class AssetServiceLayer {
      */
     public void deleteAsset(String assetId) throws NonExistentArtefactException {
 
-        // Delete all attachments belonging to the asset
-        Asset asset = persistenceBean.retrieveAsset(assetId);
+        // Retrieve the asset to ensure it exists
+        persistenceBean.retrieveAsset(assetId);
 
-        for (Attachment attachment : asset.getAttachments()) {
+        // Delete all attachments belonging to the asset
+        for (Attachment attachment : persistenceBean.findAttachmentsForAsset(assetId)) {
             deleteAttachment(attachment.get_id());
         }
 

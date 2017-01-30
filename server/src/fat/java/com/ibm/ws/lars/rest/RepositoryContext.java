@@ -383,7 +383,8 @@ public class RepositoryContext extends ExternalResource {
     private void cleanRepo() throws InvalidJsonAssetException, IOException {
         deleteAllAssets();
         AssetList assets = doGetAllAssets();
-        assertEquals("The repository is not empty", 0, assets.size());
+        assertEquals("Assets remaining in the repository", 0, assets.size());
+        assertEquals("Attachments remaining in the repository", 0, FatUtils.getMongoDB().getCollection("attachments").count());
     }
 
     void deleteAllAssets() throws IOException, InvalidJsonAssetException {
