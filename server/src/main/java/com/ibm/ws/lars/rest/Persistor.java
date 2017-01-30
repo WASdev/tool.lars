@@ -144,10 +144,10 @@ public interface Persistor {
     public Attachment retrieveAttachmentMetadata(String attachmentId) throws NonExistentArtefactException;
 
     /**
-     * Deletes the content of the specified attachment. Caller should also delete the attachment
-     * metadata.
+     * Deletes the attachment content associated with the given gridFsId. Caller should also delete
+     * the attachment metadata.
      */
-    public void deleteAttachmentContent(String attachmentId);
+    public void deleteAttachmentContent(String gridFsId);
 
     /**
      * Deletes the metadata for the specified attachment. Callers should have already deleted

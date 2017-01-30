@@ -65,6 +65,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import com.mongodb.gridfs.GridFS;
 
 /**
  * Tests for the LARS REST API, which is designed to be compatible with the legacy Massive server.
@@ -385,6 +386,9 @@ public class ApiTest {
 
         AttachmentList attachmentsAfterDeletion = repository.doGetAllAttachmentsForAsset(returnedAsset.get_id());
         assertTrue("Asset should have zero attachments after deletion of only attachment", attachmentsAfterDeletion.isEmpty());
+
+        GridFS fs = new GridFS(FatUtils.getMongoDB());
+        assertEquals("Files in database after delete", 0, fs.getFileList().size());
     }
 
     /**
