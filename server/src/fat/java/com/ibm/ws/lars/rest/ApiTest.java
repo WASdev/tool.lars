@@ -65,8 +65,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.WriteConcern;
+import com.mongodb.gridfs.GridFS;
 
 /**
  * Tests for the LARS REST API, which is designed to be compatible with the legacy Massive server.
@@ -387,6 +386,36 @@ public class ApiTest {
 
         AttachmentList attachmentsAfterDeletion = repository.doGetAllAttachmentsForAsset(returnedAsset.get_id());
         assertTrue("Asset should have zero attachments after deletion of only attachment", attachmentsAfterDeletion.isEmpty());
+
+        GridFS fs = new GridFS(FatUtils.getMongoDB());
+        assertEquals("Files in database after delete", 0, fs.getFileList().size());
+    }
+
+    /**
+     * Test that deleting an asset deletes its attachments
+     */
+    @Test
+    public void testDeleteAssetWithAttachments() throws Exception {
+        Asset testAsset = AssetUtils.getTestAsset();
+        Asset returnedAsset = repository.addAssetNoAttachments(testAsset);
+
+        Attachment att1 = AssetUtils.getTestAttachmentNoContent();
+        att1 = repository.doPostAttachmentNoContent(returnedAsset.get_id(), "att1", att1);
+
+        Attachment att2 = AssetUtils.getTestAttachmentWithContent();
+        byte[] content = "Att2 test content".getBytes("UTF-8");
+        att2 = repository.doPostAttachmentWithContent(returnedAsset.get_id(),
+                                                      "att2",
+                                                      att2,
+                                                      content,
+                                                      ContentType.APPLICATION_OCTET_STREAM);
+
+        repository.deleteAsset(returnedAsset.get_id(), -1);
+
+        assertEquals("There should be no assets", 0, repository.doGetAllAssets().size());
+
+        DB db = FatUtils.getMongoDB();
+        assertEquals("There should be no remaining attachments", 0, db.getCollection("attachments").count());
     }
 
     /**
@@ -1173,11 +1202,8 @@ public class ApiTest {
     public void test500Mapping() throws InvalidJsonAssetException, ParseException, IOException {
 
         // First, make a direct connection to the database, and insert a dodgy asset
-
         String ID = "_id";
-        MongoClient mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
-        mongoClient.setWriteConcern(WriteConcern.JOURNAL_SAFE);
-        DB db = mongoClient.getDB(FatUtils.TEST_DB_NAME);
+        DB db = FatUtils.getMongoDB();
         DBCollection assetCollection = db.getCollection("assets");
         DBObject obj = new BasicDBObject();
         obj.put("foo", "bar");
@@ -1204,7 +1230,6 @@ public class ApiTest {
         // Remove dodgy data from the database for the next test. Don't drop anything
         // as it will remove the database indexing.
         assetCollection.remove(new BasicDBObject());
-        mongoClient.close();
     }
 
     @Test

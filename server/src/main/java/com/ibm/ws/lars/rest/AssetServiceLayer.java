@@ -200,10 +200,11 @@ public class AssetServiceLayer {
      */
     public void deleteAsset(String assetId) throws NonExistentArtefactException {
 
-        // Delete all attachments belonging to the asset
-        Asset asset = persistenceBean.retrieveAsset(assetId);
+        // Retrieve the asset to ensure it exists
+        persistenceBean.retrieveAsset(assetId);
 
-        for (Attachment attachment : asset.getAttachments()) {
+        // Delete all attachments belonging to the asset
+        for (Attachment attachment : persistenceBean.findAttachmentsForAsset(assetId)) {
             deleteAttachment(attachment.get_id());
         }
 
@@ -312,8 +313,15 @@ public class AssetServiceLayer {
     }
 
     public void deleteAttachment(String attachmentId) {
-        persistenceBean.deleteAttachmentMetadata(attachmentId);
-        persistenceBean.deleteAttachmentContent(attachmentId);
+        try {
+            Attachment attachment = persistenceBean.retrieveAttachmentMetadata(attachmentId);
+            if (attachment.getGridFSId() != null) {
+                persistenceBean.deleteAttachmentContent(attachment.getGridFSId());
+            }
+            persistenceBean.deleteAttachmentMetadata(attachmentId);
+        } catch (NonExistentArtefactException ex) {
+            // Do nothing if attachment does not exist
+        }
     }
 
     public Attachment retrieveAttachmentMetadata(String assetId, String attachmentId, UriInfo uriInfo) throws NonExistentArtefactException {

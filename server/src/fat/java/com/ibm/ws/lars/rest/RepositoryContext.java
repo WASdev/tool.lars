@@ -82,6 +82,7 @@ import com.ibm.ws.lars.rest.model.AssetList;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentList;
 import com.ibm.ws.lars.testutils.FatUtils;
+import com.mongodb.gridfs.GridFS;
 
 /**
  * Context used by testcases to perform HTTP operations against one LARS server. Tests should use
@@ -383,7 +384,9 @@ public class RepositoryContext extends ExternalResource {
     private void cleanRepo() throws InvalidJsonAssetException, IOException {
         deleteAllAssets();
         AssetList assets = doGetAllAssets();
-        assertEquals("The repository is not empty", 0, assets.size());
+        assertEquals("Assets remaining in the repository", 0, assets.size());
+        assertEquals("Attachments remaining in the repository", 0, FatUtils.getMongoDB().getCollection("attachments").count());
+        assertEquals("Files remaining in repository", 0, new GridFS(FatUtils.getMongoDB()).getFileList().size());
     }
 
     void deleteAllAssets() throws IOException, InvalidJsonAssetException {

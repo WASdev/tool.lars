@@ -460,8 +460,8 @@ public class PersistenceBean implements Persistor {
     }
 
     @Override
-    public void deleteAttachmentContent(String attachmentId) {
-        gridFS.remove(attachmentId);
+    public void deleteAttachmentContent(String gridFsId) {
+        gridFS.remove(gridFsId);
     }
 
     @Override
