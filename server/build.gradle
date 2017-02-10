@@ -45,10 +45,10 @@ if (!hasProperty("mongodExecutable")) {
 }
 
 def requiredSpecJars = [
-    'com.ibm.ws.javaee.jaxrs.1.1_*.jar',
-    'com.ibm.ws.javaee.servlet.3.0_*.jar',
-    'com.ibm.ws.javaee.cdi.1.0_*.jar',
-    'com.ibm.ws.javaee.annotation.1.1_*.jar']
+    'com.ibm.*.javaee.jaxrs.1.1_*.jar',
+    'com.ibm.*.javaee.servlet.3.0_*.jar',
+    'com.ibm.*.javaee.cdi.1.0_*.jar',
+    'com.ibm.*.javaee.annotation.1.1_*.jar']
 
 ext {
     serverName = archivesBaseName
