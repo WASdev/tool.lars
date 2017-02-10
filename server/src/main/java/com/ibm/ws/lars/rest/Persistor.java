@@ -24,7 +24,7 @@ import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
 import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
@@ -35,7 +35,7 @@ import com.ibm.ws.lars.rest.model.AttachmentList;
  */
 public interface Persistor {
 
-    public AssetList retrieveAllAssets();
+    public AssetCursor retrieveAllAssets();
 
     /**
      * Retrieve a list of assets, filtered based on the supplied set of filters. See the AssetFilter
@@ -56,7 +56,7 @@ public interface Persistor {
      * @param sortOptions options describing how to sort the results, may be null if the results are
      *            not to be sorted
      */
-    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions);
+    public AssetCursor retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions);
 
     /**
      * Retrieve the number of assets which match the given set of filters.

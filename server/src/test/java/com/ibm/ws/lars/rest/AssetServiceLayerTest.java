@@ -40,7 +40,7 @@ import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.injection.AssetServiceLayerInjection;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.RepositoryObject;
 import com.ibm.ws.lars.rest.model.RepositoryResourceLifecycleException;
@@ -105,7 +105,7 @@ public class AssetServiceLayerTest {
         Asset gotAsset = service.retrieveAsset(id, dummyUriInfo);
         assertEquals("The id of the asset has changed", id, gotAsset.get_id());
 
-        AssetList assets = service.retrieveAllAssets();
+        AssetCursor assets = service.retrieveAllAssets();
         assertEquals("Too many assets", 1, assets.size());
 
         try {
@@ -123,13 +123,13 @@ public class AssetServiceLayerTest {
         Asset simpleGotAsset = service.retrieveAsset(simpleAsset.get_id(), dummyUriInfo);
         assertEquals("Wrong state", Asset.State.DRAFT, simpleGotAsset.getState());
 
-        AssetList lotsOfAssets = service.retrieveAllAssets();
+        AssetCursor lotsOfAssets = service.retrieveAllAssets();
         assertEquals("Wrong number of assets found", 2, lotsOfAssets.size());
 
         service.deleteAsset(id);
         service.deleteAsset(simpleGotAsset.get_id());
 
-        AssetList emptyAssets = service.retrieveAllAssets();
+        AssetCursor emptyAssets = service.retrieveAllAssets();
         assertEquals("There should be no assets stored", 0, emptyAssets.size());
     }
 

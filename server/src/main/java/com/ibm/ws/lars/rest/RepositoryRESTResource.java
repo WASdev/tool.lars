@@ -67,7 +67,7 @@ import com.ibm.ws.lars.rest.exceptions.InvalidParameterException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
 import com.ibm.ws.lars.rest.model.AttachmentList;
@@ -135,9 +135,8 @@ public class RepositoryRESTResource {
             filters.add(ASSET_IS_PUBLISHED);
         }
 
-        AssetList assets = assetService.retrieveAllAssets(filters, params.getSearchTerm(), params.getPagination(), params.getSortOptions());
-        String json = assets.toJson();
-        return Response.ok(json).build();
+        AssetCursor assets = assetService.retrieveAllAssets(filters, params.getSearchTerm(), params.getPagination(), params.getSortOptions());
+        return Response.ok(assets).build();
     }
 
     @HEAD

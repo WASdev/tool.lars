@@ -32,7 +32,7 @@ import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
 import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
@@ -64,13 +64,13 @@ public class MemoryPersistor implements Persistor {
      * @see com.ibm.ws.lars.rest.Persistor#retrieveAllAssets()
      */
     @Override
-    public AssetList retrieveAllAssets() {
+    public AssetCursor retrieveAllAssets() {
         // Note: retrieveAllAssets does *not* set attachments
-        return AssetList.createAssetListFromMaps(new ArrayList<Map<String, Object>>(assets.values()));
+        return new BasicAssetCursor(assets.values());
     }
 
     @Override
-    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+    public AssetCursor retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
         throw new UnsupportedOperationException("Filtering is not supported in this test facade");
     }
 
@@ -154,8 +154,7 @@ public class MemoryPersistor implements Persistor {
      * java.lang.String, java.io.InputStream)
      */
     @Override
-    public AttachmentContentMetadata createAttachmentContent(String name, String contentType, InputStream attachmentContentStream)
-            throws AssetPersistenceException {
+    public AttachmentContentMetadata createAttachmentContent(String name, String contentType, InputStream attachmentContentStream) throws AssetPersistenceException {
         try {
             String id = getNextId();
 
