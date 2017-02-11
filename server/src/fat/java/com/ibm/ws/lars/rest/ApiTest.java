@@ -90,7 +90,7 @@ public class ApiTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] { { Protocol.HTTP },
-                                             { Protocol.HTTPS } });
+                                              { Protocol.HTTPS } });
     }
 
     public ApiTest(Protocol protocol) {
@@ -897,8 +897,7 @@ public class ApiTest {
 
         // Testing phrases
         Asset testAsset9 = addLittleAsset(new String[] { "bill", "ben", "jack", "jill", "name", "a long name which can be searched" });
-        Asset testAsset10 = addLittleAsset(new String[]
-        { "bill", "ben", "jack", "jill", "name", "long", "description", "name", "tags", "which can" });
+        Asset testAsset10 = addLittleAsset(new String[] { "bill", "ben", "jack", "jill", "name", "long", "description", "name", "tags", "which can" });
 
         // This should get just 9, as it is searching for a phrase
         String searchQuery = URLEncoder.encode("\"long name which\"", StandardCharsets.UTF_8.name());
@@ -988,20 +987,20 @@ public class ApiTest {
         Asset asset4 = addLittleAsset("name", "asset4");
 
         AssetList page1 = repository.getAllAssets("offset=0&limit=2");
-        assertEquals("Wrong number of assets on page 1", page1.size(), 2);
+        assertEquals("Wrong number of assets on page 1", 2, page1.size());
         AssetList page2 = repository.getAllAssets("offset=2&limit=2");
-        assertEquals("Wrong number of assets on page 2", page2.size(), 2);
+        assertEquals("Wrong number of assets on page 2", 2, page2.size());
         AssetList page3 = repository.getAllAssets("offset=4&limit=2");
-        assertEquals("Wrong number of assets on page 3", page3.size(), 0);
+        assertEquals("Wrong number of assets on page 3", 0, page3.size());
 
         assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset1, asset2, asset3, asset4));
 
         page1 = repository.getAllAssets("offset=0&name=asset2|asset3|asset4&limit=2");
-        assertEquals("Wrong number of assets on page 1", page1.size(), 2);
+        assertEquals("Wrong number of assets on page 1", 2, page1.size());
         page2 = repository.getAllAssets("offset=2&name=asset2|asset3|asset4&limit=2");
-        assertEquals("Wrong number of assets on page 2", page2.size(), 1);
+        assertEquals("Wrong number of assets on page 2", 1, page2.size());
         page3 = repository.getAllAssets("offset=4&name=asset2|asset3|asset4&limit=2");
-        assertEquals("Wrong number of assets on page 3", page3.size(), 0);
+        assertEquals("Wrong number of assets on page 3", 0, page3.size());
 
         assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset2, asset3, asset4));
     }
