@@ -31,7 +31,7 @@ import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
 import com.ibm.ws.lars.rest.model.AttachmentList;
 
 /**
- *
+ * Interface to a persistent data store for assets and attachments
  */
 public interface Persistor {
 

@@ -50,6 +50,7 @@ import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
+import com.ibm.ws.lars.rest.mongo.PersistenceBean;
 import com.ibm.ws.lars.testutils.BasicChecks;
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.mongodb.DB;

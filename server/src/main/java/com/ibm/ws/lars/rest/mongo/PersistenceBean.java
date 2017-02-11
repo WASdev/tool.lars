@@ -14,7 +14,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.mongo;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -32,6 +32,12 @@ import javax.enterprise.context.ApplicationScoped;
 
 import org.bson.types.ObjectId;
 
+import com.ibm.ws.lars.rest.AssetFilter;
+import com.ibm.ws.lars.rest.Condition;
+import com.ibm.ws.lars.rest.PaginationOptions;
+import com.ibm.ws.lars.rest.Persistor;
+import com.ibm.ws.lars.rest.RepositoryRESTResource;
+import com.ibm.ws.lars.rest.SortOptions;
 import com.ibm.ws.lars.rest.SortOptions.SortOrder;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
@@ -43,7 +49,6 @@ import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
 import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
 import com.ibm.ws.lars.rest.model.AttachmentList;
-import com.ibm.ws.lars.rest.model.MongoAssetCursor;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
@@ -80,7 +85,7 @@ public class PersistenceBean implements Persistor {
             Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
 
     /** The _id field of a MongoDB object */
-    public static final String ID = "_id";
+    private static final String ID = "_id";
 
     private static final String DB_NAME = "mongo/larsDB";
 

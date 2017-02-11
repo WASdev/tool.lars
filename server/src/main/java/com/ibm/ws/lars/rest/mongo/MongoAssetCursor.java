@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.ibm.ws.lars.rest.model;
+package com.ibm.ws.lars.rest.mongo;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ibm.ws.lars.rest.model.Asset;
+import com.ibm.ws.lars.rest.model.AssetCursor;
+import com.ibm.ws.lars.rest.model.AssetOperation;
 import com.mongodb.DBCursor;
 
 /**
- *
+ * An {@link AssetCursor} implementation which streams Assets from a Mongo {@link DBCursor}.
  */
 public class MongoAssetCursor implements AssetCursor {
 
