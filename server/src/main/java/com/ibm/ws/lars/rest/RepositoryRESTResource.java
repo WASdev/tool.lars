@@ -265,8 +265,7 @@ public class RepositoryRESTResource {
                                                 @PathParam("assetId") String assetId,
                                                 @Context HttpServletRequest request,
                                                 BufferedInMultiPart inMultiPart,
-                                                @Context UriInfo uriInfo
-            ) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException, NonExistentArtefactException {
+                                                @Context UriInfo uriInfo) throws InvalidJsonAssetException, InvalidIdException, AssetPersistenceException, NonExistentArtefactException {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("createAttachmentWithContent called, name: " + name + " assetId: " + assetId);
@@ -326,8 +325,8 @@ public class RepositoryRESTResource {
     @Path("/assets/{assetId}/attachments")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ ADMIN_ROLE, USER_ROLE })
-    public Response getAttachments(@PathParam("assetId") String assetId, @Context UriInfo uriInfo, @Context SecurityContext sc)
-            throws InvalidIdException, NonExistentArtefactException, JsonProcessingException {
+    public Response getAttachments(@PathParam("assetId") String assetId, @Context UriInfo uriInfo,
+                                   @Context SecurityContext sc) throws InvalidIdException, NonExistentArtefactException, JsonProcessingException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAttachments called for assetId: " + assetId);
         }
@@ -392,9 +391,7 @@ public class RepositoryRESTResource {
             final InputStream contentInputStream = contentResponse.getContentStream();
             StreamingOutput stream = new InputStreamStreamingOutput(contentInputStream);
 
-            return Response.ok(stream)
-                    .header("Content-Type", contentResponse.getContentType())
-                    .build();
+            return Response.ok(stream).header("Content-Type", contentResponse.getContentType()).build();
         } else {
             String body = getErrorJson(Response.Status.NOT_FOUND, "Could not find attachment for id " + attachmentId);
             return Response.status(Response.Status.NOT_FOUND).entity(body).build();
@@ -405,8 +402,7 @@ public class RepositoryRESTResource {
     @Path("/assets/{assetId}/state")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(ADMIN_ROLE)
-    public Response updateAssetState(@PathParam("assetId") String assetId, String actionJSON)
-            throws NonExistentArtefactException, RepositoryResourceLifecycleException {
+    public Response updateAssetState(@PathParam("assetId") String assetId, String actionJSON) throws NonExistentArtefactException, RepositoryResourceLifecycleException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("updateAssetState called for assetId: " + assetId + " action: " + actionJSON);
         }
@@ -414,9 +410,7 @@ public class RepositoryRESTResource {
         Asset.StateAction action = getStateAction(actionJSON);
         if (action == null) {
             String error = "Either the supplied JSON was badly formed, or it did not contain a valid 'action' field: " + actionJSON;
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(getErrorJson(Response.Status.BAD_REQUEST, error))
-                    .build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(getErrorJson(Response.Status.BAD_REQUEST, error)).build();
         }
 
         assetService.updateAssetState(action, assetId);
@@ -426,7 +420,8 @@ public class RepositoryRESTResource {
     @GET
     @Path("/assets/{assetId}/assetreviews")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAssetReviews(@PathParam("assetId") String assetId, @Context UriInfo uriInfo, @Context SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
+    public Response getAssetReviews(@PathParam("assetId") String assetId, @Context UriInfo uriInfo,
+                                    @Context SecurityContext sc) throws InvalidIdException, NonExistentArtefactException {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("getAssetReviews called with id of '" + assetId + "'");
         }
