@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -59,6 +60,12 @@ public class BasicAssetCursor implements AssetCursor {
     @Override
     public void addOperation(AssetOperation filter) {
 
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void close() throws IOException {
+        // Do nothing
     }
 
 }

@@ -65,4 +65,9 @@ public class MongoAssetCursor implements AssetCursor {
         operations.add(op);
     }
 
+    @Override
+    public void close() {
+        cursor.close();
+    }
+
 }

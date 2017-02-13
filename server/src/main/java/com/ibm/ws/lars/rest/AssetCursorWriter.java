@@ -52,7 +52,8 @@ public class AssetCursorWriter implements MessageBodyWriter<AssetCursor> {
     @Override
     public void writeTo(AssetCursor cursor, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders,
                         OutputStream entityStream) throws IOException {
-        MAPPER.writeValue(entityStream, cursor);
+        try (AssetCursor cursorToBeClosed = cursor) {
+            MAPPER.writeValue(entityStream, cursorToBeClosed);
+        }
     }
-
 }

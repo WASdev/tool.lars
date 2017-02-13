@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest.model;
 
+import java.io.Closeable;
 import java.util.Iterator;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -32,7 +33,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  * returned.
  */
 @JsonSerialize(as = Iterator.class)
-public interface AssetCursor extends Iterator<Asset> {
+public interface AssetCursor extends Iterator<Asset>, Closeable {
 
     /**
      * Get the total number of assets which will be returned from this cursor
