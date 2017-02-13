@@ -36,6 +36,8 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
     
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
 
     repositories {
         mavenCentral()
