@@ -14,7 +14,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-package com.ibm.ws.lars.rest;
+package com.ibm.ws.lars.rest.mongo;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -32,12 +32,19 @@ import javax.enterprise.context.ApplicationScoped;
 
 import org.bson.types.ObjectId;
 
+import com.ibm.ws.lars.rest.AssetFilter;
+import com.ibm.ws.lars.rest.Condition;
+import com.ibm.ws.lars.rest.PaginationOptions;
+import com.ibm.ws.lars.rest.Persistor;
+import com.ibm.ws.lars.rest.RepositoryRESTResource;
+import com.ibm.ws.lars.rest.SortOptions;
 import com.ibm.ws.lars.rest.SortOptions.SortOrder;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
+import com.ibm.ws.lars.rest.model.AssetOperation;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
 import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
@@ -78,7 +85,7 @@ public class PersistenceBean implements Persistor {
             Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
 
     /** The _id field of a MongoDB object */
-    private static String ID = "_id";
+    private static final String ID = "_id";
 
     private static final String DB_NAME = "mongo/larsDB";
 
@@ -113,6 +120,25 @@ public class PersistenceBean implements Persistor {
         }
     }
 
+    private static AssetOperation CONVERT_OID_TO_HEX = new AssetOperation() {
+        @Override
+        public void perform(Asset asset) {
+            Object objectIdObject = asset.getProperty(ID);
+            if ((objectIdObject != null) && (objectIdObject instanceof ObjectId)) {
+                ObjectId objId = (ObjectId) objectIdObject;
+                String hex = objId.toHexString();
+                asset.setProperty(ID, hex);
+            }
+        }
+    };
+
+    private static AssetOperation REMOVE_SCORE = new AssetOperation() {
+        @Override
+        public void perform(Asset asset) {
+            asset.getProperties().remove("score");
+        }
+    };
+
     private static void convertHexIdToObjectId(DBObject obj) {
         Object idObject = obj.get(ID);
         if ((idObject != null) && (idObject instanceof String)) {
@@ -122,29 +148,21 @@ public class PersistenceBean implements Persistor {
     }
 
     @Override
-    public AssetList retrieveAllAssets() {
-        List<Map<String, Object>> mapList = new ArrayList<>();
-
-        try (DBCursor cursor = getAssetCollection().find()) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("retrieveAllAssets: found " + cursor.count() + " assets.");
-            }
-            for (DBObject obj : cursor) {
-                convertObjectIdToHexString(obj);
-                // BSON spec says that all keys have to be strings
-                // so this should be safe.
-                @SuppressWarnings("unchecked")
-                Map<String, Object> assetMap = obj.toMap();
-                mapList.add(assetMap);
-            }
+    public AssetCursor retrieveAllAssets() {
+        DBCursor cursor = getAssetCollection().find();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("retrieveAllAssets: found " + cursor.count() + " assets.");
         }
 
-        return AssetList.createAssetListFromMaps(mapList);
+        AssetCursor assetCursor = new MongoAssetCursor(cursor);
+        assetCursor.addOperation(CONVERT_OID_TO_HEX);
+
+        return assetCursor;
     }
 
     /** {@inheritDoc} */
     @Override
-    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+    public AssetCursor retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
 
         if (filters.size() == 0 && searchTerm == null && pagination == null && sortOptions == null) {
             return retrieveAllAssets();
@@ -169,19 +187,13 @@ public class PersistenceBean implements Persistor {
             }
         }
 
-        List<DBObject> results = query(filterObject, sortObject, projectionObject, pagination);
-        List<Map<String, Object>> assets = new ArrayList<Map<String, Object>>();
-        for (DBObject result : results) {
-            // BSON spec says that all keys have to be strings
-            // so this should be safe.
-            @SuppressWarnings("unchecked")
-            Map<String, Object> resultMap = result.toMap();
-            if (textScoreAdded) {
-                resultMap.remove("score");
-            }
-            assets.add(resultMap);
+        AssetCursor results = query(filterObject, sortObject, projectionObject, pagination);
+
+        if (textScoreAdded) {
+            results.addOperation(REMOVE_SCORE);
         }
-        return AssetList.createAssetListFromMaps(assets);
+
+        return results;
     }
 
     /** {@inheritDoc} */
@@ -253,7 +265,7 @@ public class PersistenceBean implements Persistor {
         return new BasicDBObject(field, value);
     }
 
-    private List<DBObject> query(DBObject filterObject, DBObject sortObject, DBObject projectionObject, PaginationOptions pagination) {
+    private AssetCursor query(DBObject filterObject, DBObject sortObject, DBObject projectionObject, PaginationOptions pagination) {
 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("query: Querying database with query object " + filterObject);
@@ -262,27 +274,24 @@ public class PersistenceBean implements Persistor {
             logger.fine("query: pagination object " + pagination);
         }
 
-        List<DBObject> results = new ArrayList<DBObject>();
-        try (DBCursor cursor = getAssetCollection().find(filterObject, projectionObject)) {
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("query: found " + cursor.count() + " assets.");
-            }
-
-            if (pagination != null) {
-                cursor.skip(pagination.getOffset());
-                cursor.limit(pagination.getLimit());
-            }
-
-            if (sortObject != null) {
-                cursor.sort(sortObject);
-            }
-
-            for (DBObject obj : cursor) {
-                convertObjectIdToHexString(obj);
-                results.add(obj);
-            }
+        DBCursor cursor = getAssetCollection().find(filterObject, projectionObject);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("query: found " + cursor.count() + " assets.");
         }
-        return results;
+
+        if (pagination != null) {
+            cursor.skip(pagination.getOffset());
+            cursor.limit(pagination.getLimit());
+        }
+
+        if (sortObject != null) {
+            cursor.sort(sortObject);
+        }
+
+        AssetCursor result = new MongoAssetCursor(cursor);
+        result.addOperation(CONVERT_OID_TO_HEX);
+
+        return result;
     }
 
     private int queryCount(DBObject filterObject) {

@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import mockit.Mocked;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,14 +47,17 @@ import com.ibm.ws.lars.rest.Condition.Operation;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
+import com.ibm.ws.lars.rest.mongo.PersistenceBean;
 import com.ibm.ws.lars.testutils.BasicChecks;
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+
+import mockit.Mocked;
 
 public class PersistenceBeanTest {
 
@@ -116,7 +117,7 @@ public class PersistenceBeanTest {
     }
 
     private void assertEmpty() throws IOException {
-        AssetList allAssets = persistenceBean.retrieveAllAssets();
+        AssetCursor allAssets = persistenceBean.retrieveAllAssets();
         assertTrue(allAssets.size() == 0);
     }
 
@@ -235,14 +236,14 @@ public class PersistenceBeanTest {
 
         List<AssetFilter> filters = new ArrayList<>();
         filters.add(new AssetFilter("name", Arrays.asList(eq("new name1"))));
-        AssetList assets = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> assets = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertEquals("Should only have got 1 asset back", 1, assets.size());
         assertEquals("Got the wrong asset back", asset1.get_id(), assets.get(0).get_id());
 
         List<AssetFilter> filters2 = new ArrayList<>();
         filters2.add(new AssetFilter("layer1.layer1field", Arrays.asList(eq("layer1value"))));
 
-        AssetList assets2 = persistenceBean.retrieveAllAssets(filters2, null, null, null);
+        List<Asset> assets2 = readAll(persistenceBean.retrieveAllAssets(filters2, null, null, null));
         assertEquals("Should have got 2 asset back", 2, assets2.size());
         for (Asset retrievedAsset : assets2) {
             if (!retrievedAsset.get_id().equals(asset1.get_id()) && !retrievedAsset.get_id().equals(asset2.get_id())) {
@@ -253,7 +254,7 @@ public class PersistenceBeanTest {
         List<AssetFilter> filters3 = new ArrayList<>();
         filters3.add(new AssetFilter("name", Arrays.asList(eq("new name1"), eq("new name2"))));
 
-        AssetList assets3 = persistenceBean.retrieveAllAssets(filters3, null, null, null);
+        List<Asset> assets3 = readAll(persistenceBean.retrieveAllAssets(filters3, null, null, null));
         assertEquals("Should have got 2 asset back", 2, assets3.size());
         for (Asset retrievedAsset : assets3) {
             if (!retrievedAsset.get_id().equals(asset1.get_id()) && !retrievedAsset.get_id().equals(asset2.get_id())) {
@@ -264,7 +265,7 @@ public class PersistenceBeanTest {
         // With a search term as well
         List<AssetFilter> filters4 = new ArrayList<>();
         filters4.add(new AssetFilter("name", Arrays.asList(eq("new name1"), eq("new name2"))));
-        AssetList assets4 = persistenceBean.retrieveAllAssets(filters4, "name1", null, null);
+        List<Asset> assets4 = readAll(persistenceBean.retrieveAllAssets(filters4, "name1", null, null));
         assertEquals("Wrong number of assets retrieved", 1, assets4.size());
         Asset retrieved = assets4.get(0);
         assertEquals("Got the wrong asset back", asset1.get_id(), retrieved.get_id());
@@ -282,13 +283,13 @@ public class PersistenceBeanTest {
 
         // Test with an empty set of filters
         List<AssetFilter> emptyFilters = Collections.emptyList();
-        AssetList assets = persistenceBean.retrieveAllAssets(emptyFilters, null, null, null);
+        List<Asset> assets = readAll(persistenceBean.retrieveAllAssets(emptyFilters, null, null, null));
         assertEquals("An empty filter should get all assets", 4, assets.size());
 
         List<AssetFilter> filters = new ArrayList<>();
         // test which retrieves no assets
         filters.add(new AssetFilter("blurgh", Arrays.asList(eq("new name1"))));
-        AssetList assets2 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> assets2 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertEquals("Should not have got any assets back", 0, assets2.size());
 
         // test which uses multiple entries in the map
@@ -296,7 +297,7 @@ public class PersistenceBeanTest {
         filters.add(new AssetFilter("name", Arrays.asList(eq("new name1"))));
         filters.add(new AssetFilter("layer1.layer1field", Arrays.asList(eq("layer1value"))));
 
-        AssetList assets3 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> assets3 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertEquals("Wrong number of assets retrieved", 2, assets3.size());
         String id1 = asset1.get_id();
         String id2 = asset2.get_id();
@@ -318,7 +319,7 @@ public class PersistenceBeanTest {
 
         // Empty filters should get everything
         List<AssetFilter> emptyFilters = Collections.emptyList();
-        AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null, null, null);
+        List<Asset> allAssets = readAll(persistenceBean.retrieveAllAssets(emptyFilters, null, null, null));
         assertEquals("Unexpected number of assets returned", 3, allAssets.size());
 
         List<AssetFilter> filters;
@@ -326,14 +327,14 @@ public class PersistenceBeanTest {
         // query that should return nothing
         filters = new ArrayList<>();
         filters.add(new AssetFilter("layer1.layer1field", Arrays.asList(neq("layer1value"))));
-        AssetList emptyAssets = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> emptyAssets = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertEquals("Unexpected number of assets returned", 0, emptyAssets.size());
         filters.clear();
 
         // basic not filter
         filters = new ArrayList<>();
         filters.add(new AssetFilter("name", Arrays.asList(neq("new name1"))));
-        AssetList assets1 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> assets1 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertEquals("Unexpected number of assets returned", 1, assets1.size());
         assertEquals("The wrong asset id was retrieved", asset3.get_id(), assets1.get(0).get_id());
 
@@ -342,7 +343,7 @@ public class PersistenceBeanTest {
         filters = new ArrayList<>();
         filters.add(new AssetFilter("name", Arrays.asList(neq("new name1"))));
         filters.add(new AssetFilter("layer1.layer1field", Arrays.asList(eq("layer1value2"))));
-        AssetList assets2 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> assets2 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertEquals("Unexpected number of assets returned", 1, assets2.size());
         assertEquals("The wrong asset id was retrieved", asset4.get_id(), assets2.get(0).get_id());
 
@@ -350,7 +351,7 @@ public class PersistenceBeanTest {
         filters = new ArrayList<>();
         filters.add(new AssetFilter("name", Arrays.asList(neq("new name1"))));
         filters.add(new AssetFilter("layer1.layer1field", Arrays.asList(eq("layer1value2"))));
-        AssetList assets3 = persistenceBean.retrieveAllAssets(filters, "\"new name2\"", null, null);
+        List<Asset> assets3 = readAll(persistenceBean.retrieveAllAssets(filters, "\"new name2\"", null, null));
         assertEquals("Unexpected number of assets returned", 1, assets3.size());
         assertEquals("The wrong asset id was retrieved", asset4.get_id(), assets3.get(0).get_id());
 
@@ -370,7 +371,7 @@ public class PersistenceBeanTest {
 
         // Empty filters should get everything
         List<AssetFilter> emptyFilters = Collections.emptyList();
-        AssetList allAssets = persistenceBean.retrieveAllAssets(emptyFilters, null, null, null);
+        List<Asset> allAssets = readAll(persistenceBean.retrieveAllAssets(emptyFilters, null, null, null));
         assertEquals("Unexpected number of assets returned", 9, allAssets.size());
         assertThat(allAssets, containsInAnyOrder(assetsWithIds(asset1, asset2, asset3, asset4, asset5, asset6, asset7, asset8, asset9)));
 
@@ -379,28 +380,28 @@ public class PersistenceBeanTest {
         // Simple OR filter
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
-        AssetList result1 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> result1 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertThat(result1, containsInAnyOrder(assetsWithIds(asset1, asset2, asset3, asset7, asset8, asset9)));
 
         // OR with NOT
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         filters.add(new AssetFilter("ground", Arrays.asList(neq("mountainous"))));
-        AssetList result2 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> result2 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertThat(result2, containsInAnyOrder(assetsWithIds(asset1, asset2, asset7, asset8)));
 
         // Two ORs
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         filters.add(new AssetFilter("ground", Arrays.asList(eq("hilly"), eq("mountainous"))));
-        AssetList result3 = persistenceBean.retrieveAllAssets(filters, null, null, null);
+        List<Asset> result3 = readAll(persistenceBean.retrieveAllAssets(filters, null, null, null));
         assertThat(result3, containsInAnyOrder(assetsWithIds(asset2, asset3, asset8, asset9)));
 
         // OR with NOT and searchTerm
         filters = new ArrayList<>();
         filters.add(new AssetFilter("weather", Arrays.asList(eq("hot"), eq("warm"))));
         filters.add(new AssetFilter("ground", Arrays.asList(neq("mountainous"))));
-        AssetList result4 = persistenceBean.retrieveAllAssets(filters, "long", null, null);
+        List<Asset> result4 = readAll(persistenceBean.retrieveAllAssets(filters, "long", null, null));
         assertThat(result4, containsInAnyOrder(assetsWithIds(asset1, asset2, asset7)));
     }
 
@@ -445,29 +446,29 @@ public class PersistenceBeanTest {
         List<AssetFilter> emptyFilter = Collections.emptyList();
 
         // Test 2 per page
-        AssetList page1 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 2), null);
+        List<Asset> page1 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 2), null));
         assertEquals("Wrong number of assets on page 1", 2, page1.size());
-        AssetList page2 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(2, 2), null);
+        List<Asset> page2 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(2, 2), null));
         assertEquals("Wrong number of assets on page 2", 2, page2.size());
-        AssetList page3 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(4, 2), null);
+        List<Asset> page3 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(4, 2), null));
         assertEquals("Wrong number of assets on page 3", 0, page3.size());
         assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset1, asset2, asset3, asset4));
 
         // Test 3 per page
-        page1 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 3), null);
+        page1 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 3), null));
         assertEquals("Wrong number of assets on page 1", 3, page1.size());
-        page2 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(3, 3), null);
+        page2 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(3, 3), null));
         assertEquals("Wrong number of assets on page 2", 1, page2.size());
-        page3 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(6, 3), null);
+        page3 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(6, 3), null));
         assertEquals("Wrong number of assets on page 3", 0, page3.size());
         assertThat(collatePages(page1, page2, page3), containsInAnyOrder(asset1, asset2, asset3, asset4));
 
         // Test with filter
         List<AssetFilter> conditions = new ArrayList<>();
         conditions.add(new AssetFilter("name", Arrays.asList(eq("asset2"), eq("asset3"), eq("asset4"))));
-        page1 = persistenceBean.retrieveAllAssets(conditions, null, new PaginationOptions(0, 2), null);
+        page1 = readAll(persistenceBean.retrieveAllAssets(conditions, null, new PaginationOptions(0, 2), null));
         assertEquals("Wrong number of assets on page 1", 2, page1.size());
-        page2 = persistenceBean.retrieveAllAssets(conditions, null, new PaginationOptions(2, 2), null);
+        page2 = readAll(persistenceBean.retrieveAllAssets(conditions, null, new PaginationOptions(2, 2), null));
         assertEquals("Wrong number of assets on page 2", 1, page2.size());
         assertThat(collatePages(page1, page2), containsInAnyOrder(asset2, asset3, asset4));
     }
@@ -481,26 +482,26 @@ public class PersistenceBeanTest {
 
         List<AssetFilter> emptyFilter = Collections.emptyList();
 
-        AssetList result = persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("name", ASCENDING));
+        List<Asset> result = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("name", ASCENDING)));
         assertThat(result, contains(asset1, asset2, asset3, asset4));
 
-        result = persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("name", DESCENDING));
+        result = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("name", DESCENDING)));
         assertThat(result, contains(asset4, asset3, asset2, asset1));
 
         // Missing values should be the "lowest"
-        result = persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("score", ASCENDING));
+        result = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("score", ASCENDING)));
         assertThat(result, contains(asset1, asset4, asset3, asset2));
 
-        result = persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("score", DESCENDING));
+        result = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("score", DESCENDING)));
         assertThat(result, contains(asset2, asset3, asset4, asset1));
 
         // Sort by something non-existent, the order is undefined but it should return all assets
-        result = persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("wibble", ASCENDING));
+        result = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, null, new SortOptions("wibble", ASCENDING)));
         assertThat(result, containsInAnyOrder(asset1, asset2, asset3, asset4));
 
         // Test sorting with pagination
-        AssetList page1 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 2), new SortOptions("name", ASCENDING));
-        AssetList page2 = persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(2, 2), new SortOptions("name", ASCENDING));
+        List<Asset> page1 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(0, 2), new SortOptions("name", ASCENDING)));
+        List<Asset> page2 = readAll(persistenceBean.retrieveAllAssets(emptyFilter, null, new PaginationOptions(2, 2), new SortOptions("name", ASCENDING)));
         assertThat(collatePages(page1, page2), contains(asset1, asset2, asset3, asset4));
     }
 
@@ -548,11 +549,11 @@ public class PersistenceBeanTest {
      * @param lists the AssetLists
      * @return the collated list
      */
-    private static List<Asset> collatePages(AssetList... lists) {
+    private static List<Asset> collatePages(List<?>... lists) {
         List<Asset> result = new ArrayList<Asset>();
-        for (AssetList list : lists) {
-            for (Asset asset : list) {
-                result.add(asset);
+        for (Object list : lists) {
+            for (Object asset : (Iterable<?>) list) {
+                result.add((Asset) asset);
             }
         }
         return result;
@@ -582,5 +583,13 @@ public class PersistenceBeanTest {
      */
     private static Condition neq(String value) {
         return new Condition(Operation.NOT_EQUALS, value);
+    }
+
+    private static List<Asset> readAll(AssetCursor cursor) {
+        List<Asset> result = new ArrayList<>();
+        while (cursor.hasNext()) {
+            result.add(cursor.next());
+        }
+        return result;
     }
 }

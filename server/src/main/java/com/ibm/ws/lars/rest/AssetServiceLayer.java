@@ -36,7 +36,7 @@ import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 import com.ibm.ws.lars.rest.model.Asset;
-import com.ibm.ws.lars.rest.model.AssetList;
+import com.ibm.ws.lars.rest.model.AssetCursor;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.model.AttachmentContentMetadata;
 import com.ibm.ws.lars.rest.model.AttachmentContentResponse;
@@ -62,14 +62,14 @@ public class AssetServiceLayer {
     /**
      * @see Persistor#retrieveAllAssets()
      */
-    public AssetList retrieveAllAssets() {
+    public AssetCursor retrieveAllAssets() {
         return persistenceBean.retrieveAllAssets();
     }
 
     /**
      * @see Persistor#retrieveAllAssets(Collection,String, PaginationOptions, SortOptions)
      */
-    public AssetList retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
+    public AssetCursor retrieveAllAssets(Collection<AssetFilter> filters, String searchTerm, PaginationOptions pagination, SortOptions sortOptions) {
         return persistenceBean.retrieveAllAssets(filters, searchTerm, pagination, sortOptions);
     }
 

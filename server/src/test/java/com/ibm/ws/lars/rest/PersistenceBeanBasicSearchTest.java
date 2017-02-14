@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import com.ibm.ws.lars.rest.Condition.Operation;
 import com.ibm.ws.lars.rest.SortOptions.SortOrder;
+import com.ibm.ws.lars.rest.mongo.PersistenceBean;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;

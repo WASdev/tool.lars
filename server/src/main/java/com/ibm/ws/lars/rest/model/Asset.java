@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.ibm.ws.lars.rest.AssetConverter;
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.RepositoryException;
 
@@ -29,6 +31,7 @@ import com.ibm.ws.lars.rest.exceptions.RepositoryException;
  * service.
  *
  */
+@JsonSerialize(converter = AssetConverter.class)
 public class Asset extends RepositoryObject {
 
     public static final String ATTACHMENTS = "attachments";
@@ -307,8 +310,7 @@ public class Asset extends RepositoryObject {
             public void performAction(Asset asset) throws RepositoryResourceLifecycleException {
                 asset.getState().publish(asset);
             }
-        }
-        ,
+        },
         APPROVE("approve") {
             @Override
             public void performAction(Asset asset) throws RepositoryResourceLifecycleException {
