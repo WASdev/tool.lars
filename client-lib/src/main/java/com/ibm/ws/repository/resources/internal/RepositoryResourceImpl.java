@@ -72,6 +72,7 @@ import com.ibm.ws.repository.exceptions.RepositoryResourceLifecycleException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.AttachmentResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.AppliesToProcessor.AppliesToEntry;
 import com.ibm.ws.repository.resources.writeable.AttachmentResourceWritable;
 import com.ibm.ws.repository.resources.writeable.RepositoryResourceWritable;
@@ -927,9 +928,8 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     protected List<RepositoryResourceImpl> performMatching() throws BadVersionException, RequestFailureException, RepositoryBadDataException, RepositoryBackendException {
         List<RepositoryResourceImpl> matching = new ArrayList<RepositoryResourceImpl>();
 
-        // connect to massive and find that sample
         @SuppressWarnings("unchecked")
-        Collection<RepositoryResourceImpl> resources = (Collection<RepositoryResourceImpl>) new RepositoryConnectionList(_repoConnection).getAllResourcesWithDupes(getType());
+        Collection<RepositoryResourceImpl> resources = (Collection<RepositoryResourceImpl>) getPotentiallyMatchingResources();
 
         RepositoryResourceImpl resource = null;
         for (RepositoryResourceImpl res : resources) {
@@ -941,6 +941,15 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
 
         return matching;
+    }
+
+    /**
+     * Returns a superset of resources to those returned by {@link #performMatching()}
+     *
+     * This allows us to do some type-specific pre-filtering of the resources on the server.
+     */
+    protected Collection<? extends RepositoryResource> getPotentiallyMatchingResources() throws RepositoryBackendException {
+        return _repoConnection.getAllResourcesWithDupes(getType());
     }
 
     /**
