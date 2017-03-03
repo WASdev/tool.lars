@@ -20,19 +20,24 @@ import static com.ibm.ws.lars.testutils.BasicChecks.checkCopyFields;
 import static com.ibm.ws.lars.testutils.BasicChecks.populateResource;
 import static com.ibm.ws.lars.testutils.BasicChecks.simpleUpload;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.reflectiveCallAnyTypes;
+import static com.ibm.ws.lars.testutils.matchers.ResourceByIdMatcher.hasId;
 import static com.ibm.ws.repository.common.enums.State.PUBLISHED;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,9 +57,12 @@ import com.ibm.ws.repository.connections.RepositoryConnectionList;
 import com.ibm.ws.repository.connections.RestRepositoryConnection;
 import com.ibm.ws.repository.connections.SimpleProductDefinition;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
+import com.ibm.ws.repository.exceptions.RepositoryException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
 import com.ibm.ws.repository.resources.EsaResource;
+import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.EsaResourceImpl;
+import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.MatchResult;
 import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 import com.ibm.ws.repository.resources.writeable.WritableResourceFactory;
@@ -464,6 +472,47 @@ public class EsaResourceTest {
         });
     }
 
+    /**
+     * Tests the matching logic for ESAs, because we do some pre-filtering on the server
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testFindMatchingResource() throws SecurityException, IllegalArgumentException,
+                    NoSuchMethodException, IllegalAccessException, InvocationTargetException, RepositoryException,
+                    IOException, URISyntaxException {
+
+        EsaResourceImpl original = (EsaResourceImpl) WritableResourceFactory.createEsa(repoConnection);
+        original.setProvideFeature("com.example.testA");
+        original.setName("Test A");
+        original.setAppliesTo("com.ibm.websphere.appserver; productVersion=8.5.5.4");
+        original.uploadToMassive(new AddNewStrategy(PUBLISHED, PUBLISHED));
+
+        EsaResourceWritable differentName = WritableResourceFactory.createEsa(repoConnection);
+        differentName.setProvideFeature("com.example.testB");
+        differentName.setName("Test B");
+        differentName.setAppliesTo("com.ibm.websphere.appserver; productVersion=8.5.5.4");
+        differentName.uploadToMassive(new AddNewStrategy(PUBLISHED, PUBLISHED));
+
+        EsaResourceWritable differentProductVersion = WritableResourceFactory.createEsa(repoConnection);
+        differentProductVersion.setProvideFeature("com.example.testA");
+        differentProductVersion.setName("Test A");
+        differentProductVersion.setAppliesTo("com.ibm.websphere.appserver; productVersion=8.5.5.5");
+        differentProductVersion.uploadToMassive(new AddNewStrategy(PUBLISHED, PUBLISHED));
+
+        EsaResourceWritable shouldMatch = WritableResourceFactory.createEsa(repoConnection);
+        shouldMatch.setProvideFeature("com.example.testA");
+        shouldMatch.setName("Test A");
+        shouldMatch.setAppliesTo("com.ibm.websphere.appserver; productVersion=8.5.5.4");
+        shouldMatch.uploadToMassive(new AddNewStrategy(PUBLISHED, PUBLISHED));
+
+        // getPotentiallyMatchingResources should find things that match type and symbolic name
+        Collection<? extends RepositoryResource> potentialMatches = callGetPotentiallyMatchingResources(original);
+        assertThat(potentialMatches, containsInAnyOrder(hasId(original), hasId(differentProductVersion), hasId(shouldMatch)));
+
+        List<RepositoryResourceImpl> matches = original.findMatchingResource();
+        assertThat(matches, containsInAnyOrder(hasId(original), hasId(shouldMatch)));
+    }
+
     private static interface RunMatchClosure {
         Collection<EsaResource> runMatch(ProductDefinition definition) throws Exception;
     }
@@ -509,6 +558,17 @@ public class EsaResourceTest {
         esaRes.setProvideFeature(provideFeature);
         esaRes.setName(provideFeature);
         return esaRes;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Collection<? extends RepositoryResource> callGetPotentiallyMatchingResources(RepositoryResourceImpl resource) {
+        try {
+            Method m = RepositoryResourceImpl.class.getDeclaredMethod("getPotentiallyMatchingResources");
+            m.setAccessible(true);
+            return (Collection<RepositoryResource>) m.invoke(resource);
+        } catch (Exception e) {
+            throw new RuntimeException("Exception calling getPotentiallyMatchingResources", e);
+        }
     }
 
 }

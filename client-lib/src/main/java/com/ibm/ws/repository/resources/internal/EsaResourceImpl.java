@@ -23,11 +23,15 @@ import java.util.List;
 
 import com.ibm.ws.repository.common.enums.DisplayPolicy;
 import com.ibm.ws.repository.common.enums.DownloadPolicy;
+import com.ibm.ws.repository.common.enums.FilterPredicate;
+import com.ibm.ws.repository.common.enums.FilterableAttribute;
 import com.ibm.ws.repository.common.enums.InstallPolicy;
 import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.connections.RepositoryConnection;
+import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
+import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 import com.ibm.ws.repository.transport.model.AppliesToFilterInfo;
 import com.ibm.ws.repository.transport.model.Asset;
@@ -356,6 +360,20 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
         matchingData.setVersion(getVersion());
         matchingData.setProvideFeature(getProvideFeature());
         return matchingData;
+    }
+
+    @Override
+    protected Collection<? extends RepositoryResource> getPotentiallyMatchingResources() throws RepositoryBackendException {
+        Collection<RepositoryResource> resources;
+
+        if (getProvideFeature() != null) {
+            resources = _repoConnection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, getType()),
+                                                             FilterPredicate.areEqual(FilterableAttribute.SYMBOLIC_NAME, getProvideFeature()));
+        } else {
+            resources = _repoConnection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, getType()));
+        }
+
+        return resources;
     }
 
     @Override
