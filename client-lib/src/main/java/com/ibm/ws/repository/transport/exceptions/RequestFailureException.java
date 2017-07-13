@@ -41,7 +41,7 @@ public class RequestFailureException extends Exception {
 
     /**
      * Returns the response code from the HTTP URL connection when connecting to the repository backend.
-     * 
+     *
      * @return The response code
      * @see HttpURLConnection#getResponseCode()
      */
@@ -51,7 +51,7 @@ public class RequestFailureException extends Exception {
 
     /**
      * Returns the error message written to the error stream on the HTTP URL connection when connecting to the repository backend.
-     * 
+     *
      * @return The error message
      * @see HttpURLConnection#getErrorStream()
      */
@@ -61,7 +61,7 @@ public class RequestFailureException extends Exception {
 
     /**
      * Returns the full contents of the error stream.
-     * 
+     *
      * @return The contents of the error stream
      * @see HttpURLConnection#getErrorStream()
      */

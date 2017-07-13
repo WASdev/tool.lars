@@ -114,11 +114,21 @@ public class RestClientTest {
      * @return
      */
     private String createDateString() {
-        SimpleDateFormat dateFormater = new SimpleDateFormat(
-                        "yyyy/MM/dd HH:mm:ss.SSS");
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
         String createdString = " created at "
                                + dateFormater.format(Calendar.getInstance().getTime());
         return createdString;
+    }
+
+    /**
+     * This should not throw an exception, the repo should be available
+     *
+     * @throws IOException
+     * @throws RequestFailureException
+     */
+    @Test
+    public void testCheckRepositoryStatus() throws IOException, RequestFailureException {
+        _unauthenticatedClient.checkRepositoryStatus();
     }
 
     /**
@@ -151,13 +161,7 @@ public class RestClientTest {
 
         String attachmentUrl = fixture.getHostedFileRoot() + "/testfile.txt";
 
-        AttachmentSummary attachmentSummary = new MockAttachmentSummary(
-                        new File(resourcesDir, "TestAttachment.txt"),
-                        "TestAttachment.txt",
-                        AttachmentType.CONTENT,
-                        0,
-                        attachmentUrl
-                        );
+        AttachmentSummary attachmentSummary = new MockAttachmentSummary(new File(resourcesDir, "TestAttachment.txt"), "TestAttachment.txt", AttachmentType.CONTENT, 0, attachmentUrl);
 
         createdAttachment = _writeableClient.addAttachment(createdAsset.get_id(), attachmentSummary);
         assertEquals("The attachment asset ID should match the asset ID",
@@ -167,8 +171,7 @@ public class RestClientTest {
                      createdAttachment.getUrl());
 
         InputStream attachmentContentStream = _client.getAttachment(createdAsset, createdAttachment);
-        BufferedReader attachmentContentReader = new BufferedReader(
-                        new InputStreamReader(attachmentContentStream));
+        BufferedReader attachmentContentReader = new BufferedReader(new InputStreamReader(attachmentContentStream));
         assertEquals("The content in the attachment should be the testfile content",
                      "This is a test file",
                      attachmentContentReader.readLine());
