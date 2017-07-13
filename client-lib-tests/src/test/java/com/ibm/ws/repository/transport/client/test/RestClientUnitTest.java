@@ -15,14 +15,16 @@
  *******************************************************************************/
 package com.ibm.ws.repository.transport.client.test;
 
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import mockit.Deencapsulation;
-import mockit.Expectations;
 
 import org.junit.Test;
 
@@ -31,6 +33,10 @@ import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.transport.client.ClientLoginInfo;
 import com.ibm.ws.repository.transport.client.RestClient;
 import com.ibm.ws.repository.transport.exceptions.RequestFailureException;
+
+import mockit.Deencapsulation;
+import mockit.Expectations;
+import mockit.Mocked;
 
 public class RestClientUnitTest {
 
@@ -73,6 +79,72 @@ public class RestClientUnitTest {
             }
         }
 
+    }
+
+    @Test
+    public void testGetStatusNoHeader(final @Mocked HttpURLConnection connection) throws IOException, RequestFailureException {
+        try {
+            executeGetStatus(connection, null);
+            fail("An exception should have been thrown if there was no header");
+        } catch (RequestFailureException e) {
+            if (!e.getMessage().contains("No header returned")) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    public void testGetStatusNoCount(final @Mocked HttpURLConnection connection) throws IOException, RequestFailureException {
+        Map<String, List<String>> headers = new HashMap<String, List<String>>();
+        List<String> wibbleValues = new ArrayList<String>();
+        wibbleValues.add("value1");
+        wibbleValues.add("value2");
+        headers.put("Wibble", wibbleValues);
+
+        try {
+            executeGetStatus(connection, headers);
+            fail("An exception should have been thrown if there was no count in the header");
+        } catch (RequestFailureException e) {
+            if (!e.getMessage().contains("No count returned")) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    public void testGetStatusWithCount(final @Mocked HttpURLConnection connection) throws IOException, RequestFailureException {
+        Map<String, List<String>> headers = new HashMap<String, List<String>>();
+        List<String> wibbleValues = new ArrayList<String>();
+        wibbleValues.add("value1");
+        wibbleValues.add("value2");
+        headers.put("Wibble", wibbleValues);
+
+        List<String> countValues = new ArrayList<String>();
+        countValues.add("1234");
+        headers.put("count", countValues);
+
+        executeGetStatus(connection, headers);
+    }
+
+    private void executeGetStatus(final HttpURLConnection connection, final Map<String, List<String>> headerFields) throws IOException, RequestFailureException {
+        ClientLoginInfo info = new ClientLoginInfo("noone", "letmein", "123", "http://broken");
+
+        final RestClient client = new RestClient(info);
+
+        new Expectations(client) {
+            {
+                Deencapsulation.invoke(client, "createHeadConnection", "/assets");
+                result = connection;
+
+                Deencapsulation.invoke(client, "testResponseCode", connection);
+                result = null;
+
+                connection.getHeaderFields();
+                result = headerFields;
+            }
+        };
+
+        client.checkRepositoryStatus();
     }
 
 }

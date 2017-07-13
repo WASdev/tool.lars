@@ -108,12 +108,22 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      *
      * @return This will return void if all is ok but will throw an exception if
      *         there are any problems
-     * @throws RequestFailureException
-     * @throws IOException
+     * @throws RequestFailureException If the response code is not OK or the headers returned are missing
+     *             the count field (which can happen if we hit a URL that returns 200 but is not a valid repository).
+     * @throws IOException If there is a problem with the URL
      */
     @Override
     public void checkRepositoryStatus() throws IOException, RequestFailureException {
-        getAllAssetsMetadata();
+        HttpURLConnection connection = createHeadConnection("/assets");
+        testResponseCode(connection);
+        Map<String, List<String>> results = connection.getHeaderFields();
+        if (results == null) {
+            throw new RequestFailureException(connection.getResponseCode(), "No header returned, this does not look like a valid repository", connection.getURL(), null);
+        }
+        List<String> count = results.get("count");
+        if (count == null) {
+            throw new RequestFailureException(connection.getResponseCode(), "No count returned, this does not look like a valid repository", connection.getURL(), null);
+        }
     }
 
     /**
@@ -124,10 +134,22 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @throws RequestFailureException if the response code is not OK
      */
     public Map<String, List<String>> getAllAssetsMetadata() throws IOException, RequestFailureException {
-        HttpURLConnection connection = createHttpURLConnectionToMassive("/assets");
-        connection.setRequestMethod("HEAD");
+        HttpURLConnection connection = createHeadConnection("/assets");
         testResponseCode(connection);
         return connection.getHeaderFields();
+    }
+
+    /**
+     * Creates a head request connection to the specified path
+     *
+     * @param path The relative URL path
+     * @return An HttpURLConnection to the specified path
+     * @throws IOException If there was a problem creating the connection or URL
+     */
+    private HttpURLConnection createHeadConnection(String path) throws IOException {
+        HttpURLConnection connection = createHttpURLConnectionToMassive(path);
+        connection.setRequestMethod("HEAD");
+        return connection;
     }
 
     /**
@@ -149,8 +171,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
         connection.setDoOutput(true);
         JSONAssetConverter.writeValue(connection.getOutputStream(), asset);
         testResponseCode(connection);
-        Asset returnedAsset = JSONAssetConverter.readValue(connection
-                        .getInputStream());
+        Asset returnedAsset = JSONAssetConverter.readValue(connection.getInputStream());
         returnedAsset = getAsset(returnedAsset.get_id());
         return returnedAsset;
     }
@@ -443,8 +464,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @throws RequestFailureException
      */
     @Override
-    public InputStream getAttachment(final Asset asset, final Attachment attachment)
-                    throws IOException, BadVersionException, RequestFailureException {
+    public InputStream getAttachment(final Asset asset, final Attachment attachment) throws IOException, BadVersionException, RequestFailureException {
 
         // accept license for type CONTENT
         HttpURLConnection connection;
@@ -480,8 +500,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @throws IOException
      * @throws RequestFailureException
      */
-    public Attachment getAttachmentMetaData(String assetId, String attachmentId)
-                    throws IOException, BadVersionException, RequestFailureException {
+    public Attachment getAttachmentMetaData(String assetId, String attachmentId) throws IOException, BadVersionException, RequestFailureException {
         // At the moment can only get all attachments
         Asset ass = getAsset(assetId);
         List<Attachment> allAttachments = ass.getAttachments();
@@ -507,8 +526,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @throws RequestFailureException
      */
     @Override
-    public void deleteAttachment(final String assetId, final String attachmentId)
-                    throws IOException, RequestFailureException {
+    public void deleteAttachment(final String assetId, final String attachmentId) throws IOException, RequestFailureException {
         HttpURLConnection connection = createHttpURLConnectionToMassive("/assets/"
                                                                         + assetId + "/attachments/" + attachmentId);
         connection.setRequestMethod("DELETE");
@@ -589,8 +607,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @throws RequestFailureException
      */
     @Override
-    public void updateState(final String assetId, final StateAction action)
-                    throws IOException, RequestFailureException {
+    public void updateState(final String assetId, final StateAction action) throws IOException, RequestFailureException {
         StateUpdateAction newState = new StateUpdateAction(action);
         HttpURLConnection connection = createHttpURLConnectionToMassive("/assets/"
                                                                         + assetId + "/state");
@@ -613,8 +630,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @return The {@link HttpURLConnection}
      * @throws IOException
      */
-    private HttpURLConnection createHttpURLConnectionToMassive(String path)
-                    throws IOException {
+    private HttpURLConnection createHttpURLConnectionToMassive(String path) throws IOException {
         return createHttpURLConnection(loginInfo.getRepositoryUrl() + path);
     }
 
@@ -630,8 +646,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      *         information added
      * @throws IOException
      */
-    private HttpURLConnection createHttpURLConnection(final String urlString)
-                    throws IOException {
+    private HttpURLConnection createHttpURLConnection(final String urlString) throws IOException {
         // Add the api key, might already have query parameters so check
         final String connectingString = urlString.contains("?") ? "&" : "?";
         return createRealHttpURLConnection(urlString + connectingString + "apiKey=" + loginInfo.getApiKey());
@@ -683,8 +698,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
             if (clientProxy.isHTTPorHTTPS()) {
 
                 LoginInfoClientProxy loginProxy = loginInfo.getProxy();
-                Proxy javaNetProxy = new Proxy(Proxy.Type.HTTP,
-                                new InetSocketAddress(loginProxy.getProxyURL().getHost(), loginProxy.getProxyURL().getPort()));
+                Proxy javaNetProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(loginProxy.getProxyURL().getHost(), loginProxy.getProxyURL().getPort()));
                 connection = (HttpURLConnection) url.openConnection(javaNetProxy);
 
             } else {
@@ -758,8 +772,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      * @throws RequestFailureException
      */
     @Override
-    public Attachment updateAttachment(String assetId, AttachmentSummary summary)
-                    throws IOException, BadVersionException, RequestFailureException {
+    public Attachment updateAttachment(String assetId, AttachmentSummary summary) throws IOException, BadVersionException, RequestFailureException {
         // First find the attachment to update
         Asset ass = getAsset(assetId);
         List<Attachment> attachments = ass.getAttachments();
