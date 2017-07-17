@@ -10,9 +10,9 @@ to install the hosted features into your server.
 
 The LARS documentation is organized into a number of pages:
 
- * [Building LARS] (doc/BUILDING.md)
- * [Installing LARS] (doc/INSTALL.md)
- * [Using `larsClient`] (doc/LARSCLIENT.md)
+ * [Building LARS](doc/BUILDING.md)
+ * [Installing LARS](doc/INSTALL.md)
+ * [Using `larsClient`](doc/LARSCLIENT.md)
 
 The wiki has docs on [using LARS with WebSphere Liberty](https://github.com/WASdev/tool.lars/wiki/Using%20LARS%20with%20WebSphere%20Liberty)
  
@@ -21,8 +21,7 @@ The wiki has docs on [using LARS with WebSphere Liberty](https://github.com/WASd
 
 ## Getting started
 
-If you don't wish to build LARS from source, follow the [Installing LARS]
-(doc/INSTALL.md) instructions to install the latest binary release from the [Liberty Repository] (http://www.wasdev.net/downloads), and perform the necessary `server.xml` customization steps.
+If you don't wish to build LARS from source, follow the [Installing LARS](doc/INSTALL.md) instructions to install the latest binary release from the [Liberty Repository](http://www.wasdev.net/downloads), and perform the necessary `server.xml` customization steps.
 
 Start mongodb
 
