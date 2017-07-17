@@ -867,6 +867,17 @@ public class ApiTest {
         assertEquals("Unexpected number of assets retrieved", 1, assets6.size());
         assertEquals("The wrong asset was retrieved.", testAsset3.get_id(), assets6.get(0).get_id());
 
+        // Test what assets are returned if we set a filter to an empty value
+        // Assets should only be returned if they have the relevant property
+        // set to an empty value.
+        // This is a change from the massive behaviour which would have returned
+        // all assets
+        AssetList blankFilterList = repository.getAllAssets("foo=");
+        assertEquals("Unexpected number of assets retrieved", 0, blankFilterList.size());
+        addLittleAsset("foo", "");
+        AssetList assets7 = repository.getAllAssets("foo=");
+        assertEquals("Unexpected number of assets retrieved", 1, assets7.size());
+
     }
 
     @Test
