@@ -22,6 +22,7 @@ import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryBadDataException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceNoConnectionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
@@ -125,8 +126,8 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
         } else {
             // First check assert itself for changes
             switch (resource.updateRequired(firstMatch)) {
-            // This strategy will add a new asset instead of overwriting an existing one
-            // Update should fall through to add
+                // This strategy will add a new asset instead of overwriting an existing one
+                // Update should fall through to add
                 case UPDATE:
                     deleteOriginal = true;
                 case ADD:
@@ -192,8 +193,7 @@ public class AddThenDeleteStrategy extends AddNewStrategy {
     }
 
     @Override
-    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException,
-                    RepositoryBackendException, RepositoryBadDataException {
+    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException, RepositoryBackendException, RepositoryBadDataException, RepositoryResourceNoConnectionException {
         if (_matchingResources != null) {
             return _matchingResources;
         } else {

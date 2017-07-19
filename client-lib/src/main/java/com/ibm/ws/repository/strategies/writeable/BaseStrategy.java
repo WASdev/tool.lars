@@ -21,6 +21,7 @@ import java.util.List;
 import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryBadDataException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceNoConnectionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 
@@ -93,10 +94,14 @@ public abstract class BaseStrategy implements UploadStrategy {
 
     /**
      * Delegates to the resource.findMatchingResource, see {@link RepositoryResourceImpl#findMatchingResource()}
+     * 
+     * @throws RepositoryBackendException If there was a problem with tbe backend
+     * @throws RepositoryBadDataException If while checking for matching assets we find one with bad version data
+     * @throws RepositoryResourceNoConnectionException If no connection has been specified
+     * @throws RepositoryResourceValidationException If the resource fails a validation check
      */
     @Override
-    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException,
-                    RepositoryBackendException, RepositoryBadDataException {
+    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException, RepositoryBackendException, RepositoryBadDataException, RepositoryResourceNoConnectionException {
         return resource.findMatchingResource();
     }
 

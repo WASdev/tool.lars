@@ -31,6 +31,7 @@ import com.ibm.ws.repository.common.enums.Visibility;
 import com.ibm.ws.repository.connections.RepositoryConnection;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceNoConnectionException;
 import com.ibm.ws.repository.resources.RepositoryResource;
 import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 import com.ibm.ws.repository.transport.model.AppliesToFilterInfo;
@@ -48,7 +49,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /**
      * Constructor - requires connection info
-     * 
+     *
      */
     public EsaResourceImpl(RepositoryConnection repoConnection) {
         this(repoConnection, null);
@@ -76,8 +77,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
     /** {@inheritDoc} */
     @Override
     public String getProvideFeature() {
-        Collection<String> provideFeatures = _asset.getWlpInformation()
-                        .getProvideFeature();
+        Collection<String> provideFeatures = _asset.getWlpInformation().getProvideFeature();
         if (provideFeatures == null || provideFeatures.isEmpty()) {
             return null;
         } else {
@@ -106,7 +106,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
                 }
 
                 temp += "&type=";
-                temp += getType().getValue(); // get the long name of the Type 
+                temp += getType().getValue(); // get the long name of the Type
                 query.add(temp);
             }
         }
@@ -115,7 +115,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /**
      * Uses the filter information to return the first version number
-     * 
+     *
      * @return the first version number
      */
     private String findVersion() {
@@ -363,14 +363,14 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
     }
 
     @Override
-    protected Collection<? extends RepositoryResource> getPotentiallyMatchingResources() throws RepositoryBackendException {
+    protected Collection<? extends RepositoryResource> getPotentiallyMatchingResources() throws RepositoryBackendException, RepositoryResourceNoConnectionException {
         Collection<RepositoryResource> resources;
 
         if (getProvideFeature() != null) {
-            resources = _repoConnection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, getType()),
-                                                             FilterPredicate.areEqual(FilterableAttribute.SYMBOLIC_NAME, getProvideFeature()));
+            resources = getAndCheckRepositoryConnection().getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, getType()),
+                                                                               FilterPredicate.areEqual(FilterableAttribute.SYMBOLIC_NAME, getProvideFeature()));
         } else {
-            resources = _repoConnection.getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, getType()));
+            resources = getAndCheckRepositoryConnection().getMatchingResources(FilterPredicate.areEqual(FilterableAttribute.TYPE, getType()));
         }
 
         return resources;
@@ -399,7 +399,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /**
      * Returns the Enables {@link Links} for this feature
-     * 
+     *
      * @return
      */
     public void setLinks(Collection<Link> links) {
@@ -413,7 +413,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /**
      * Set the Enables {@link Links} for this feature
-     * 
+     *
      * @return
      */
     public Collection<Link> getLinks() {
@@ -481,7 +481,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /**
      * Returns the {@link Visibility} for this feature
-     * 
+     *
      * @return
      */
     @Override
@@ -552,7 +552,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /**
      * Get the {@link DisplayPolicy}
-     * 
+     *
      * @return {@link DisplayPolicy} in use
      */
     @Override
@@ -607,7 +607,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
      * <code>JavaSEVersionRequirements</code> contains the set of the Require-Capability
      * headers, i.e. one from each bundle which specifies the header.
      * All fields in the version object may be null, if no requirement was specified in the bundles.
-     * 
+     *
      * @return
      */
     public JavaSEVersionRequirements getJavaSEVersionRequirements() {

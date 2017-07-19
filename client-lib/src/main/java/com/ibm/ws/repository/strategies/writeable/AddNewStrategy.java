@@ -21,6 +21,7 @@ import com.ibm.ws.repository.common.enums.State;
 import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryBadDataException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceNoConnectionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl.AttachmentResourceImpl;
@@ -38,7 +39,7 @@ public class AddNewStrategy extends BaseStrategy {
 
     /**
      * Sets the desired state of the asset after uploading it
-     * 
+     *
      * @param desiredStateIfMatchingFound This is not used by this strategy but can be used by derived strategies
      * @param desiredStateIfNoMatchingFound Set the resource to this state after uploading. This behaviour can
      *            be changed by derived classes
@@ -68,7 +69,7 @@ public class AddNewStrategy extends BaseStrategy {
 
     /**
      * Get the state that the resource being added should be set to once it's been uploaded
-     * 
+     *
      * @param matchingResource
      * @return
      */
@@ -77,8 +78,7 @@ public class AddNewStrategy extends BaseStrategy {
     }
 
     @Override
-    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException,
-                    RepositoryBackendException, RepositoryBadDataException {
+    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException, RepositoryBackendException, RepositoryBadDataException, RepositoryResourceNoConnectionException {
         return null;
     }
 }
