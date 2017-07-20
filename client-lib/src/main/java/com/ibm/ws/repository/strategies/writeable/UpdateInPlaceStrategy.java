@@ -23,6 +23,7 @@ import com.ibm.ws.repository.exceptions.RepositoryBackendException;
 import com.ibm.ws.repository.exceptions.RepositoryBadDataException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceNoConnectionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.internal.RepositoryResourceImpl;
@@ -80,8 +81,7 @@ public class UpdateInPlaceStrategy extends BaseStrategy {
     }
 
     @Override
-    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException,
-                    RepositoryBackendException, RepositoryBadDataException {
+    public List<RepositoryResourceImpl> findMatchingResources(RepositoryResourceImpl resource) throws RepositoryResourceValidationException, RepositoryBackendException, RepositoryBadDataException, RepositoryResourceNoConnectionException {
         if (_matchingResources != null) {
             return _matchingResources;
         } else {
@@ -96,8 +96,7 @@ public class UpdateInPlaceStrategy extends BaseStrategy {
      * @throws RepositoryBackendException
      */
     @Override
-    public void uploadAsset(RepositoryResourceImpl resource, List<RepositoryResourceImpl> matchingResources)
-                    throws RepositoryBackendException, RepositoryResourceException {
+    public void uploadAsset(RepositoryResourceImpl resource, List<RepositoryResourceImpl> matchingResources) throws RepositoryBackendException, RepositoryResourceException {
         RepositoryResourceImpl firstMatch = (matchingResources == null || matchingResources.isEmpty()) ? null : matchingResources.get(0);
         State targetState = calculateTargetState(firstMatch);
 
@@ -149,9 +148,8 @@ public class UpdateInPlaceStrategy extends BaseStrategy {
      * @throws RepositoryBadDataException
      * @throws RepositoryResourceCreationException
      */
-    public void uploadAttachment(RepositoryResourceImpl resource, AttachmentResourceImpl attachment, RepositoryResourceImpl matchingResource)
-                    throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryResourceUpdateException,
-                    RepositoryBackendException, RepositoryResourceException {
+    public void uploadAttachment(RepositoryResourceImpl resource, AttachmentResourceImpl attachment,
+                                 RepositoryResourceImpl matchingResource) throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryResourceUpdateException, RepositoryBackendException, RepositoryResourceException {
         switch (attachment.updateRequired(matchingResource)) {
             case ADD:
                 resource.addAttachment(attachment);

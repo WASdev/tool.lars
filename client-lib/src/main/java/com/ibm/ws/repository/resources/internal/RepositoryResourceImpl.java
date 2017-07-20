@@ -69,6 +69,7 @@ import com.ibm.ws.repository.exceptions.RepositoryResourceCreationException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceDeletionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceLifecycleException;
+import com.ibm.ws.repository.exceptions.RepositoryResourceNoConnectionException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceUpdateException;
 import com.ibm.ws.repository.exceptions.RepositoryResourceValidationException;
 import com.ibm.ws.repository.resources.AttachmentResource;
@@ -125,7 +126,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    protected RepositoryConnection _repoConnection;
+    private RepositoryConnection _repoConnection;
 
     /**
      * A match result enum used for checking if a resource matches a product definition.
@@ -161,10 +162,16 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         if (_client instanceof RepositoryWriteableClient) {
             return (RepositoryWriteableClient) _client;
         } else {
-            throw new RepositoryOperationNotSupportedException("The backend does not support write operations", _repoConnection);
+            throw new RepositoryOperationNotSupportedException("The backend does not support write operations or no connection has been specified", getRepositoryConnection());
         }
     }
 
+    /**
+     *
+     * @param repoConnection This can be set to null if the resource is being created. The connection can be set later by the {@link #setRepositoryConnection}
+     *            method. Note that if no connection has been set and an operation is attempted that requires a connection a {@link RepositoryResourceNoConnectionException}
+     *            will be thrown
+     */
     public RepositoryResourceImpl(RepositoryConnection repoConnection) {
         this(repoConnection, null);
     }
@@ -205,9 +212,9 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
 
         T result;
         if (null == getType()) {
-            result = (T) createTestResource(_repoConnection);
+            result = (T) createTestResource(getRepositoryConnection());
         } else {
-            result = ResourceFactory.getInstance().createResource(getType(), _repoConnection, null);
+            result = ResourceFactory.getInstance().createResource(getType(), getRepositoryConnection(), null);
         }
         return result;
     }
@@ -223,11 +230,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             _asset = _client.getAsset(_asset.get_id());
             parseAttachmentsInAsset();
         } catch (IOException ioe) {
-            throw new RepositoryBackendIOException("Unable to obtain asset from massive " + _asset.get_id(), ioe, _repoConnection);
+            throw new RepositoryBackendIOException("Unable to obtain asset from massive " + _asset.get_id(), ioe, getRepositoryConnection());
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version in asset ", _asset.get_id(), bvx);
         } catch (RequestFailureException bfe) {
-            throw new RepositoryBackendRequestFailureException(bfe, _repoConnection);
+            throw new RepositoryBackendRequestFailureException(bfe, getRepositoryConnection());
         }
     }
 
@@ -334,6 +341,21 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     /** {@inheritDoc} */
     @Override
     public RepositoryConnection getRepositoryConnection() {
+        return _repoConnection;
+    }
+
+    /**
+     * Gets the connection associated with the connection and throws a RepositoryResourceNoConnectionException
+     * if no connection has been specified
+     *
+     * @return The connection associated with this resource
+     * @throws RepositoryResourceNoConnectionException If no connection has been specified
+     */
+    public RepositoryConnection getAndCheckRepositoryConnection() throws RepositoryResourceNoConnectionException {
+        if (_repoConnection == null) {
+            // In order to have an ID then we should have already been stored so we should have a connection but just in case...
+            throw new RepositoryResourceNoConnectionException("No connection has been specified for the resource when attemping to communicte with the repository", getId());
+        }
         return _repoConnection;
     }
 
@@ -582,8 +604,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     public AttachmentResourceWritable addContent(File file, String name) throws RepositoryException {
         if (_contentAttached) {
             throw new RepositoryResourceValidationException("addContent(" + file.getAbsolutePath()
-                                                            + ") called for resource " + getName() + " which all ready has a CONTENT attachment",
-                            getId());
+                                                            + ") called for resource " + getName() + " which all ready has a CONTENT attachment", getId());
         }
         _contentAttached = true;
         AttachmentResourceWritable at = addAttachment(file, AttachmentType.CONTENT, name);
@@ -601,8 +622,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     public AttachmentResourceWritable addContent(File file, String name, String url, AttachmentLinkType linkType) throws RepositoryException {
         if (_contentAttached) {
             throw new RepositoryResourceValidationException("addContent(" + file.getAbsolutePath()
-                                                            + ") called for resource " + getName() + " which all ready has a CONTENT attachment",
-                            getId());
+                                                            + ") called for resource " + getName() + " which all ready has a CONTENT attachment", getId());
         }
         _contentAttached = true;
         AttachmentResourceWritable at = addAttachment(file, AttachmentType.CONTENT, name, url, linkType);
@@ -692,7 +712,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             // read all the resource info back and we just want the attachments
             // Might just be an asset that hasn't been uploaded yet and has no attachments
             if (getId() != null) {
-                RepositoryResourceImpl mr = (RepositoryResourceImpl) _repoConnection.getResource(getId());
+                RepositoryResourceImpl mr = (RepositoryResourceImpl) getAndCheckRepositoryConnection().getResource(getId());
                 readAttachmentsFromAsset(mr._asset);
 
                 // Update our backing asset with the attachments read in
@@ -925,7 +945,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         return matchingData;
     }
 
-    protected List<RepositoryResourceImpl> performMatching() throws BadVersionException, RequestFailureException, RepositoryBadDataException, RepositoryBackendException {
+    protected List<RepositoryResourceImpl> performMatching() throws BadVersionException, RequestFailureException, RepositoryBadDataException, RepositoryBackendException, RepositoryResourceNoConnectionException {
         List<RepositoryResourceImpl> matching = new ArrayList<RepositoryResourceImpl>();
 
         @SuppressWarnings("unchecked")
@@ -935,7 +955,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         for (RepositoryResourceImpl res : resources) {
             if (createMatchingData().equals(res.createMatchingData())) {
                 // found an asset on massive - get the full asset.
-                resource = (RepositoryResourceImpl) _repoConnection.getResource(res.getId());
+                resource = (RepositoryResourceImpl) getAndCheckRepositoryConnection().getResource(res.getId());
                 matching.add(resource);
             }
         }
@@ -947,9 +967,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
      * Returns a superset of resources to those returned by {@link #performMatching()}
      *
      * This allows us to do some type-specific pre-filtering of the resources on the server.
+     *
+     * @throws RepositoryResourceNoConnectionException If no connection has been specified for the resource
+     * @throws RepositoryBackendException If there was a problem talking to the backend
      */
-    protected Collection<? extends RepositoryResource> getPotentiallyMatchingResources() throws RepositoryBackendException {
-        return _repoConnection.getAllResourcesWithDupes(getType());
+    protected Collection<? extends RepositoryResource> getPotentiallyMatchingResources() throws RepositoryBackendException, RepositoryResourceNoConnectionException {
+        return getAndCheckRepositoryConnection().getAllResourcesWithDupes(getType());
     }
 
     /**
@@ -991,10 +1014,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
      *
      * @return A list of resources that were found in massive which has the same name, provider and type as this
      *         resource, an empty list otherwise.
-     * @throws RepositoryResourceValidationException
-     * @throws RepositoryBackendException
+     * @throws RepositoryResourceValidationException If the resource fails a validation check
+     * @throws RepositoryBackendException If there was a problem talking to the backend
+     * @throws RepositoryResourceNoConnectionException If no connection has been specified
      */
-    public List<RepositoryResourceImpl> findMatchingResource() throws RepositoryResourceValidationException, RepositoryBackendException, RepositoryBadDataException {
+    public List<RepositoryResourceImpl> findMatchingResource() throws RepositoryResourceValidationException, RepositoryBackendException, RepositoryBadDataException, RepositoryResourceNoConnectionException {
         List<RepositoryResourceImpl> matchingRes;
         try {
             matchingRes = performMatching();
@@ -1008,7 +1032,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("BadDataException accessing asset", getId(), bvx);
         } catch (RequestFailureException bfe) {
-            throw new RepositoryBackendRequestFailureException(bfe, _repoConnection);
+            throw new RepositoryBackendRequestFailureException(bfe, getRepositoryConnection());
         }
         return matchingRes;
     }
@@ -1079,7 +1103,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         try {
             _asset = getWritableClient().addAsset(_asset);
         } catch (IOException ioe) {
-            throw new RepositoryBackendIOException("Failed to add asset " + getId(), ioe, _repoConnection);
+            throw new RepositoryBackendIOException("Failed to add asset " + getId(), ioe, getRepositoryConnection());
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when adding asset", getId(), bvx);
         } catch (RequestFailureException rfe) {
@@ -1093,12 +1117,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
     }
 
-    public void updateAsset() throws RepositoryResourceUpdateException,
-                    RepositoryResourceValidationException, RepositoryBadDataException, RepositoryBackendIOException {
+    public void updateAsset() throws RepositoryResourceUpdateException, RepositoryResourceValidationException, RepositoryBadDataException, RepositoryBackendIOException {
         try {
             _asset = getWritableClient().updateAsset(_asset);
         } catch (IOException ioe) {
-            throw new RepositoryBackendIOException("Failed to update asset " + getId(), ioe, _repoConnection);
+            throw new RepositoryBackendIOException("Failed to update asset " + getId(), ioe, getRepositoryConnection());
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when updating asset", getId(), bvx);
         } catch (RequestFailureException e) {
@@ -1121,15 +1144,14 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         _asset = from._asset;
     }
 
-    public void addAttachment(AttachmentResourceImpl at) throws RepositoryResourceCreationException,
-                    RepositoryBadDataException, RepositoryResourceUpdateException, RepositoryBackendIOException {
+    public void addAttachment(AttachmentResourceImpl at) throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryResourceUpdateException, RepositoryBackendIOException {
         // ensure the attachment does not have an id - if we read a resource back from massive, change it, then re-upload it
         // then we need to remove the id as massive won't allow us to push an asset into massive with an id
         at.resetId();
         try {
             getWritableClient().addAttachment(getId(), at);
         } catch (IOException e) {
-            throw new RepositoryBackendIOException("Failed to add the attachment" + getId(), e, _repoConnection);
+            throw new RepositoryBackendIOException("Failed to add the attachment" + getId(), e, getRepositoryConnection());
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when adding attachment", getId(), bvx);
         } catch (RequestFailureException rfe) {
@@ -1141,12 +1163,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
     }
 
-    public void updateAttachment(AttachmentResourceImpl at) throws RepositoryResourceUpdateException,
-                    RepositoryBadDataException, RepositoryBackendIOException {
+    public void updateAttachment(AttachmentResourceImpl at) throws RepositoryResourceUpdateException, RepositoryBadDataException, RepositoryBackendIOException {
         try {
             getWritableClient().updateAttachment(getId(), at);
         } catch (IOException ioe) {
-            throw new RepositoryBackendIOException("Failed to update the attachment " + this.getId(), ioe, _repoConnection);
+            throw new RepositoryBackendIOException("Failed to update the attachment " + this.getId(), ioe, getRepositoryConnection());
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when updating attachment", this.getId(), bvx);
         } catch (RequestFailureException e) {
@@ -1213,8 +1234,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                     at.setFile(tempFile);
                 } catch (IOException e) {
                     // tried twice, give up :(
-                    throw new RepositoryBackendIOException("Exception caught while obtaining attachments for resource " + getName(),
-                                    e, _repoConnection);
+                    throw new RepositoryBackendIOException("Exception caught while obtaining attachments for resource " + getName(), e, getRepositoryConnection());
                 }
             }
 
@@ -1234,10 +1254,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                 throw new RepositoryBackendRequestFailureException(cause, null);
             }
         } else {
-            throw new RepositoryResourceLifecycleException(action + " not supported for assets in " + s + " state",
-                            _asset.get_id(),
-                            s,
-                            action);
+            throw new RepositoryResourceLifecycleException(action + " not supported for assets in " + s + " state", _asset.get_id(), s, action);
         }
         refreshFromMassive();
     }
@@ -1278,8 +1295,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             performLifeCycle(nextAction);
             if (counter >= 10) {
                 throw new RepositoryResourceLifecycleException("Unable to move to state " + state +
-                                                               " after 10 state transistion attempts. Resource left in state " + getState(),
-                                getId(), getState(), nextAction);
+                                                               " after 10 state transistion attempts. Resource left in state " + getState(), getId(), getState(), nextAction);
             }
         }
     }
@@ -1301,8 +1317,8 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
     @Override
     public String getAssetURL() {
         String url = null;
-        if (_repoConnection instanceof RestRepositoryConnection) {
-            RestRepositoryConnection lie = (RestRepositoryConnection) _repoConnection;
+        if (getRepositoryConnection() instanceof RestRepositoryConnection) {
+            RestRepositoryConnection lie = (RestRepositoryConnection) getRepositoryConnection();
             url = lie.getAssetURL(getId());
         }
         return url;
@@ -1677,11 +1693,11 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             try {
                 return _client.getAttachment(_asset, _attachment);
             } catch (IOException e) {
-                throw new RepositoryBackendIOException("Failed to get read attachment", e, _repoConnection);
+                throw new RepositoryBackendIOException("Failed to get read attachment", e, getRepositoryConnection());
             } catch (BadVersionException e) {
                 throw new RepositoryBadDataException("BadVersion reading attachment", getId(), e);
             } catch (RequestFailureException e) {
-                throw new RepositoryBackendRequestFailureException(e, _repoConnection);
+                throw new RepositoryBackendRequestFailureException(e, getRepositoryConnection());
             }
         }
 
@@ -1714,12 +1730,14 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                         _contentAttached = false;
                     }
                 } catch (IOException e) {
-                    throw new RepositoryBackendIOException("Failed to delete the attachment " + getId() + " in asset " + RepositoryResourceImpl.this.getId(), e,
-                                    RepositoryResourceImpl.this.getRepositoryConnection());
+                    throw new RepositoryBackendIOException("Failed to delete the attachment " + getId() + " in asset "
+                                                           + RepositoryResourceImpl.this.getId(), e, RepositoryResourceImpl.this.getRepositoryConnection());
                 } catch (RequestFailureException e) {
-                    throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset " + RepositoryResourceImpl.this.getId(), this.getId(), e);
+                    throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset "
+                                                                  + RepositoryResourceImpl.this.getId(), this.getId(), e);
                 } catch (RepositoryOperationNotSupportedException rbnse) {
-                    throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset " + RepositoryResourceImpl.this.getId(), this.getId(), rbnse);
+                    throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset "
+                                                                  + RepositoryResourceImpl.this.getId(), this.getId(), rbnse);
                 }
             }
         }
@@ -1823,19 +1841,18 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
          * @throws RepositoryBackendException
          * @throws RepositoryBadDataException
          */
-        public void downloadToFile(final File fileToWriteTo) throws RepositoryBackendException,
-                        IOException, RepositoryBadDataException {
+        public void downloadToFile(final File fileToWriteTo) throws RepositoryBackendException, IOException, RepositoryBadDataException {
             FileOutputStream fos = null;
             InputStream is = getInputStream();
             try {
                 try {
                     fos = AccessController.doPrivileged(
-                                    new PrivilegedExceptionAction<FileOutputStream>() {
-                                        @Override
-                                        public FileOutputStream run() throws FileNotFoundException {
-                                            return new FileOutputStream(fileToWriteTo);
-                                        }
-                                    });
+                                                        new PrivilegedExceptionAction<FileOutputStream>() {
+                                                            @Override
+                                                            public FileOutputStream run() throws FileNotFoundException {
+                                                                return new FileOutputStream(fileToWriteTo);
+                                                            }
+                                                        });
                 } catch (PrivilegedActionException e) {
                     // Creating a FileInputStream can only return a FileNotFoundException
                     throw (FileNotFoundException) e.getCause();
@@ -1878,12 +1895,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             InputStream is = null;
             try {
                 is = AccessController.doPrivileged(
-                                new PrivilegedExceptionAction<FileInputStream>() {
-                                    @Override
-                                    public FileInputStream run() throws FileNotFoundException {
-                                        return new FileInputStream(_file);
-                                    }
-                                });
+                                                   new PrivilegedExceptionAction<FileInputStream>() {
+                                                       @Override
+                                                       public FileInputStream run() throws FileNotFoundException {
+                                                           return new FileInputStream(_file);
+                                                       }
+                                                   });
                 return RepositoryResourceImpl.getCRC(is);
             } catch (PrivilegedActionException e) {
                 // Creating a FileInputStream can only return a FileNotFoundException or NPE
