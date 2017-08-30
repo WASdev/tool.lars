@@ -104,6 +104,8 @@ import com.ibm.ws.repository.transport.model.WlpInformation;
  */
 public abstract class RepositoryResourceImpl implements RepositoryResourceWritable {
 
+    private static final int SERVER_ERROR = 500;
+
     // The backing asset for this resource
     protected Asset _asset;
 
@@ -1096,7 +1098,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         _asset = fromResource._asset;
     }
 
-    public void addAsset() throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryBackendIOException {
+    public void addAsset() throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryBackendIOException, RepositoryBackendRequestFailureException {
         // ensure the resource does not have an id - if we read a resource back from massive, change it, then re-upload it
         // then we need to remove the id as massive won't allow us to push an asset into massive with an id
         resetId();
@@ -1107,7 +1109,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when adding asset", getId(), bvx);
         } catch (RequestFailureException rfe) {
-            throw new RepositoryResourceCreationException("Failed to add the asset", getId(), rfe);
+            if (rfe.getResponseCode() == SERVER_ERROR) {
+                // Treat this is a backend exception as the caller may want to retry
+                throw new RepositoryBackendRequestFailureException(rfe, getRepositoryConnection());
+            } else {
+                throw new RepositoryResourceCreationException("Failed to add the asset", getId(), rfe);
+            }
         } catch (SecurityException se) {
             throw new RepositoryResourceCreationException("Failed to add the asset", getId(), se);
         } catch (RepositoryOperationNotSupportedException rbnse) {
@@ -1117,7 +1124,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
     }
 
-    public void updateAsset() throws RepositoryResourceUpdateException, RepositoryResourceValidationException, RepositoryBadDataException, RepositoryBackendIOException {
+    public void updateAsset() throws RepositoryResourceUpdateException, RepositoryResourceValidationException, RepositoryBadDataException, RepositoryBackendIOException, RepositoryBackendRequestFailureException {
         try {
             _asset = getWritableClient().updateAsset(_asset);
         } catch (IOException ioe) {
@@ -1125,7 +1132,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when updating asset", getId(), bvx);
         } catch (RequestFailureException e) {
-            throw new RepositoryResourceUpdateException("Failed to update the attachment", getId(), e);
+            if (e.getResponseCode() == SERVER_ERROR) {
+                // Rethrow as a backend exception as the caller may want to retry
+                throw new RepositoryBackendRequestFailureException(e, getRepositoryConnection());
+            } else {
+                throw new RepositoryResourceUpdateException("Failed to update the attachment", getId(), e);
+            }
         } catch (SecurityException se) {
             throw new RepositoryResourceUpdateException("Failed to update the asset", getId(), se);
         } catch (RepositoryOperationNotSupportedException rbnse) {
@@ -1144,7 +1156,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         _asset = from._asset;
     }
 
-    public void addAttachment(AttachmentResourceImpl at) throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryResourceUpdateException, RepositoryBackendIOException {
+    public void addAttachment(AttachmentResourceImpl at) throws RepositoryResourceCreationException, RepositoryBadDataException, RepositoryResourceUpdateException, RepositoryBackendIOException, RepositoryBackendRequestFailureException {
         // ensure the attachment does not have an id - if we read a resource back from massive, change it, then re-upload it
         // then we need to remove the id as massive won't allow us to push an asset into massive with an id
         at.resetId();
@@ -1155,7 +1167,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when adding attachment", getId(), bvx);
         } catch (RequestFailureException rfe) {
-            throw new RepositoryResourceCreationException("Failed to add the attachment", getId(), rfe);
+            if (rfe.getResponseCode() == SERVER_ERROR) {
+                // Re-throw as a backend exception as the caller may want to retry
+                throw new RepositoryBackendRequestFailureException(rfe, getRepositoryConnection());
+            } else {
+                throw new RepositoryResourceCreationException("Failed to add the attachment", getId(), rfe);
+            }
         } catch (SecurityException se) {
             throw new RepositoryResourceUpdateException("Failed to add the attachment", getId(), se);
         } catch (RepositoryOperationNotSupportedException rbnse) {
@@ -1163,7 +1180,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
     }
 
-    public void updateAttachment(AttachmentResourceImpl at) throws RepositoryResourceUpdateException, RepositoryBadDataException, RepositoryBackendIOException {
+    public void updateAttachment(AttachmentResourceImpl at) throws RepositoryResourceUpdateException, RepositoryBadDataException, RepositoryBackendIOException, RepositoryBackendRequestFailureException {
         try {
             getWritableClient().updateAttachment(getId(), at);
         } catch (IOException ioe) {
@@ -1171,7 +1188,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         } catch (BadVersionException bvx) {
             throw new RepositoryBadDataException("Bad version when updating attachment", this.getId(), bvx);
         } catch (RequestFailureException e) {
-            throw new RepositoryResourceUpdateException("Failed to update the attachment", this.getId(), e);
+            if (e.getResponseCode() == SERVER_ERROR) {
+                // Re-throw as a backend exception as the caller may want to retry
+                throw new RepositoryBackendRequestFailureException(e, getRepositoryConnection());
+            } else {
+                throw new RepositoryResourceUpdateException("Failed to update the attachment", this.getId(), e);
+            }
         } catch (SecurityException se) {
             throw new RepositoryResourceUpdateException("Failed to update the attachment", this.getId(), se);
         } catch (RepositoryOperationNotSupportedException rbnse) {
@@ -1300,15 +1322,19 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
     }
 
-    /** {@inheritDoc} */
     @Override
-    public void delete() throws RepositoryResourceDeletionException, RepositoryBackendIOException {
+    public void delete() throws RepositoryResourceDeletionException, RepositoryBackendIOException, RepositoryBackendRequestFailureException {
         try {
             getWritableClient().deleteAssetAndAttachments(_asset.get_id());
         } catch (IOException ioe) {
             throw new RepositoryBackendIOException("Failed to delete resource " + this.getId(), ioe, this.getRepositoryConnection());
         } catch (RequestFailureException e) {
-            throw new RepositoryResourceDeletionException("Failed to delete resource", this.getId(), e);
+            if (e.getResponseCode() == SERVER_ERROR) {
+                // Re-throw as a backend exception as the caller may want to retry
+                throw new RepositoryBackendRequestFailureException(e, getRepositoryConnection());
+            } else {
+                throw new RepositoryResourceDeletionException("Failed to delete resource", this.getId(), e);
+            }
         } catch (RepositoryOperationNotSupportedException e) {
             throw new RepositoryResourceDeletionException("Failed to delete resource", this.getId(), e);
         }
@@ -1715,11 +1741,9 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         }
 
         /**
-         * Deletes this attachment from massive
-         *
-         * @throws RepositoryResourceException
+         * Deletes this attachment from the repository
          */
-        public void deleteNow() throws RepositoryResourceDeletionException, RepositoryBackendIOException {
+        public void deleteNow() throws RepositoryResourceDeletionException, RepositoryBackendIOException, RepositoryBackendRequestFailureException {
             synchronized (RepositoryResourceImpl.this) {
                 try {
                     if (getId() != null) {
@@ -1733,8 +1757,13 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
                     throw new RepositoryBackendIOException("Failed to delete the attachment " + getId() + " in asset "
                                                            + RepositoryResourceImpl.this.getId(), e, RepositoryResourceImpl.this.getRepositoryConnection());
                 } catch (RequestFailureException e) {
-                    throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset "
-                                                                  + RepositoryResourceImpl.this.getId(), this.getId(), e);
+                    if (e.getResponseCode() == SERVER_ERROR) {
+                        // re-throw as backend exception as the caller may want to retry
+                        throw new RepositoryBackendRequestFailureException(e, getRepositoryConnection());
+                    } else {
+                        throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset "
+                                                                      + RepositoryResourceImpl.this.getId(), this.getId(), e);
+                    }
                 } catch (RepositoryOperationNotSupportedException rbnse) {
                     throw new RepositoryResourceDeletionException("Failed to delete the attachment " + getId() + " in asset "
                                                                   + RepositoryResourceImpl.this.getId(), this.getId(), rbnse);
