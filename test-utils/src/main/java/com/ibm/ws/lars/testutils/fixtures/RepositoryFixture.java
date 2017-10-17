@@ -125,6 +125,15 @@ public abstract class RepositoryFixture implements TestRule {
     }
 
     /**
+     * Returns true if this repository supports attachments
+     * 
+     * @return
+     */
+    public boolean isAttachmentSupported() {
+        return true;
+    }
+
+    /**
      * Returns the root URL where hosted testfiles can be found
      * <p>
      * Not applicable to all repository types

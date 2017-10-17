@@ -21,7 +21,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.ibm.ws.repository.common.enums.FilterableAttribute;
 import com.ibm.ws.repository.common.enums.ResourceType;
@@ -50,7 +52,8 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
      * @throws RequestFailureException
      */
     @Override
-    public Collection<Asset> getAssets(final Collection<ResourceType> types, final Collection<String> productIds, final Visibility visibility,final Collection<String> productVersions) throws IOException, RequestFailureException {
+    public Collection<Asset> getAssets(final Collection<ResourceType> types, final Collection<String> productIds, final Visibility visibility,
+                                       final Collection<String> productVersions) throws IOException, RequestFailureException {
         return getFilteredAssets(types, productIds, visibility, productVersions, false);
     }
 
@@ -67,7 +70,8 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
      * @throws RequestFailureException
      */
     @Override
-    public Collection<Asset> getAssetsWithUnboundedMaxVersion(final Collection<ResourceType> types, final Collection<String> rightProductIds, final Visibility visibility) throws IOException, RequestFailureException {
+    public Collection<Asset> getAssetsWithUnboundedMaxVersion(final Collection<ResourceType> types, final Collection<String> rightProductIds,
+                                                              final Visibility visibility) throws IOException, RequestFailureException {
         return getFilteredAssets(types, rightProductIds, visibility, null, true);
     }
 
@@ -91,6 +95,57 @@ public abstract class AbstractRepositoryClient implements RepositoryReadableClie
             types = Collections.singleton(type);
         }
         return getFilteredAssets(types, null, null, null, false);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Collection<Asset> getFilteredAssets(final Map<FilterableAttribute, Collection<String>> filters) throws IOException, RequestFailureException {
+        // Were any filters defined?
+        if (filters == null || allFiltersAreEmpty(filters)) {
+            return getAllAssets();
+        }
+
+        Collection<Asset> allAssets = getAllAssets();
+        Collection<Asset> filtered = new ArrayList<Asset>();
+
+        assetLoop: for (Asset asset : allAssets) {
+            filterAttribLoop: for (Entry<FilterableAttribute, Collection<String>> entry : filters.entrySet()) {
+                FilterableAttribute attrib = entry.getKey();
+                // List of values we are looking for
+                Collection<String> values = entry.getValue();
+                // List of values in the asset
+                Collection<String> assetValues = getValues(attrib, asset);
+
+                if (values != null && values.size() != 0) {
+                    // Check each required value and see if the asset has it
+                    for (String filterValue : values) {
+                        // if we find a match stop checking this attribute and move to next attribute
+                        if (assetValues.contains(filterValue)) {
+                            continue filterAttribLoop;
+                        }
+                    }
+                    // We never found a match for this attribute so move to next asset
+                    continue assetLoop;
+                }
+            }
+            filtered.add(asset);
+        }
+
+        return filtered;
+    }
+
+    @Override
+    public List<Asset> findAssets(final String searchString, final Collection<ResourceType> types) throws IOException, RequestFailureException {
+        Collection<Asset> assets = getAssets(types, null, null, null);
+        List<Asset> foundAssets = new ArrayList<Asset>();
+        for (Asset ass : assets) {
+            if ((ass.getName() != null && ass.getName().contains(searchString))
+                || (ass.getDescription() != null && ass.getDescription().contains(searchString))
+                || (ass.getShortDescription() != null && ass.getShortDescription().contains(searchString))) {
+                foundAssets.add(ass);
+            }
+        }
+        return foundAssets;
     }
 
     /**
