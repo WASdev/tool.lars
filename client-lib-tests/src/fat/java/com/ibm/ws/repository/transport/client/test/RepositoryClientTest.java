@@ -51,6 +51,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.ibm.ws.lars.testutils.fixtures.FileRepositoryFixture;
+import com.ibm.ws.lars.testutils.fixtures.LooseFileRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.ZipRepositoryFixture;
 import com.ibm.ws.repository.common.enums.AttachmentType;
@@ -90,6 +91,7 @@ public class RepositoryClientTest {
         }
         parameters.add(new Object[] { ZipRepositoryFixture.createFixture(new File("testZipRepo.zip")) });
         parameters.add(new Object[] { FileRepositoryFixture.createFixture(new File("testFileRepo")) });
+        parameters.add(new Object[] { LooseFileRepositoryFixture.createFixture(new File("")) });
         Object[][] params = parameters.toArray(new Object[parameters.size()][]);
         return params;
     }
@@ -178,6 +180,7 @@ public class RepositoryClientTest {
 
     @Test
     public void testAttachmentEquivalent() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -240,6 +243,7 @@ public class RepositoryClientTest {
 
     @Test
     public void testAddAttachmentWithInfo() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -265,6 +269,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testAssetEquivalent() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset1 = _writeableClient.addAsset(newAsset);
@@ -324,6 +329,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testAttachmentNotEquivalent() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -351,6 +357,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testAttachmentNoTypeSpecified() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -373,6 +380,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testAddAttachment() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         String name = "TestAttachment.txt";
         Asset newAsset = createTestAsset();
@@ -393,8 +401,7 @@ public class RepositoryClientTest {
 
         // Get the attachment content to make sure it was added ok
         InputStream attachmentContentStream = _client.getAttachment(createdAsset, createdAttachment);
-        BufferedReader attachmentContentReader = new BufferedReader(
-                        new InputStreamReader(attachmentContentStream));
+        BufferedReader attachmentContentReader = new BufferedReader(new InputStreamReader(attachmentContentStream));
         assertEquals("The content in the attachment should be the same as what was uploaded",
                      "This is a test attachment",
                      attachmentContentReader.readLine());
@@ -403,6 +410,7 @@ public class RepositoryClientTest {
 
     @Test
     public void testGetAllAssetsDoesntGetAttachments() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -418,6 +426,7 @@ public class RepositoryClientTest {
 
     @Test
     public void testGetAssetGetsAttachments() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -440,8 +449,7 @@ public class RepositoryClientTest {
 
         // Get the attachment content to make sure it was added ok
         InputStream attachmentContentStream = _client.getAttachment(createdAsset, readAttachment);
-        BufferedReader attachmentContentReader = new BufferedReader(
-                        new InputStreamReader(attachmentContentStream));
+        BufferedReader attachmentContentReader = new BufferedReader(new InputStreamReader(attachmentContentStream));
         assertEquals(
                      "The content in the attachment should be the same as what was uploaded",
                      "This is a test attachment",
@@ -463,6 +471,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testDeleteAssetAndAttachments() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachments to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -526,6 +535,7 @@ public class RepositoryClientTest {
      */
     @Test
     public void testUpdateAttachment() throws Exception {
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         // Add an asset that we'll add the attachment to
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
@@ -539,8 +549,7 @@ public class RepositoryClientTest {
 
         try {
             attachmentContentStream = _client.getAttachment(createdAsset, createdAttachment);
-            attachmentContentReader = new BufferedReader(
-                            new InputStreamReader(attachmentContentStream));
+            attachmentContentReader = new BufferedReader(new InputStreamReader(attachmentContentStream));
             assertEquals(
                          "The content in the attachment should be the same as what was uploaded",
                          "This is a test attachment",
@@ -555,19 +564,14 @@ public class RepositoryClientTest {
         }
 
         // Now update
-        AttachmentSummary attachSummary = new MockAttachmentSummary(new File(getResourcesDir(), "TestAttachmentUpdated.txt"),
-                        "TestAttachment.txt",
-                        AttachmentType.CONTENT,
-                        0,
-                        null);
+        AttachmentSummary attachSummary = new MockAttachmentSummary(new File(getResourcesDir(), "TestAttachmentUpdated.txt"), "TestAttachment.txt", AttachmentType.CONTENT, 0, null);
         attachSummary.getAttachment().set_id(createdAttachment.get_id());
 
         Attachment updatedAttachment = _writeableClient.updateAttachment(createdAsset.get_id(), attachSummary);
 
         try {
             attachmentContentStream = _client.getAttachment(createdAsset, updatedAttachment);
-            attachmentContentReader = new BufferedReader(
-                            new InputStreamReader(attachmentContentStream));
+            attachmentContentReader = new BufferedReader(new InputStreamReader(attachmentContentStream));
             assertEquals(
                          "The content in the attachment should be the same as the udpated file",
                          "This is an updated test attachment",
@@ -677,6 +681,7 @@ public class RepositoryClientTest {
     @Test
     public void testUnauthReadAttachment() throws Exception {
 
+        assumeThat(fixture.isAttachmentSupported(), is(true));
         Asset newAsset = createTestAsset();
         Asset createdAsset = _writeableClient.addAsset(newAsset);
         final Attachment createdAttachment = new Attachment();
@@ -1494,22 +1499,20 @@ public class RepositoryClientTest {
     }
 
     protected static Attachment addAttachment(String id, final String name,
-                                              final File f, int crc) throws IOException, BadVersionException,
-                    RequestFailureException {
+                                              final File f, int crc) throws IOException, BadVersionException, RequestFailureException {
 
         // default to adding CONTENT attachment and not supplying a URL
         return addAttachment(id, name, f, crc, AttachmentType.CONTENT, null);
     }
 
-    protected static Attachment addAttachment(String id, final String name, final File f, int crc, String url)
-                    throws IOException, BadVersionException, RequestFailureException {
+    protected static Attachment addAttachment(String id, final String name, final File f, int crc, String url) throws IOException, BadVersionException, RequestFailureException {
 
         // default to adding CONTENT attachment
         return addAttachment(id, name, f, crc, AttachmentType.CONTENT, url);
     }
 
-    protected static Attachment addAttachment(String id, String name, File f, int crc, AttachmentType type, String url)
-                    throws IOException, BadVersionException, RequestFailureException {
+    protected static Attachment addAttachment(String id, String name, File f, int crc, AttachmentType type,
+                                              String url) throws IOException, BadVersionException, RequestFailureException {
         System.out.println("Adding attachment:");
         System.out.println("Asset id: " + id);
         System.out.println("File: " + f.getAbsolutePath());
@@ -1542,8 +1545,7 @@ public class RepositoryClientTest {
      * @return
      */
     private String createDateString() {
-        SimpleDateFormat dateFormater = new SimpleDateFormat(
-                        "yyyy/MM/dd HH:mm:ss.SSS");
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
         String createdString = " created at "
                                + dateFormater.format(Calendar.getInstance().getTime());
         return createdString;
