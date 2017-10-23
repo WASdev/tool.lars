@@ -91,7 +91,7 @@ public class RepositoryClientTest {
         }
         parameters.add(new Object[] { ZipRepositoryFixture.createFixture(new File("testZipRepo.zip")) });
         parameters.add(new Object[] { FileRepositoryFixture.createFixture(new File("testFileRepo")) });
-        parameters.add(new Object[] { LooseFileRepositoryFixture.createFixture(new File("")) });
+        parameters.add(new Object[] { LooseFileRepositoryFixture.createFixture(new File("testLooseRepo")) });
         Object[][] params = parameters.toArray(new Object[parameters.size()][]);
         return params;
     }
