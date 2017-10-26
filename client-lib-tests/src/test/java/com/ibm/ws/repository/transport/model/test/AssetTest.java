@@ -215,7 +215,8 @@ public class AssetTest {
             _target = target;
         }
 
-        private void check(String name, boolean copied) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        private void check(String name,
+                           boolean copied) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
             Method m = Asset.class.getDeclaredMethod("get" + name, (Class[]) null);
             Object found = m.invoke(_target);
             Object expected = copied ? m.invoke(_source) : null;
@@ -406,10 +407,8 @@ public class AssetTest {
      * --------------------------------------------------------------------------
      */
 
-    private void checkJSON(Class<?> cls, Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException, InstantiationException, SecurityException,
-                    NoSuchMethodException {
+    private void checkJSON(Class<?> cls, Method setter, Object left,
+                           Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException, InstantiationException, SecurityException, NoSuchMethodException {
         Constructor<?> c = cls.getConstructor();
         Object JSON = c.newInstance();
         setter.invoke(left, JSON);
@@ -420,8 +419,7 @@ public class AssetTest {
     }
 
     private void checkPrimitive(Class<?> cls, Method setter, Object left,
-                                Object right) throws IllegalArgumentException,
-                    IllegalAccessException, InvocationTargetException {
+                                Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         String name = cls.getName();
         if ("long".equals(name)) {
             setter.invoke(left, 456);
@@ -444,14 +442,11 @@ public class AssetTest {
             setter.invoke(right, true);
             assertEquals(left, right);
         } else {
-            throw new IllegalArgumentException(
-                            "No code to handle primitive type " + name);
+            throw new IllegalArgumentException("No code to handle primitive type " + name);
         }
     }
 
-    private void checkEnum(Class<?> cls, Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException {
+    private void checkEnum(Class<?> cls, Method setter, Object left, Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Object[] enumValues = cls.getEnumConstants();
         Object prevValue = null;
         for (Object aValue : enumValues) {
@@ -468,8 +463,7 @@ public class AssetTest {
         }
     }
 
-    private void checkFilterVersion(Method setter, Object left, Object right)
-                    throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private void checkFilterVersion(Method setter, Object left, Object right) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         FilterVersion fv1 = new FilterVersion();
         FilterVersion fv2 = new FilterVersion();
         fv1.setLabel("Fred");
@@ -482,8 +476,7 @@ public class AssetTest {
         assertEquals(left, right);
     }
 
-    private void checkLocale(Method setter, Object left, Object right)
-                    throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private void checkLocale(Method setter, Object left, Object right) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         setter.invoke(left, Locale.ENGLISH);
         assertNotEquals(left, right);
         setter.invoke(right, Locale.FRANCE);
@@ -492,8 +485,7 @@ public class AssetTest {
         assertEquals(left, right);
     }
 
-    private void checkImageDetails(Method setter, Object left, Object right)
-                    throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private void checkImageDetails(Method setter, Object left, Object right) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         // both should be null, and hence equal
         assertEquals(left, right);
         ImageDetails image1 = new ImageDetails();
@@ -514,9 +506,7 @@ public class AssetTest {
         assertEquals(left, right);
     }
 
-    private void checkString(Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException {
+    private void checkString(Method setter, Object left, Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         setter.invoke(right, (Object) null);
         setter.invoke(left, "test");
         assertNotEquals(left, right);
@@ -526,9 +516,7 @@ public class AssetTest {
         assertEquals(left, right);
     }
 
-    private void checkCollectionOfString(Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException {
+    private void checkCollectionOfString(Method setter, Object left, Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         HashSet<String> leftSet = new HashSet<String>();
         leftSet.add("Test");
         setter.invoke(left, leftSet);
@@ -540,9 +528,7 @@ public class AssetTest {
         assertEquals(left, right);
     }
 
-    private void checkCollectionOfObjects(Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException {
+    private void checkCollectionOfObjects(Method setter, Object left, Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         HashSet<Object> leftSet = new HashSet<Object>();
         leftSet.add("test data");
         setter.invoke(left, leftSet);
@@ -556,8 +542,7 @@ public class AssetTest {
     }
 
     private void checkListOfObjects(Method setter, Object left,
-                                    Object right) throws IllegalArgumentException,
-                    IllegalAccessException, InvocationTargetException {
+                                    Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         ArrayList<Object> leftSet = new ArrayList<Object>();
         ArrayList<Object> rightSet = new ArrayList<Object>();
         // Have to special case setAttachments as it does more than
@@ -583,9 +568,7 @@ public class AssetTest {
     }
 
     @SuppressWarnings("deprecation")
-    private void checkDate(Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException {
+    private void checkDate(Method setter, Object left, Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Date leftDate = new Date();
         leftDate.setYear(2001);
         setter.invoke(left, leftDate);
@@ -597,9 +580,7 @@ public class AssetTest {
         assertEquals(left, right);
     }
 
-    private void checkCalendar(Method setter, Object left, Object right)
-                    throws IllegalArgumentException, IllegalAccessException,
-                    InvocationTargetException {
+    private void checkCalendar(Method setter, Object left, Object right) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Calendar leftDate = Calendar.getInstance();
         leftDate.set(2001, 6, 12);
         setter.invoke(left, leftDate);
