@@ -55,6 +55,7 @@ import com.ibm.ws.repository.transport.model.FilterVersion;
 import com.ibm.ws.repository.transport.model.ImageDetails;
 import com.ibm.ws.repository.transport.model.Link;
 import com.ibm.ws.repository.transport.model.Provider;
+import com.ibm.ws.repository.transport.model.RequireFeatureWithTolerates;
 import com.ibm.ws.repository.transport.model.Reviewed;
 import com.ibm.ws.repository.transport.model.SalesContact;
 import com.ibm.ws.repository.transport.model.StateUpdateAction;
@@ -129,6 +130,11 @@ public class AssetTest {
     @Test
     public void testAttachmentInfoEquals() throws Throwable {
         checkEqualsOnClass(new AttachmentInfo(), new AttachmentInfo());
+    }
+
+    @Test
+    public void testRequireFeatureWithTolerates() throws Throwable {
+        checkEqualsOnClass(new RequireFeatureWithTolerates(), new RequireFeatureWithTolerates());
     }
 
     /**

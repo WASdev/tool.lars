@@ -70,6 +70,7 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
     private String mainAttachmentSHA256;
     private String genericRequirements;
     private String packagedJava;
+    private Collection<RequireFeatureWithTolerates> requireFeatureWithTolerates;
 
     public String getFeaturedWeight() {
         return featuredWeight;
@@ -106,6 +107,21 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
             this.requireFeature = new HashSet<String>();
         }
         this.requireFeature.add(requireFeature);
+    }
+
+    public Collection<RequireFeatureWithTolerates> getRequireFeatureWithTolerates() {
+        return requireFeatureWithTolerates;
+    }
+
+    public void setRequireFeatureWithTolerates(Collection<RequireFeatureWithTolerates> requiredFeaturesWithTolerates) {
+        this.requireFeatureWithTolerates = requiredFeaturesWithTolerates;
+    }
+
+    public void addRequireFeatureWithTolerates(RequireFeatureWithTolerates feature) {
+        if (this.requireFeatureWithTolerates == null) {
+            this.requireFeatureWithTolerates = new HashSet<RequireFeatureWithTolerates>();
+        }
+        this.requireFeatureWithTolerates.add(feature);
     }
 
     public ResourceTypeLabel getTypeLabel() {
@@ -685,6 +701,14 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
             return false;
         }
 
+        if (requireFeatureWithTolerates == null) {
+            if (other.requireFeatureWithTolerates != null) {
+                return false;
+            }
+        } else if (!requireFeatureWithTolerates.equals(other.requireFeatureWithTolerates)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -692,8 +716,7 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
     public void validate(String version) throws IllegalStateException, BadVersionException {
         float v = Float.valueOf(version);
         if (v < MIN_VERSION || v >= MAX_VERSION) {
-            throw new BadVersionException(Float.toString(MIN_VERSION),
-                            Float.toString(MAX_VERSION), version);
+            throw new BadVersionException(Float.toString(MIN_VERSION), Float.toString(MAX_VERSION), version);
         }
     }
 
