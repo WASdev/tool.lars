@@ -19,7 +19,11 @@ package com.ibm.ws.repository.resources.internal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.ibm.ws.repository.common.enums.DisplayPolicy;
 import com.ibm.ws.repository.common.enums.DownloadPolicy;
@@ -37,6 +41,7 @@ import com.ibm.ws.repository.resources.writeable.EsaResourceWritable;
 import com.ibm.ws.repository.transport.model.AppliesToFilterInfo;
 import com.ibm.ws.repository.transport.model.Asset;
 import com.ibm.ws.repository.transport.model.JavaSEVersionRequirements;
+import com.ibm.ws.repository.transport.model.RequireFeatureWithTolerates;
 import com.ibm.ws.repository.transport.model.WlpInformation;
 
 public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResourceWritable {
@@ -387,6 +392,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
         setProvideFeature(esaRes.getProvideFeature());
         setProvisionCapability(esaRes.getProvisionCapability());
         setRequireFeature(esaRes.getRequireFeature());
+        setRequireFeatureWithTolerates(esaRes.getRequireFeatureWithTolerates());
         setVisibility(esaRes.getVisibility());
         setShortName(esaRes.getShortName());
         setVanityURL(esaRes.getVanityURL());
@@ -428,7 +434,90 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
     /** {@inheritDoc} */
     @Override
     public void addRequireFeature(String requiredFeatureSymbolicName) {
+        copyRequireFeatureToRequireFeatureWithTolerates();
+        // Add to the old field without tolerates info
         _asset.getWlpInformation().addRequireFeature(requiredFeatureSymbolicName);
+
+        // Add to requireFeatureWithTolerates field, but with empty tolerates info
+        // Need to ensure that if there is an existing object with the same feature name
+        // it is removed first, so that there is only one entry per feature.
+        removeRequireFeatureWithToleratesIfExists(requiredFeatureSymbolicName);
+
+        RequireFeatureWithTolerates newFeature = new RequireFeatureWithTolerates();
+        newFeature.setFeature(requiredFeatureSymbolicName);
+        newFeature.setTolerates(Collections.<String> emptySet());
+        _asset.getWlpInformation().addRequireFeatureWithTolerates(newFeature);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void addRequireFeatureWithTolerates(String feature, Collection<String> tolerates) {
+        WlpInformation wlp = _asset.getWlpInformation();
+        copyRequireFeatureToRequireFeatureWithTolerates();
+        // add just the feature info to the old field
+        wlp.addRequireFeature(feature);
+
+        // Add to the new field including tolerates info.
+        // The set of RequireFeatureWithTolerates should be unique based on the feature
+        // name, so need to check if there is an existing entry to overwrite.
+        removeRequireFeatureWithToleratesIfExists(feature);
+
+        // Previous entry removed (if it existed), now add the new entry
+        RequireFeatureWithTolerates newFeature = new RequireFeatureWithTolerates();
+        newFeature.setFeature(feature);
+        newFeature.setTolerates(tolerates);
+        wlp.addRequireFeatureWithTolerates(newFeature);
+    }
+
+    /**
+     * Looks in the underlying asset to see if there is a requireFeatureWithTolerates entry for
+     * the supplied feature, and if there is, removes it.
+     */
+    private void removeRequireFeatureWithToleratesIfExists(String feature) {
+        Collection<RequireFeatureWithTolerates> rfwt = _asset.getWlpInformation().getRequireFeatureWithTolerates();
+        if (rfwt != null) {
+            for (RequireFeatureWithTolerates toCheck : rfwt) {
+                if (toCheck.getFeature().equals(feature)) {
+                    rfwt.remove(toCheck);
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * requireFeature was the old field in the asset which didn't contain tolerates information.
+     * The new field is requireFeatureWithTolerates, and for the moment, both fields are being
+     * maintained, as older assets in the repository will only have the older field. When older assets
+     * are being written to, the data from the older field needs to be copied to the new field, to ensure
+     * both are consistent.
+     * The write will then write to both fields
+     */
+    private void copyRequireFeatureToRequireFeatureWithTolerates() {
+        Collection<RequireFeatureWithTolerates> rfwt = _asset.getWlpInformation().getRequireFeatureWithTolerates();
+        if (rfwt != null) {
+            // Both fields (with and without tolerates) should exist, as
+            // rfwt should not be created unless the other field is created first.
+            // No need to copy, as the two fields should always be in sync
+            return;
+        }
+
+        Collection<String> requireFeature = _asset.getWlpInformation().getRequireFeature();
+        if (requireFeature == null) {
+            // Neither field exists, no need to copy
+            return;
+        }
+
+        // We have the requireFeature field but not rfwt, so copy info into
+        // the new field (rfwt).
+        Collection<RequireFeatureWithTolerates> newOne = new HashSet<RequireFeatureWithTolerates>();
+        for (String feature : requireFeature) {
+            RequireFeatureWithTolerates newFeature = new RequireFeatureWithTolerates();
+            newFeature.setFeature(feature);
+            newFeature.setTolerates(Collections.<String> emptyList());
+            newOne.add(newFeature);
+        }
+        _asset.getWlpInformation().setRequireFeatureWithTolerates(newOne);
     }
 
     /** {@inheritDoc} */
@@ -446,13 +535,75 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
     /** {@inheritDoc} */
     @Override
     public void setRequireFeature(Collection<String> feats) {
+        // No need to copy (like we do in addRequireFeatureWithTolerates)
+        // as we are overwriting anyway
+        // It would be nice if this delegated to setRequireFeatureWithTolerates, but that
+        // would require an awful lot of data munging with little benefit, and this method
+        // is deprecated and going away anyway.
+        Collection<RequireFeatureWithTolerates> set = new HashSet<RequireFeatureWithTolerates>();
+        for (String foo : feats) {
+            RequireFeatureWithTolerates feature = new RequireFeatureWithTolerates();
+            feature.setFeature(foo);
+            feature.setTolerates(Collections.<String> emptySet());
+            set.add(feature);
+        }
+        _asset.getWlpInformation().setRequireFeatureWithTolerates(set);
         _asset.getWlpInformation().setRequireFeature(feats);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setRequireFeatureWithTolerates(Map<String, Collection<String>> features) {
+        // No need to copy (like we do in addRequireFeatureWithTolerates)
+        // as we are overwriting anyway
+        Collection<RequireFeatureWithTolerates> set = new HashSet<RequireFeatureWithTolerates>();
+        Collection<String> collection = new HashSet<String>();
+        for (Map.Entry<String, Collection<String>> foo : features.entrySet()) {
+            RequireFeatureWithTolerates feature = new RequireFeatureWithTolerates();
+            feature.setFeature(foo.getKey());
+            feature.setTolerates(foo.getValue());
+            set.add(feature);
+
+            collection.add(foo.getKey());
+        }
+        _asset.getWlpInformation().setRequireFeatureWithTolerates(set);
+        _asset.getWlpInformation().setRequireFeature(collection);
     }
 
     /** {@inheritDoc} */
     @Override
     public Collection<String> getRequireFeature() {
         return _asset.getWlpInformation().getRequireFeature();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Map<String, Collection<String>> getRequireFeatureWithTolerates() {
+        // The feature may be an older feature which never had the tolerates information
+        // stored, in which case, look in the older requireFeature field and massage
+        // that info into the required format.
+        // Or there may just not be any required features at all.
+        Collection<RequireFeatureWithTolerates> rfwt = _asset.getWlpInformation().getRequireFeatureWithTolerates();
+        if (rfwt != null) {
+            Map<String, Collection<String>> rv = new HashMap<String, Collection<String>>();
+            for (RequireFeatureWithTolerates feature : rfwt) {
+                rv.put(feature.getFeature(), feature.getTolerates());
+            }
+            return rv;
+        }
+
+        // Newer field not present, check the older field
+        Collection<String> rf = _asset.getWlpInformation().getRequireFeature();
+        if (rf != null) {
+            Map<String, Collection<String>> rv = new HashMap<String, Collection<String>>();
+            for (String feature : rf) {
+                rv.put(feature, Collections.<String> emptyList());
+            }
+            return rv;
+        }
+
+        // No required features at all
+        return null;
     }
 
     /** {@inheritDoc} */

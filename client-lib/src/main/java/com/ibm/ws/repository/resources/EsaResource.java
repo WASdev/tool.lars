@@ -16,6 +16,7 @@
 package com.ibm.ws.repository.resources;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.ibm.ws.repository.common.enums.InstallPolicy;
 import com.ibm.ws.repository.common.enums.Visibility;
@@ -44,9 +45,22 @@ public interface EsaResource extends RepositoryResource, ApplicableToProduct {
     /**
      * Gets the list of required features for this feature
      *
+     * @deprecated Should use {@link #getRequireFeatureWithTolerates()} instead
+     *
      * @return The list of required features for this feature, or null if no features are required
      */
+    @Deprecated
     public Collection<String> getRequireFeature();
+
+    /**
+     * Get the required features for this feature. Returns a map of
+     * 'required feature + version' -> 'other tolerated versions (if any)'
+     * The collection of tolerated versions will be empty if
+     * 1. There are no other tolerated versions
+     * 2. No tolerates information is available in the repository.
+     * Returns null if there are no required features.
+     */
+    public Map<String, Collection<String>> getRequireFeatureWithTolerates();
 
     /**
      * Gets the short name for this feature, as defined by the IBM-ShortName header
