@@ -391,7 +391,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
         setLinks(esaRes.getLinks());
         setProvideFeature(esaRes.getProvideFeature());
         setProvisionCapability(esaRes.getProvisionCapability());
-        setRequireFeature(esaRes.getRequireFeature());
+        // No need to call setRequireFeature, as setRequireFeatureWithTolerates will set both fields
         setRequireFeatureWithTolerates(esaRes.getRequireFeatureWithTolerates());
         setVisibility(esaRes.getVisibility());
         setShortName(esaRes.getShortName());
@@ -540,12 +540,16 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
         // It would be nice if this delegated to setRequireFeatureWithTolerates, but that
         // would require an awful lot of data munging with little benefit, and this method
         // is deprecated and going away anyway.
-        Collection<RequireFeatureWithTolerates> set = new HashSet<RequireFeatureWithTolerates>();
-        for (String foo : feats) {
-            RequireFeatureWithTolerates feature = new RequireFeatureWithTolerates();
-            feature.setFeature(foo);
-            feature.setTolerates(Collections.<String> emptySet());
-            set.add(feature);
+        // Need to allow for feats being null, for legacy reasons
+        Collection<RequireFeatureWithTolerates> set = null;
+        if (feats != null) {
+            set = new HashSet<RequireFeatureWithTolerates>();
+            for (String feat : feats) {
+                RequireFeatureWithTolerates feature = new RequireFeatureWithTolerates();
+                feature.setFeature(feat);
+                feature.setTolerates(Collections.<String> emptySet());
+                set.add(feature);
+            }
         }
         _asset.getWlpInformation().setRequireFeatureWithTolerates(set);
         _asset.getWlpInformation().setRequireFeature(feats);
@@ -556,15 +560,19 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
     public void setRequireFeatureWithTolerates(Map<String, Collection<String>> features) {
         // No need to copy (like we do in addRequireFeatureWithTolerates)
         // as we are overwriting anyway
-        Collection<RequireFeatureWithTolerates> set = new HashSet<RequireFeatureWithTolerates>();
-        Collection<String> collection = new HashSet<String>();
-        for (Map.Entry<String, Collection<String>> foo : features.entrySet()) {
-            RequireFeatureWithTolerates feature = new RequireFeatureWithTolerates();
-            feature.setFeature(foo.getKey());
-            feature.setTolerates(foo.getValue());
-            set.add(feature);
-
-            collection.add(foo.getKey());
+        // need to allow for features being null, for legacy reasons
+        Collection<RequireFeatureWithTolerates> set = null;
+        Collection<String> collection = null;
+        if (features != null) {
+            set = new HashSet<RequireFeatureWithTolerates>();
+            collection = new HashSet<String>();
+            for (Map.Entry<String, Collection<String>> foo : features.entrySet()) {
+                RequireFeatureWithTolerates feature = new RequireFeatureWithTolerates();
+                feature.setFeature(foo.getKey());
+                feature.setTolerates(foo.getValue());
+                set.add(feature);
+                collection.add(foo.getKey());
+            }
         }
         _asset.getWlpInformation().setRequireFeatureWithTolerates(set);
         _asset.getWlpInformation().setRequireFeature(collection);
