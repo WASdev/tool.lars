@@ -15,11 +15,13 @@
  *******************************************************************************/
 package com.ibm.ws.repository.transport.client.test;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -53,6 +55,7 @@ import com.ibm.ws.lars.testutils.FatUtils;
 import com.ibm.ws.lars.testutils.fixtures.FileRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.LooseFileRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
+import com.ibm.ws.lars.testutils.fixtures.SingleFileRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.ZipRepositoryFixture;
 import com.ibm.ws.repository.common.enums.AttachmentType;
 import com.ibm.ws.repository.common.enums.FilterableAttribute;
@@ -92,6 +95,7 @@ public class RepositoryClientTest {
         parameters.add(new Object[] { ZipRepositoryFixture.createFixture(new File("testZipRepo.zip")) });
         parameters.add(new Object[] { FileRepositoryFixture.createFixture(new File("testFileRepo")) });
         parameters.add(new Object[] { LooseFileRepositoryFixture.createFixture(new File("testLooseRepo")) });
+        parameters.add(new Object[] { SingleFileRepositoryFixture.createFixture(new File("testSingleFileRepo")) });
         Object[][] params = parameters.toArray(new Object[parameters.size()][]);
         return params;
     }
@@ -1498,6 +1502,27 @@ public class RepositoryClientTest {
         _client.checkRepositoryStatus();
     }
 
+    @Test
+    public void testAssetIdsMaintained() throws Exception {
+        // Some repository clients generate the IDs for assets
+        // Check that creating several assets and then deleting one doesn't change the IDs of the others
+
+        Asset asset1 = _writeableClient.addAsset(createTestAsset());
+        Asset asset2 = _writeableClient.addAsset(createTestAsset());
+        Asset asset3 = _writeableClient.addAsset(createTestAsset());
+
+        _writeableClient.deleteAssetAndAttachments(asset2.get_id());
+
+        assertThat(_client.getAsset(asset1.get_id()), equalTo(asset1));
+        assertThat(_client.getAsset(asset3.get_id()), equalTo(asset3));
+        try {
+            _client.getAsset(asset2.get_id());
+            fail("Exception not thrown retrieving deleted asset");
+        } catch (Exception e) {
+            // expected
+        }
+    }
+
     protected static Attachment addAttachment(String id, final String name,
                                               final File f, int crc) throws IOException, BadVersionException, RequestFailureException {
 
@@ -1529,7 +1554,7 @@ public class RepositoryClientTest {
 
     /*
      * Creates a test asset with a timestamp in its name
-     *
+     * 
      * @return The asset
      */
     protected Asset createTestAsset() {

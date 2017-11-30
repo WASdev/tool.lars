@@ -365,6 +365,23 @@ public class DataModelSerializer {
     }
 
     /**
+     * Convert a POJO into a serialized JsonValue object
+     *
+     * @param o the POJO to serialize
+     * @return
+     */
+    public static JsonValue serializeAsJson(Object o) throws IOException {
+        try {
+            return findFieldsToSerialize(o).mainObject;
+        } catch (IllegalStateException ise) {
+            // the reflective attempt to build the object failed.
+            throw new IOException("Unable to build JSON for Object", ise);
+        } catch (JsonException e) {
+            throw new IOException("Unable to build JSON for Object", e);
+        }
+    }
+
+    /**
      * Simple class to associate a Class and a Method for passing around.
      */
     private static class ClassAndMethod {
@@ -759,6 +776,10 @@ public class DataModelSerializer {
             // This is unreachable
         }
         return result;
+    }
+
+    public static <T> T deserializeObject(JsonObject jsonObject, Class<? extends T> typeOfObject, Verification verify) throws IOException, BadVersionException {
+        return processJsonObjectBackIntoDataModelInstance(jsonObject, typeOfObject, verify);
     }
 
     private static <T> T doDeserializeObject(InputStream i, Class<? extends T> typeOfObject, Verification verify)
