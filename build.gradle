@@ -42,6 +42,10 @@ subprojects {
     repositories {
         mavenCentral()
     }
+
+    dependencies {
+        findbugs 'com.google.code.findbugs:findbugs:3.0.0'
+    }
     
     sourceSets {
         fat {
