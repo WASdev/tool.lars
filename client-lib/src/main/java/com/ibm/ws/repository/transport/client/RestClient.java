@@ -72,6 +72,11 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
      */
     private static final String NEWLINE = "\r\n";
 
+    /**
+     * Bar (|) character encoded for URL
+     */
+    private static final String ENCODED_BAR = "%7C";
+
     private static final int REPOSITORY_SOCKET_READ_TIMEOUT = 300 * 1000;
 
     /**
@@ -841,7 +846,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
     private String createListFilter(FilterableAttribute attribute, Collection<String> values) {
         /*
          * This is more complicated than you'd think... Some attribute values caused incompatible changes to the JSON data model so are actually stored in a different object in the
-         * JSON. Therefore the filter that we are constructing maybe pointing to one or two attributes in the JSON. We create a filter for both possibible attributes and then only
+         * JSON. Therefore the filter that we are constructing maybe pointing to one or two attributes in the JSON. We create a filter for both possible attributes and then only
          * add the ones that we used.
          */
         boolean firstFilter1Value = true;
@@ -863,7 +868,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
                     firstFilter2Value = false;
                 } else {
                     // OR all types so we get them all
-                    filter2.append("|");
+                    filter2.append(ENCODED_BAR);
                 }
                 filter2.append(value);
             } else {
@@ -876,7 +881,7 @@ public class RestClient extends AbstractRepositoryClient implements RepositoryRe
                     firstFilter1Value = false;
                 } else {
                     // OR all types so we get them all
-                    filter1.append("|");
+                    filter1.append(ENCODED_BAR);
                 }
                 filter1.append(value);
             }

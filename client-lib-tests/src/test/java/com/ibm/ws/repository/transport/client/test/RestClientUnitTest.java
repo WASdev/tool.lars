@@ -20,11 +20,16 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import mockit.Deencapsulation;
+import mockit.Expectations;
+import mockit.Mocked;
 
 import org.junit.Test;
 
@@ -33,10 +38,6 @@ import com.ibm.ws.repository.common.enums.ResourceType;
 import com.ibm.ws.repository.transport.client.ClientLoginInfo;
 import com.ibm.ws.repository.transport.client.RestClient;
 import com.ibm.ws.repository.transport.exceptions.RequestFailureException;
-
-import mockit.Deencapsulation;
-import mockit.Expectations;
-import mockit.Mocked;
 
 public class RestClientUnitTest {
 
@@ -79,6 +80,37 @@ public class RestClientUnitTest {
             }
         }
 
+    }
+
+    /**
+     * Check that special characters in filters get encoded correctly
+     */
+    @Test
+    public void testFilterEscaping() throws IOException, RequestFailureException {
+
+        ClientLoginInfo info = new ClientLoginInfo("noone", "letmein", "123", "http://broken");
+
+        final RestClient client = new RestClient(info);
+        new Expectations(client) {
+            {
+                // Ensure the @, %, +, | and space characters are escaped
+                Deencapsulation.invoke(client, "createHttpURLConnectionToMassive", "/assets?type=Foo%40%25%7CBar+%2B+Baz");
+                // now that the correct query string has been constructed, stop the test
+                // Otherwise the test will try to connect to a duff url
+                result = new RuntimeException("OK");
+            }
+        };
+
+        Map<FilterableAttribute, Collection<String>> filters = new HashMap<FilterableAttribute, Collection<String>>();
+        filters.put(FilterableAttribute.TYPE, Arrays.asList("Foo@%", "Bar + Baz"));
+
+        try {
+            client.getFilteredAssets(filters);
+        } catch (RuntimeException e) {
+            if (!e.getMessage().equals("OK")) {
+                throw e;
+            }
+        }
     }
 
     @Test
