@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -1273,6 +1274,19 @@ public class ResourceTest {
         }
         assertEquals("Wrong number of recources visible: ", VANITY_URLS, countVisible);
         assertEquals("Wrong number of recources hidden: ", (VANITY_URLS * RESOURCES_PER_VANITY_URL) - VANITY_URLS, countHidden);
+    }
+
+    @Test
+    public void testMavenCoords() throws RepositoryResourceException, RepositoryBackendException {
+        SampleResourceImpl sample = createSampleResource();
+        String sampleCoords = "com.example.mygroup:my-artifact:0.0.1";
+
+        sample.setMavenCoordinates(sampleCoords);
+        assertThat(sample.getMavenCoordinates(), is(sampleCoords));
+
+        uploadResource(sample);
+        RepositoryResource res = fixture.getAdminConnection().getResource(sample.getId());
+        assertThat(res.getMavenCoordinates(), is(sampleCoords));
     }
 
     /**

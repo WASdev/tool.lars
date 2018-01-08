@@ -71,6 +71,7 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
     private String genericRequirements;
     private String packagedJava;
     private Collection<RequireFeatureWithTolerates> requireFeatureWithTolerates;
+    private String mavenCoordinates;
 
     public String getFeaturedWeight() {
         return featuredWeight;
@@ -413,6 +414,14 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
         this.packagedJava = packagedJava;
     }
 
+    public String getMavenCoordinates() {
+        return mavenCoordinates;
+    }
+
+    public void setMavenCoordinates(String mavenCoordinates) {
+        this.mavenCoordinates = mavenCoordinates;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -706,6 +715,14 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
                 return false;
             }
         } else if (!requireFeatureWithTolerates.equals(other.requireFeatureWithTolerates)) {
+            return false;
+        }
+
+        if (mavenCoordinates == null) {
+            if (other.mavenCoordinates != null) {
+                return false;
+            }
+        } else if (!mavenCoordinates.equals(other.mavenCoordinates)) {
             return false;
         }
 

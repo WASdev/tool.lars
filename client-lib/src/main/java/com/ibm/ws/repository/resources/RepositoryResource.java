@@ -235,6 +235,17 @@ public interface RepositoryResource {
     public String getWlpInformationVersion();
 
     /**
+     * Get the maven coordinates for the asset
+     * <p>
+     * This is only set for resources which are stored in a maven repository.
+     * <p>
+     * Maven coordinates are returned as a string in the format {@code groupId:assetId:version}.
+     *
+     * @return the maven coordinates for the resource, or {@code null} if they have not been set
+     */
+    public String getMavenCoordinates();
+
+    /**
      * Writes the directory based repository formatted JSON to the supplied output stream
      *
      * @param writeJsonTo The output stream the JSON should be written to

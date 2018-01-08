@@ -304,6 +304,15 @@ public interface RepositoryResourceWritable extends RepositoryResource {
     public void setLicenseId(String lic);
 
     /**
+     * Set the maven coordinates
+     * <p>
+     * This must only be set for resources which are stored in a maven repository.
+     * <p>
+     * Maven coordinates must be given as a string in the format {@code groupId:assetId:version}.
+     */
+    public void setMavenCoordinates(String mavenCoordinates);
+
+    /**
      * Sets the {@link WlpInformation} version of the asset
      *
      * @param wlpInformationVersion The {@link WlpInformation} version to use for the asset

@@ -144,7 +144,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         MATCHED, NOT_APPLICABLE, INVALID_VERSION, INVALID_EDITION, INVALID_INSTALL_TYPE;
     }
 
-    /**
+    /*
      * ------------------------------------------------------------------------------------------------
      * Constructor Code
      * ------------------------------------------------------------------------------------------------
@@ -905,7 +905,17 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         return _asset.getWlpInformation().getDisplayPolicy();
     }
 
-    /**
+    @Override
+    public String getMavenCoordinates() {
+        return _asset.getWlpInformation().getMavenCoordinates();
+    }
+
+    @Override
+    public void setMavenCoordinates(String mavenCoordinates) {
+        _asset.getWlpInformation().setMavenCoordinates(mavenCoordinates);
+    }
+
+    /*
      * ------------------------------------------------------------------------------------------------
      * HELPER METHODS
      * ------------------------------------------------------------------------------------------------
@@ -1061,6 +1071,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         setDisplayPolicy(fromResource.getDisplayPolicy());
         setVanityURL(fromResource.getVanityURL());
         setWlpInformationVersion(fromResource.getWlpInformationVersion());
+        setMavenCoordinates(fromResource.getMavenCoordinates());
 
         if (includeAttachmentInfo) {
             setMainAttachmentSize(fromResource.getMainAttachmentSize());
@@ -1523,7 +1534,7 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
         return "<MassiveResource@" + this.hashCode() + " <Asset=" + _asset + ">>";
     }
 
-    /**
+    /*
      * ------------------------------------------------------------------------------------------------
      * PRIVATE INTERNAL METHODS
      * ------------------------------------------------------------------------------------------------
@@ -1876,12 +1887,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             try {
                 try {
                     fos = AccessController.doPrivileged(
-                                                        new PrivilegedExceptionAction<FileOutputStream>() {
-                                                            @Override
-                                                            public FileOutputStream run() throws FileNotFoundException {
-                                                                return new FileOutputStream(fileToWriteTo);
-                                                            }
-                                                        });
+                                    new PrivilegedExceptionAction<FileOutputStream>() {
+                                        @Override
+                                        public FileOutputStream run() throws FileNotFoundException {
+                                            return new FileOutputStream(fileToWriteTo);
+                                        }
+                                    });
                 } catch (PrivilegedActionException e) {
                     // Creating a FileInputStream can only return a FileNotFoundException
                     throw (FileNotFoundException) e.getCause();
@@ -1924,12 +1935,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             InputStream is = null;
             try {
                 is = AccessController.doPrivileged(
-                                                   new PrivilegedExceptionAction<FileInputStream>() {
-                                                       @Override
-                                                       public FileInputStream run() throws FileNotFoundException {
-                                                           return new FileInputStream(_file);
-                                                       }
-                                                   });
+                                new PrivilegedExceptionAction<FileInputStream>() {
+                                    @Override
+                                    public FileInputStream run() throws FileNotFoundException {
+                                        return new FileInputStream(_file);
+                                    }
+                                });
                 return RepositoryResourceImpl.getCRC(is);
             } catch (PrivilegedActionException e) {
                 // Creating a FileInputStream can only return a FileNotFoundException or NPE
