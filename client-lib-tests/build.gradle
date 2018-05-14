@@ -34,21 +34,21 @@ test {
 }
 
 rootProject.afterEvaluate {
-    if (rootProject.hasProperty("java6BootClasspath")) {
+    if (rootProject.hasProperty("java7BootClasspath")) {
         tasks.each {
             if (it instanceof JavaCompile) {
-                it.options.bootClasspath = rootProject.java6BootClasspath
+                it.options.bootClasspath = rootProject.java7BootClasspath
             }
         }
         tasks.each {
             if (it instanceof Test) {
-                it.executable = rootProject.java6Executable
-                it.systemProperty 'SHOULD_USE_JAVA_6', 'true'
+                it.executable = rootProject.java7Executable
+                it.systemProperty 'SHOULD_USE_JAVA_7', 'true'
             }
         }
     }
 }
-eclipse.classpath.containers=['org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6']
+eclipse.classpath.containers=['org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7']
 
 ext {
     // Indicate that we'd like a file hosted by the test server
