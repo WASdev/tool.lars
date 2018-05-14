@@ -17,6 +17,7 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
+
 dependencies {
     compile group:'org.apache.aries', name:'org.apache.aries.util', version:aries_util_version
     compile group:'org.osgi', name:'org.osgi.core', version:osgi_core_version
@@ -30,8 +31,6 @@ task srcJar(type: Jar) {
 }
 assemble.dependsOn srcJar
  
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
 rootProject.afterEvaluate {
     if (rootProject.hasProperty("java6BootClasspath")) {
         tasks.each {

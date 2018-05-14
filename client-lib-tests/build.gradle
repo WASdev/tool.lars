@@ -33,9 +33,6 @@ test {
     jvmArgs "-javaagent:"+jmockitJar.getAbsolutePath()
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
-
 rootProject.afterEvaluate {
     if (rootProject.hasProperty("java6BootClasspath")) {
         tasks.each {
