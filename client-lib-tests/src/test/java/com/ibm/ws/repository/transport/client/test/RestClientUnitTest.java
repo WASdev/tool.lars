@@ -27,9 +27,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import mockit.Deencapsulation;
 import mockit.Expectations;
-import mockit.Mocked;
+import mockit.Injectable;
+import mockit.MockUp;
+import mockit.Mock;
 
 import org.junit.Test;
 
@@ -56,7 +57,7 @@ public class RestClientUnitTest {
          * it turns out that mocking HttpURLConnection is really hard. Instead, partially mock the client
          * object. The method to be tested (i.e. getFilteredAssets) is not mocked, but the private method
          * which returns the HTTP connection is.
-         */
+         * OLD VERSION:
         final RestClient client = new RestClient(info);
         new Expectations(client) {
             {
@@ -67,6 +68,21 @@ public class RestClientUnitTest {
             }
 
         };
+        * NEW VERSION:
+        * Deencapuslation.invoke no longer exists, instead explicitly create a MockUp replacing the private method with
+        * one with default visibility.
+        */
+        new MockUp<RestClient>() {
+            @Mock
+            HttpURLConnection createHttpURLConnectionToMassive(String path) {
+                if(path.equals("/assets?type=com.ibm.websphere.Feature")) {
+                    throw new NullPointerException("This might just work");
+                } else {
+                    throw new IllegalArgumentException("Wrong path "+path);
+                }
+            }
+        };
+        final RestClient client = new RestClient(info);
 
         Map<FilterableAttribute, Collection<String>> filters = new HashMap<FilterableAttribute, Collection<String>>();
         filters.put(FilterableAttribute.TYPE, Collections.singleton(ResourceType.FEATURE.getValue()));
@@ -79,7 +95,6 @@ public class RestClientUnitTest {
                 throw e;
             }
         }
-
     }
 
     /**
@@ -90,16 +105,20 @@ public class RestClientUnitTest {
 
         ClientLoginInfo info = new ClientLoginInfo("noone", "letmein", "123", "http://broken");
 
-        final RestClient client = new RestClient(info);
-        new Expectations(client) {
-            {
+        new MockUp<RestClient>() {
+            @Mock
+            HttpURLConnection createHttpURLConnectionToMassive(String path) {
                 // Ensure the @, %, +, | and space characters are escaped
-                Deencapsulation.invoke(client, "createHttpURLConnectionToMassive", "/assets?type=Foo%40%25%7CBar+%2B+Baz");
-                // now that the correct query string has been constructed, stop the test
-                // Otherwise the test will try to connect to a duff url
-                result = new RuntimeException("OK");
+                if(path.equals("/assets?type=Foo%40%25%7CBar+%2B+Baz")) {
+                    // now that the correct query string has been constructed, stop the test
+                    // Otherwise the test will try to connect to a duff url
+                    throw new RuntimeException("OK");
+                } else {
+                    throw new IllegalArgumentException("Wrong path "+path);
+                }
             }
         };
+        final RestClient client = new RestClient(info);
 
         Map<FilterableAttribute, Collection<String>> filters = new HashMap<FilterableAttribute, Collection<String>>();
         filters.put(FilterableAttribute.TYPE, Arrays.asList("Foo@%", "Bar + Baz"));
@@ -114,7 +133,7 @@ public class RestClientUnitTest {
     }
 
     @Test
-    public void testGetStatusNoHeader(final @Mocked HttpURLConnection connection) throws IOException, RequestFailureException {
+    public void testGetStatusNoHeader(final @Injectable HttpURLConnection connection) throws IOException, RequestFailureException {
         try {
             executeGetStatus(connection, null);
             fail("An exception should have been thrown if there was no header");
@@ -125,8 +144,9 @@ public class RestClientUnitTest {
         }
     }
 
+    
     @Test
-    public void testGetStatusNoCount(final @Mocked HttpURLConnection connection) throws IOException, RequestFailureException {
+    public void testGetStatusNoCount(final @Injectable HttpURLConnection connection) throws IOException, RequestFailureException {
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         List<String> wibbleValues = new ArrayList<String>();
         wibbleValues.add("value1");
@@ -144,7 +164,7 @@ public class RestClientUnitTest {
     }
 
     @Test
-    public void testGetStatusWithCount(final @Mocked HttpURLConnection connection) throws IOException, RequestFailureException {
+    public void testGetStatusWithCount(final @Injectable HttpURLConnection connection) throws IOException, RequestFailureException {
         Map<String, List<String>> headers = new HashMap<String, List<String>>();
         List<String> wibbleValues = new ArrayList<String>();
         wibbleValues.add("value1");
@@ -157,26 +177,34 @@ public class RestClientUnitTest {
 
         executeGetStatus(connection, headers);
     }
-
-    private void executeGetStatus(final HttpURLConnection connection, final Map<String, List<String>> headerFields) throws IOException, RequestFailureException {
+    
+    private void executeGetStatus(final HttpURLConnection connection, final Map<String, List<String>> headerFields) throws IOException, RequestFailureException {        
         ClientLoginInfo info = new ClientLoginInfo("noone", "letmein", "123", "http://broken");
 
+        new MockUp<RestClient>() {
+            @Mock
+            HttpURLConnection createHeadConnection(String path) {
+                if(path.equals("/assets")) {
+                    return connection;
+                } else {
+                    throw new IllegalArgumentException("Wrong path "+path);
+                }
+            }
+
+            @Mock
+            void testResponseCode(HttpURLConnection conn)  throws RequestFailureException, IOException {
+                return;
+            }
+
+        };
+
         final RestClient client = new RestClient(info);
-
-        new Expectations(client) {
+        new Expectations(connection) {
             {
-                Deencapsulation.invoke(client, "createHeadConnection", "/assets");
-                result = connection;
-
-                Deencapsulation.invoke(client, "testResponseCode", connection);
-                result = null;
-
                 connection.getHeaderFields();
                 result = headerFields;
             }
         };
-
         client.checkRepositoryStatus();
     }
-
 }
