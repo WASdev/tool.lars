@@ -15,10 +15,6 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +23,9 @@ import mockit.Expectations;
 import mockit.Mocked;
 
 import org.junit.Test;
+
+import java.lang.reflect.InvocationTargetException;
+import com.ibm.ws.lars.testutils.ReflectionTricks;
 
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
@@ -38,24 +37,6 @@ import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
 
 public class PersistenceBeanLoggingTest {
-    private Object invoke(Object object, String methodName, Object... args) throws SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
-        Class defaultClass = DBObject.class;
-        Class[] carg = new Class[args.length];
-        int i=0;
-        for(Object arg: args) {
-            if(defaultClass.isInstance(arg)) {
-                carg[i++] = defaultClass;
-            } else {
-                carg[i++] = arg.getClass();
-            }
-        }
-        Method method = object.getClass().getDeclaredMethod(methodName, carg);
-        method.setAccessible(true);
-        Object r = method.invoke(object, args);
-        method.setAccessible(false);
-        return r;
-    }
-
     @Mocked
     Logger logger;
 
@@ -107,7 +88,7 @@ public class PersistenceBeanLoggingTest {
                 logger.fine("query: found " + 0 + " assets.");
             }
         };
-        invoke(createTestBean(), "query", filter, sort, projection, pagination);
+        ReflectionTricks.reflectiveCallWithDefaultClass(createTestBean(), "query", DBObject.class, filter, sort, projection, pagination);
     }
 
     @Test
@@ -184,6 +165,6 @@ public class PersistenceBeanLoggingTest {
                 logger.fine("queryCount: found 3 assets.");
             }
         };
-        invoke(createTestBean(), "queryCount", filterObject);
+        ReflectionTricks.reflectiveCallWithDefaultClass(createTestBean(), "queryCount", DBObject.class, filterObject);
     }
 }

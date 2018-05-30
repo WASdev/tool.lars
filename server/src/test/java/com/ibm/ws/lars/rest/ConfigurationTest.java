@@ -16,8 +16,7 @@
 package com.ibm.ws.lars.rest;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
+import com.ibm.ws.lars.testutils.ReflectionTricks;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,43 +29,30 @@ import org.junit.Test;
  * Unit tests for the {@link Configuration} class
  */
 public class ConfigurationTest {
-
-    private Object invoke(String methodName, Object... args) throws SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
-        Class[] carg = new Class[args.length];
-        int i=0;
-        for(Object arg: args) {
-            carg[i++] = arg.getClass();
-        }
-        Method method = Configuration.class.getDeclaredMethod(methodName, carg);
-        method.setAccessible(true);
-        Object r = method.invoke(null, args);
-        method.setAccessible(false);
-        return r;
-    }
-
+    
     @Test
     public void testComputeRestAppURLBase() throws SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
         String methodName = "computeRestBaseUri";
-        assertEquals("http://example.org/ma/v1/", invoke(methodName, "http://example.org"));
-        assertEquals("http://example.org/ma/v1/", invoke(methodName, "http://example.org/"));
-        assertEquals("http://example.org/wibble/ma/v1/", invoke(methodName, "http://example.org/wibble"));
-        assertEquals("http://example.org/wibble/ma/v1/", invoke(methodName, "http://example.org/wibble/"));
+        assertEquals("http://example.org/ma/v1/", ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, "http://example.org"));
+        assertEquals("http://example.org/ma/v1/", ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, "http://example.org/"));
+        assertEquals("http://example.org/wibble/ma/v1/", ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, "http://example.org/wibble"));
+        assertEquals("http://example.org/wibble/ma/v1/", ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, "http://example.org/wibble/"));
     }
 
     @Test
     public void testStripDefaultPort() throws URISyntaxException,SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
         String methodName = "stripDefaultPort";
 
-        assertEquals(new URI("http://example.com/test"), invoke(methodName, new URI("http://example.com:80/test")));
-        assertEquals(new URI("http://example.com:9080/test"), invoke(methodName, new URI("http://example.com:9080/test")));
-        assertEquals(new URI("https://example.com/test"), invoke(methodName, new URI("https://example.com:443/test")));
-        assertEquals(new URI("https://example.com:9443/test"), invoke(methodName, new URI("https://example.com:9443/test")));
+        assertEquals(new URI("http://example.com/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("http://example.com:80/test")));
+        assertEquals(new URI("http://example.com:9080/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("http://example.com:9080/test")));
+        assertEquals(new URI("https://example.com/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("https://example.com:443/test")));
+        assertEquals(new URI("https://example.com:9443/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("https://example.com:9443/test")));
 
-        assertEquals(new URI("HTTP://example.com/test"), invoke(methodName, new URI("HTTP://example.com:80/test")));
-        assertEquals(new URI("HTTP://example.com:9080/test"), invoke(methodName, new URI("HTTP://example.com:9080/test")));
+        assertEquals(new URI("HTTP://example.com/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("HTTP://example.com:80/test")));
+        assertEquals(new URI("HTTP://example.com:9080/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("HTTP://example.com:9080/test")));
 
-        assertEquals(new URI("http://example.com:443/test"), invoke(methodName, new URI("http://example.com:443/test")));
-        assertEquals(new URI("https://example.com:80/test"), invoke(methodName, new URI("https://example.com:80/test")));
+        assertEquals(new URI("http://example.com:443/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("http://example.com:443/test")));
+        assertEquals(new URI("https://example.com:80/test"), ReflectionTricks.reflectiveCallNoPrimitives(Configuration.class, methodName, new URI("https://example.com:80/test")));
     }
 
 }
