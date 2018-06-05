@@ -24,16 +24,19 @@ import mockit.Mocked;
 
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
+import com.ibm.ws.lars.testutils.ReflectionTricks;
+
 import com.ibm.ws.lars.rest.exceptions.InvalidJsonAssetException;
 import com.ibm.ws.lars.rest.exceptions.NonExistentArtefactException;
 import com.ibm.ws.lars.rest.model.Asset;
 import com.ibm.ws.lars.rest.model.Attachment;
 import com.ibm.ws.lars.rest.mongo.PersistenceBean;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
 
 public class PersistenceBeanLoggingTest {
-
     @Mocked
     Logger logger;
 
@@ -67,7 +70,7 @@ public class PersistenceBeanLoggingTest {
     }
 
     @Test
-    public void testQuery() {
+    public void testQuery() throws SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
         final BasicDBObject filter = new BasicDBObject("name", "value");
         final BasicDBObject sort = new BasicDBObject("foo", "bar");
         final BasicDBObject projection = new BasicDBObject("wibble", "foop");
@@ -85,7 +88,7 @@ public class PersistenceBeanLoggingTest {
                 logger.fine("query: found " + 0 + " assets.");
             }
         };
-        Deencapsulation.invoke(createTestBean(), "query", filter, sort, projection, pagination);
+        ReflectionTricks.reflectiveCallWithDefaultClass(createTestBean(), "query", DBObject.class, filter, sort, projection, pagination);
     }
 
     @Test
@@ -147,7 +150,7 @@ public class PersistenceBeanLoggingTest {
     }
 
     @Test
-    public void testQueryCount(@Mocked final DBCursor cursor) {
+    public void testQueryCount(@Mocked final DBCursor cursor) throws SecurityException, IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
         final BasicDBObject filterObject = new BasicDBObject("key1", "value1");
         new Expectations() {
             {
@@ -162,6 +165,6 @@ public class PersistenceBeanLoggingTest {
                 logger.fine("queryCount: found 3 assets.");
             }
         };
-        Deencapsulation.invoke(createTestBean(), "queryCount", filterObject);
+        ReflectionTricks.reflectiveCallWithDefaultClass(createTestBean(), "queryCount", DBObject.class, filterObject);
     }
 }

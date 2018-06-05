@@ -43,7 +43,7 @@ in the configDropins/overrides directory.
          same MongoDB driver classes.
       -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
-        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.13.0.jar"/>
+        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.14.3.jar"/>
     </library>
     
     <webAppSecurity singleSignonEnabled="false"/>

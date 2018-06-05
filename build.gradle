@@ -36,8 +36,12 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
     
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7    
+    tasks.withType(JavaCompile) {
+         options.compilerArgs << '-Xlint:unchecked'
+         options.deprecation = true
+    }
 
     repositories {
         mavenCentral()
@@ -257,19 +261,19 @@ void loadProperties(String fileName) {
     
 }
 
-// If a Java 6 VM is available, set up the bootclasspath and path to java.exe for
+// If a Java 7 VM is available, set up the bootclasspath and path to java.exe for
 // other projects to use.
-if(hasProperty("java6Home")) {
-	def java_lib_dir = java6Home + File.separator + "jre" + File.separator + "lib"
-	def java_bin_dir = java6Home + File.separator + "jre" + File.separator + "bin"
+if(hasProperty("java7Home")) {
+	def java_lib_dir = java7Home + File.separator + "jre" + File.separator + "lib"
+	def java_bin_dir = java7Home + File.separator + "jre" + File.separator + "bin"
 	def java_executable = java_bin_dir + File.separator + "java.exe"
 	File java_exe_file = new File(java_executable)
 	if (!java_exe_file.exists()) {
 		java_executable = java_bin_dir + File.separator + "java"
 		java_exe_file = new File(java_executable)
 		if (!java_exe_file.exists()) {
-			throw new GradleException("java6Home property was specified but no exectuable could be found. java6Home was "
-				+ java6Home + " and " + java_executable + " couldn't be found") 
+			throw new GradleException("java7Home property was specified but no exectuable could be found. java7Home was "
+				+ java7Home + " and " + java_executable + " couldn't be found") 
 		}
 	}
 
@@ -291,17 +295,17 @@ if(hasProperty("java6Home")) {
 		// do nothing. The check below will fail the build
 	}
 	if (jars.size() == 0) {
-		throw new GradleException("the java6Home property was specified but no jar files were found in the expected JRE lib directory. java6Home was "
-			+ java6Home + " and no jars were found in " + java_lib_dir)
+		throw new GradleException("the java7Home property was specified but no jar files were found in the expected JRE lib directory. java7Home was "
+			+ java7Home + " and no jars were found in " + java_lib_dir)
 	}
 
-	ext.java6BootClasspath = jars.iterator().join(File.pathSeparator)
-	ext.java6Executable = java_executable
-	logger.warn("Will execute client-lib-tests with JVM at " + java6Executable)
-	logger.debug("bootstrapclasspath for Java 6 projects set to:\n" + java6BootClasspath)
+	ext.java7BootClasspath = jars.iterator().join(File.pathSeparator)
+	ext.java7Executable = java_executable
+	logger.warn("Will execute client-lib-tests with JVM at " + java7Executable)
+	logger.debug("bootstrapclasspath for Java 7 projects set to:\n" + java7BootClasspath)
 
 } else {
-	logger.warn("java6Home property was not set, so the bootstrapclasspath for client-lib will not be sets,"
+	logger.warn("java7Home property was not set, so the bootstrapclasspath for client-lib will not be set,"
 		+" and client-lib-tests will be executed on the current JVM") 
 }
 	
