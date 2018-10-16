@@ -100,8 +100,16 @@ public class SingleFileClient extends AbstractRepositoryClient implements Reposi
 
             idCounter = new AtomicInteger(1);
             assets = new HashMap<String, JsonObject>();
-            JsonReader reader = Json.createReader(new FileInputStream(file));
-            JsonArray assetList = reader.readArray();
+            JsonReader reader = null;
+            JsonArray assetList = null;
+            try {
+                reader = Json.createReader(new FileInputStream(file));
+                assetList = reader.readArray();
+            } finally {
+                if (reader != null) {
+                    reader.close();
+                }
+            }
             for (JsonValue val : assetList) {
                 String id = Integer.toString(idCounter.getAndIncrement());
                 if (val.getValueType() == ValueType.OBJECT) {
@@ -245,16 +253,20 @@ public class SingleFileClient extends AbstractRepositoryClient implements Reposi
 
         // Write the assets back to the file
         FileOutputStream out = null;
+        JsonWriter streamWriter = null;
         try {
             Map<String, Object> config = new HashMap<String, Object>();
             config.put(JsonGenerator.PRETTY_PRINTING, true);
             JsonWriterFactory writerFactory = Json.createWriterFactory(config);
             out = new FileOutputStream(file);
-            JsonWriter streamWriter = writerFactory.createWriter(out);
+            streamWriter = writerFactory.createWriter(out);
             streamWriter.write(jsonToStore.build());
         } finally {
             if (out != null) {
                 out.close();
+            }
+            if (streamWriter != null) {
+                streamWriter.close();
             }
         }
     }
