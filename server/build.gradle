@@ -409,7 +409,7 @@ task testLarsPackage(type: JavaExec) {
                
     doLast {
         String errorString = errorOutput.toString()
-        if (!(errorString =~ /The directory .*${badDirName} is not a valid installation./)) {
+        if (!((errorString =~ /The directory .*${badDirName} is not a valid installation./) || (errorString =~ /The directory .*${badDirName} is not a valid Liberty install directory./))) {
             throw new GradleException("The expected output from the command was not seen. Actual output was: '${errorString}'"
                 + "\nAnd stdout was: '" + standardOutput + "'")
         }        
