@@ -18,9 +18,9 @@ limitations under the License.
 
     <!-- Enable features -->
     <featureManager>
+        <feature>passwordUtilities-1.0</feature>
         <feature>servlet-3.0</feature>
         <feature>jaxrs-1.1</feature>
-        <feature>mongodb-2.0</feature>
         <feature>cdi-1.0</feature>
         <feature>jndi-1.0</feature>
         <feature>appSecurity-2.0</feature>
@@ -28,40 +28,28 @@ limitations under the License.
     </featureManager>
     <keyStore id="defaultKeyStore" password="{xor}PDc+MTg6Nis="/>
 
-<!--
-A user registry of some kind is needed. This could be added by an override file
-in the configDropins/overrides directory. 
+    <!--
+        A user registry of some kind is needed. This could be added by an override file
+        in the configDropins/overrides directory. 
     <basicRegistry id="lars_registry" realm="default">
         <user name="admin" password="passw0rd"/>
         <group name="Administrators">
             <member name="admin"/>
         </group>
     </basicRegistry>
--->
+    -->
 
     <!-- This library must be used by the WAR app in order for both the app and the MongoDB feature to see the
          same MongoDB driver classes.
       -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
-        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.13.0.jar"/>
+        <file name="${shared.resource.dir}/libs/mongo-java-driver-3.11.0.jar"/>
     </library>
     
     <webAppSecurity singleSignonEnabled="false"/>
 
     <!--  These will be overwritten by bluemix -->
     <httpEndpoint httpPort="80" httpsPort="443" id="defaultHttpEndpoint"/>
-
-    <mongo id="mongo" libraryRef="mongo-lib" writeConcern="MAJORITY" 
-    user="${cloud.services.lars_mongo_svc.connection.user}"
-    password="${cloud.services.lars_mongo_svc.connection.password}"
-    socketKeepAlive="true" >
-        <hostNames>${cloud.services.lars_mongo_svc.connection.host1}</hostNames>
-        <hostNames>${cloud.services.lars_mongo_svc.connection.host2}</hostNames>
-        <ports>${cloud.services.lars_mongo_svc.connection.port1}</ports>
-        <ports>${cloud.services.lars_mongo_svc.connection.port2}</ports>
-    </mongo>
-    
-    <mongoDB databaseName="${cloud.services.lars_mongo_svc.connection.dbname}" jndiName="mongo/larsDB" mongoRef="mongo"/>
 
     <webApplication id="com.ibm.ws.lars.rest" location="larsBluemix.war" name="com.ibm.ws.lars.rest" contextRoot="/">
         <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>

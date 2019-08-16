@@ -1,0 +1,3 @@
+lars.mongo.hostname=localhost
+lars.mongo.port=@MONGO_PORT@
+lars.mongo.dbname=@TEST_DB_NAME@

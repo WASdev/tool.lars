@@ -30,6 +30,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
 
+import javax.inject.Inject;
+
 import org.bson.types.ObjectId;
 
 import com.ibm.ws.lars.rest.AssetFilter;
@@ -82,14 +84,12 @@ public class PersistenceBean implements Persistor {
     private static final String ATTACHMENTS_COLLECTION = "attachments";
 
     private static final List<String> searchIndexFields =
-            Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
+        Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
 
     /** The _id field of a MongoDB object */
     private static final String ID = "_id";
 
-    private static final String DB_NAME = "mongo/larsDB";
-
-    @Resource(lookup = DB_NAME)
+    @Inject
     private com.mongodb.DB db;
 
     private GridFS gridFS;
@@ -536,9 +536,9 @@ public class PersistenceBean implements Persistor {
         for (String indexField : searchIndexFields) {
             textIndex.add(indexField, "text");
         }
-        assets.ensureIndex(textIndex.get());
+        assets.createIndex(textIndex.get());
 
         // Add Attachment(assetId) index
-        attachments.ensureIndex(new BasicDBObject("assetId", 1));
+        attachments.createIndex(new BasicDBObject("assetId", 1));
     }
 }

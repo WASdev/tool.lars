@@ -98,7 +98,7 @@ public class PersistenceBeanLoggingTest {
                 logger.isLoggable(Level.FINE);
                 result = true;
 
-                logger.fine("createAsset: inserting object into the database: { }");
+                logger.fine("createAsset: inserting object into the database: {}");
             }
         };
         createTestBean().createAsset(new Asset());
@@ -106,8 +106,8 @@ public class PersistenceBeanLoggingTest {
 
     @Test
     public void testUpdateAsset() throws InvalidJsonAssetException, NonExistentArtefactException {
-        final String expectedString = "updateAsset: query object: { \"_id\" : { \"$oid\" : \"ffffffffffffffffffffffff\"}}\n"
-                                      + "updated asset:{ \"_id\" : { \"$oid\" : \"ffffffffffffffffffffffff\"}}";
+        final String expectedString = "updateAsset: query object: {\"_id\": {\"$oid\": \"ffffffffffffffffffffffff\"}}\n"
+                                      + "updated asset:{\"_id\": {\"$oid\": \"ffffffffffffffffffffffff\"}}";
         new Expectations() {
             {
                 logger.isLoggable(Level.FINE);
@@ -128,7 +128,7 @@ public class PersistenceBeanLoggingTest {
                 logger.isLoggable(Level.FINE);
                 result = true;
 
-                logger.fine("createAttachmentMetadata: inserting new attachment { \"_id\" : { \"$oid\" : \"ffffffffffffffffffffffff\"}}");
+                logger.fine("createAttachmentMetadata: inserting new attachment {\"_id\": {\"$oid\": \"ffffffffffffffffffffffff\"}}");
             }
         };
         Attachment a2 = new Attachment();

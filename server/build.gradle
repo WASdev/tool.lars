@@ -50,6 +50,12 @@ def requiredSpecJars = [
     'com.ibm.*.javaee.cdi.1.0_*.jar',
     'com.ibm.*.javaee.annotation.1.1_*.jar']
 
+def requiredIbmJars = [
+    'com.ibm.*.passwordUtil_*.jar']
+
+def requiredThirdPartyJars = [
+    'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar']
+
 ext {
     serverName = archivesBaseName
     testServerName = 'testServer'
@@ -78,7 +84,8 @@ dependencies {
     
     sharedLibs group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/spec", include: requiredSpecJars)
-    providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: 'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar')
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api/ibm", include: requiredIbmJars)
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: requiredThirdPartyJars)
     providedCompile group:'com.google.code.findbugs', name:'annotations', version: '3.0.+'
 
     testCompile group:'junit', name:'junit', version:junit_version
@@ -163,6 +170,7 @@ CopySpec usrDirSpec(String serverName) {
                 into 'apps'
             }
             from 'config/server.xml'
+            from 'config/bootstrap.properties'
         }
     }
 }
@@ -201,9 +209,13 @@ task createTestUsrDir (type: Copy) {
         rename 'testServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPortHTTP,
                                       'HTTPS_PORT':testLibertyPortHTTPS,
-                                      'TEST_DB_NAME':testDbName,
-                                      'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':traceSpec])
+    }
+    from('config/testServer.props') {
+        into "servers/${testServerName}"
+        rename 'testServer\\.props', 'bootstrap.properties'
+        filter(ReplaceTokens, tokens:['MONGO_PORT':testMongoPort,
+                                      'TEST_DB_NAME':testDbName])
     }
 
     // Add the bluemix war as a separate app, so that the https redirection
@@ -220,9 +232,13 @@ task createTestUsrDir (type: Copy) {
         into "servers/${baseUrlServerName}"
         rename 'baseUrlServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':baseUrlLibertyPortHTTP,
-                                      'TEST_DB_NAME':testDbName,
-                                      'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':traceSpec])
+    }
+    from('config/testServer.props') {
+        into "servers/${baseUrlServerName}"
+        rename 'testServer\\.props', 'bootstrap.properties'
+        filter(ReplaceTokens, tokens:['MONGO_PORT':testMongoPort,
+                                      'TEST_DB_NAME':testDbName])
     }
     
     // Some tests need files served over http
@@ -343,12 +359,11 @@ task createLarsPackage {
     dependsOn 'initAnt'
     dependsOn 'createPackageUsrDir'
     
-
-    def packageJarFileDest = 'build/distributions/' + archivesBaseName + 'Package.jar' 
+    def packageZipFileDest = 'build/distributions/' + archivesBaseName + 'Package.zip' 
     
-    outputs.file packageJarFileDest
+    outputs.file packageZipFileDest
 
-    inputs.file 'config/server.xml'
+    inputs.files 'config/server.xml', 'config/bootstrap.properties'
     inputs.files rootProject.file('LICENSE'), rootProject.file('LA_en')
     inputs.files(war.getOutputs().getFiles())
 
@@ -364,12 +379,12 @@ task createLarsPackage {
                    userDir: 'build/usr',
                    serverName: serverName,
                    include: 'usr',
-                   archive: packageJarFileDest)
+                   archive: packageZipFileDest)
 
         // Get all the liberty features that LARS depends on
         def requireFeatureValue = getRequireFeatureValue(file('config/server.xml'))
                 
-        ant.jar(destfile: packageJarFileDest, update: true) {
+        ant.jar(destfile: packageZipFileDest, update: true) {
             fileset(dir: rootProject.getRootDir(), includes: 'LICENSE')
             zipfileset(file: rootProject.file('LA_en'), prefix: 'lafiles')
             zipfileset(file: rootProject.file('LICENSE'), prefix: 'wlp/usr/servers/' + serverName) // make sure the license is in the server directory
@@ -386,6 +401,7 @@ task createLarsPackage {
     
 }
 
+/* No longer relevant at all
 task testLarsPackage(type: JavaExec) {
     
     // Can't actually install the package into Liberty as the server is a supplied dependency
@@ -416,17 +432,18 @@ task testLarsPackage(type: JavaExec) {
     }
     
 }
+*/
 
-task testJarContents {
+task testZipContents {
     // minimal check on the contents of the server jar. Check for
     // - license file that will be expanded into the server directory
-    // - server.xml
+    // - server.xml and bootstrap.properties
     
     dependsOn 'createLarsPackage'
 
     doLast{
         checkZipContents(createLarsPackage.outputs.files.getAt(0),
-            ['wlp/usr/servers/larsServer/server.xml', 'wlp/usr/servers/larsServer/LICENSE'])
+            ['wlp/usr/servers/larsServer/server.xml', 'wlp/usr/servers/larsServer/bootstrap.properties', 'wlp/usr/servers/larsServer/LICENSE'])
     }
 }
 
@@ -444,14 +461,16 @@ task packageBluemixLars(type: Zip) {
         }
         from "config/${bluemixServerName}.xml"
         rename("${bluemixServerName}.xml", 'server.xml');
+        from "config/${bluemixServerName}.props"
+        rename("${bluemixServerName}.props", 'bootstrap.properties');
     }
     baseName bluemixServerName    
 }
 
 task packageLars {
     dependsOn 'createLarsPackage'
-    dependsOn 'testLarsPackage'
-    dependsOn 'testJarContents'
+    //dependsOn 'testLarsPackage'
+    dependsOn 'testZipContents'
     outputs.files(createLarsPackage.getOutputs().getFiles())
 }
 
