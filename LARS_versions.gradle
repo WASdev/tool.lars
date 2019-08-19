@@ -8,8 +8,8 @@ ext {
 	mongodb_java_version="3.11.+"
 
 	// Test/compile time only dependencies
-	// Fixed at 1.39 because jmockit frequently make breaking API changes
-	jmockit_version="1.39"
+	// Fixed at 1.44 because jmockit frequently make breaking API changes
+	jmockit_version="1.44"
 	hamcrest_version="1.+"
 	junit_version="4.+"
 	httpclient_version="4.4.+"
