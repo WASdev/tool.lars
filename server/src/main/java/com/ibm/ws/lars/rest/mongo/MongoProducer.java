@@ -13,6 +13,7 @@ package com.ibm.ws.lars.rest.mongo;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import com.ibm.websphere.crypto.PasswordUtil;
@@ -38,14 +39,24 @@ public class MongoProducer {
     private static final Logger logger = Logger.getLogger(MongoProducer.class.getCanonicalName());
 
     private String dbName = null;
+    private String user = null;
+    private String encodedPass = null;
+    private String requestedWriteConcern = null;
+    private ArrayList<ServerAddress> servers = new ArrayList<ServerAddress>(2);
 
-    @Produces
-    public MongoClient createMongo() {
+    @PostConstruct
+    private void readConfig() {
         Properties sysprops = System.getProperties();
 
-        ArrayList<ServerAddress> servers = new ArrayList<ServerAddress>(2);
+        // database name
+        dbName = sysprops.getProperty("lars.mongo.dbname", "larsDB");
 
-        MongoClientOptions opts;
+        // user and password (optional - if not set, use unauthenticated access)
+        user = sysprops.getProperty("lars.mongo.user");
+        encodedPass = sysprops.getProperty("lars.mongo.pass.encoded");
+
+        // writeConcern (optional - if not set use the default "ACKNOWLEDGED")
+        requestedWriteConcern = sysprops.getProperty("lars.mongo.writeConcern");
 
         // look for all lars.mongo.hostname* properties, in alphabetical order
         Enumeration keysEnum = sysprops.keys();
@@ -73,17 +84,14 @@ public class MongoProducer {
             logger.info("createMongo: no mongodb servers specified, defaulting to localhost:27017");
         }
 
-        // database name
-        this.dbName = sysprops.getProperty("lars.mongo.dbname", "larsDB");
 
-        // user and password (optional - if not set, use unauthenticated access)
-        String user = sysprops.getProperty("lars.mongo.user");
-        String encodedPass = sysprops.getProperty("lars.mongo.pass.encoded");
+    }
 
-        // writeConcern (optional - if not set use the default "ACKNOWLEDGED")
-        String writeConcernStr = sysprops.getProperty("lars.mongo.writeConcern");
-        if(writeConcernStr != null) {
-            WriteConcern wc = new WriteConcern(writeConcernStr);
+    @Produces
+    public MongoClient createMongo() {
+        MongoClientOptions opts;
+        if(requestedWriteConcern != null) {
+            WriteConcern wc = new WriteConcern(requestedWriteConcern);
             opts = new MongoClientOptions.Builder().writeConcern(wc).build();
             logger.info("createMongo: using write concern "+opts.getWriteConcern().getWString());
         } else {
