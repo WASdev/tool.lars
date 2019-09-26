@@ -18,9 +18,9 @@ limitations under the License.
 
     <!-- Enable features -->
     <featureManager>
+        <feature>passwordUtilities-1.0</feature>
         <feature>servlet-3.0</feature>
         <feature>jaxrs-1.1</feature>
-        <feature>mongodb-2.0</feature>
         <feature>cdi-1.0</feature>
         <feature>jndi-1.0</feature>
         <feature>appSecurity-2.0</feature>
@@ -44,21 +44,13 @@ limitations under the License.
          same MongoDB driver classes.
       -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
-        <file name="${shared.resource.dir}/libs/mongo-java-driver-2.13.0.jar"/>
+        <file name="${shared.resource.dir}/libs/mongo-java-driver-3.11.0.jar"/>
     </library>
     
     <webAppSecurity singleSignonEnabled="false"/>
 
     <httpEndpoint httpPort="@HTTP_PORT@" id="defaultHttpEndpoint"/>
 
-    <!-- Use slightly safer write concern than the default -->
-    <mongo id="mongo" libraryRef="mongo-lib" writeConcern="JOURNAL_SAFE">
-        <hostNames>localhost</hostNames>
-        <ports>@MONGO_PORT@</ports>
-    </mongo>
-    
-    <mongoDB databaseName="@TEST_DB_NAME@" jndiName="mongo/larsDB" mongoRef="mongo"/>
-    
     <jndiEntry id="lars/URLBase" jndiName="lars/URLBase" value="http://example.com/test/" />
 
     <webApplication id="com.ibm.ws.lars.rest" location="larsServer.war" name="com.ibm.ws.lars.rest" contextRoot="/">

@@ -21,7 +21,9 @@ The wiki has docs on [using LARS with WebSphere Liberty](https://github.com/WASd
 
 ## Getting started
 
-If you don't wish to build LARS from source, follow the [Installing LARS](doc/INSTALL.md) instructions to install the latest binary release from the [Liberty Repository](http://www.wasdev.net/downloads), and perform the necessary `server.xml` customization steps.
+If you don't wish to build LARS from source, follow the [Installing LARS](doc/INSTALL.md)
+instructions to install the latest binary release from the [Liberty Repository](http://www.wasdev.net/downloads),
+and perform the necessary `server.xml` and `bootstrap.properties` customization steps.
 
 Start mongodb
 

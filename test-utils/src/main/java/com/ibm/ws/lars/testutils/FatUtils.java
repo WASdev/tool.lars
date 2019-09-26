@@ -18,7 +18,6 @@ package com.ibm.ws.lars.testutils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -151,13 +150,9 @@ public class FatUtils {
     public static synchronized DB getMongoDB() {
         if (fatDB == null) {
             MongoClient mongoClient;
-            try {
-                mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
-                mongoClient.setWriteConcern(WriteConcern.ACKNOWLEDGED);
-                fatDB = mongoClient.getDB(FatUtils.TEST_DB_NAME);
-            } catch (UnknownHostException e) {
-                throw new RuntimeException("Unknown hostname connecting to Mongo DB", e);
-            }
+            mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
+            mongoClient.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+            fatDB = mongoClient.getDB(FatUtils.TEST_DB_NAME);
         }
 
         return fatDB;

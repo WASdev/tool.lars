@@ -50,6 +50,12 @@ def requiredSpecJars = [
     'com.ibm.*.javaee.cdi.1.0_*.jar',
     'com.ibm.*.javaee.annotation.1.1_*.jar']
 
+def requiredIbmJars = [
+    'com.ibm.*.passwordUtil_*.jar']
+
+def requiredThirdPartyJars = [
+    'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar']
+
 ext {
     serverName = archivesBaseName
     testServerName = 'testServer'
@@ -78,7 +84,8 @@ dependencies {
     
     sharedLibs group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/spec", include: requiredSpecJars)
-    providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: 'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar')
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api/ibm", include: requiredIbmJars)
+    providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: requiredThirdPartyJars)
     providedCompile group:'com.google.code.findbugs', name:'annotations', version: '3.0.+'
 
     testCompile group:'junit', name:'junit', version:junit_version
@@ -163,6 +170,9 @@ CopySpec usrDirSpec(String serverName) {
                 into 'apps'
             }
             from 'config/server.xml'
+            from 'config/bootstrap.properties'
+            from '../LA_en'
+            from '../LICENSE'
         }
     }
 }
@@ -171,7 +181,7 @@ distributions {
     main {
         baseName = archivesBaseName
         contents {
-            into '/usr'
+            into '/'
             with usrDirSpec(serverName)
         }
     }
@@ -201,9 +211,13 @@ task createTestUsrDir (type: Copy) {
         rename 'testServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':testLibertyPortHTTP,
                                       'HTTPS_PORT':testLibertyPortHTTPS,
-                                      'TEST_DB_NAME':testDbName,
-                                      'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':traceSpec])
+    }
+    from('config/testServer.props') {
+        into "servers/${testServerName}"
+        rename 'testServer\\.props', 'bootstrap.properties'
+        filter(ReplaceTokens, tokens:['MONGO_PORT':testMongoPort,
+                                      'TEST_DB_NAME':testDbName])
     }
 
     // Add the bluemix war as a separate app, so that the https redirection
@@ -220,9 +234,13 @@ task createTestUsrDir (type: Copy) {
         into "servers/${baseUrlServerName}"
         rename 'baseUrlServer\\.xml', 'server.xml'
         filter(ReplaceTokens, tokens:['HTTP_PORT':baseUrlLibertyPortHTTP,
-                                      'TEST_DB_NAME':testDbName,
-                                      'MONGO_PORT':testMongoPort,
                                       'LIBERTY_TRACE_SPEC':traceSpec])
+    }
+    from('config/testServer.props') {
+        into "servers/${baseUrlServerName}"
+        rename 'testServer\\.props', 'bootstrap.properties'
+        filter(ReplaceTokens, tokens:['MONGO_PORT':testMongoPort,
+                                      'TEST_DB_NAME':testDbName])
     }
     
     // Some tests need files served over http
@@ -332,102 +350,20 @@ task stopTestMongod {
     }
 }
 
-
-// Use liberty's 'package' command to produce an artifact that can be installed with
-// the 'installUtility' command. The testServer can't just be packaged up as it is 
-// using the wrong server.xml, and the name is wrong. 
-task createLarsPackage {
-    
-    description 'Package up LARS in a format that can be installed into a Liberty server using the server\'s installUtility command';
-    
-    dependsOn 'initAnt'
-    dependsOn 'createPackageUsrDir'
-    
-
-    def packageJarFileDest = 'build/distributions/' + archivesBaseName + 'Package.jar' 
-    
-    outputs.file packageJarFileDest
-
-    inputs.file 'config/server.xml'
-    inputs.files rootProject.file('LICENSE'), rootProject.file('LA_en')
-    inputs.files(war.getOutputs().getFiles())
-
-    doLast {
-        mkdir('build/distributions')
-        
-        // The 'package' command doesn't produce a jar
-        // which is suitable to be installed as a 'sample' using the
-        // server's installUtility (that is not the intention of the package command).
-        // To make it  work, create the jar and then tweak a few fields in the manifest.
-        ant.server(operation: 'package',
-                   installDir: libertyRoot,
-                   userDir: 'build/usr',
-                   serverName: serverName,
-                   include: 'usr',
-                   archive: packageJarFileDest)
-
-        // Get all the liberty features that LARS depends on
-        def requireFeatureValue = getRequireFeatureValue(file('config/server.xml'))
-                
-        ant.jar(destfile: packageJarFileDest, update: true) {
-            fileset(dir: rootProject.getRootDir(), includes: 'LICENSE')
-            zipfileset(file: rootProject.file('LA_en'), prefix: 'lafiles')
-            zipfileset(file: rootProject.file('LICENSE'), prefix: 'wlp/usr/servers/' + serverName) // make sure the license is in the server directory
-            delegate.manifest {
-                attribute(name: 'Provide-Feature', value: '') // The sample doesn't provide anything
-                attribute(name: 'Require-Feature', value: requireFeatureValue) // All the  features the sample depends on
-                // attribute(name: 'Sample-Type', value: 'thirdParty') // Needed by installUtility, but we're not currently using that.
-                attribute(name: 'Archive-Content-Type', value: 'sample')
-                attribute(name: 'Archive-Root', value: 'wlp/usr/') // This needs to be set to ensure that sample is uploaded to the repository correctly
-                attribute(name: 'License-Agreement', value: 'lafiles/LA') // should contain a file called en.html
-            }
-        }
-    }
-    
-}
-
-task testLarsPackage(type: JavaExec) {
-    
-    // Can't actually install the package into Liberty as the server is a supplied dependency
-    // Next best thing, check that java -jar runs and fails in an expected way when supplied
-    // with a non-existent destination
-    
-    dependsOn 'createLarsPackage'
-    outputs.upToDateWhen {
-        !createLarsPackage.didWork
-    }
-    
-    description "Test that 'java -jar larsServerPackage.jar' will at least run and fail in an expected manner, and some limited check on the jar contents"
-    String badDirName = "jibberjibberjibberfoogogogo";
-    ignoreExitValue = true // Expecting this to fail
-    workingDir 'build'
-    main = '-jar'
-    standardOutput = new ByteArrayOutputStream() // Hide the stdout from the screen.
-    errorOutput = new ByteArrayOutputStream()
-    standardInput = new ByteArrayInputStream(badDirName.getBytes())
-    args createLarsPackage.outputs.files.getAt(0)
-               
-    doLast {
-        String errorString = errorOutput.toString()
-        if (!((errorString =~ /The directory .*${badDirName} is not a valid installation./) || (errorString =~ /The directory .*${badDirName} is not a valid Liberty install directory./))) {
-            throw new GradleException("The expected output from the command was not seen. Actual output was: '${errorString}'"
-                + "\nAnd stdout was: '" + standardOutput + "'")
-        }        
-    }
-    
-}
-
-task testJarContents {
+task testZipContents {
     // minimal check on the contents of the server jar. Check for
     // - license file that will be expanded into the server directory
-    // - server.xml
+    // - server.xml and bootstrap.properties
+    // - the shared resources directory
     
-    dependsOn 'createLarsPackage'
+    dependsOn 'distZip'
 
     doLast{
-        checkZipContents(createLarsPackage.outputs.files.getAt(0),
-            ['wlp/usr/servers/larsServer/server.xml', 'wlp/usr/servers/larsServer/LICENSE'])
+        checkZipContents(distZip.outputs.files.getAt(0),
+            ['servers/larsServer/server.xml', 'servers/larsServer/bootstrap.properties', 'servers/larsServer/LICENSE', 'servers/larsServer/LA_en', 'shared/resources/libs'])
     }
+
+    outputs.files(distZip.getOutputs().getFiles())
 }
 
 task packageBluemixLars(type: Zip) {
@@ -444,48 +380,22 @@ task packageBluemixLars(type: Zip) {
         }
         from "config/${bluemixServerName}.xml"
         rename("${bluemixServerName}.xml", 'server.xml');
+        from "config/${bluemixServerName}.props"
+        rename("${bluemixServerName}.props", 'bootstrap.properties');
     }
     baseName bluemixServerName    
 }
 
-task packageLars {
-    dependsOn 'createLarsPackage'
-    dependsOn 'testLarsPackage'
-    dependsOn 'testJarContents'
-    outputs.files(createLarsPackage.getOutputs().getFiles())
-}
-
-
-
 task dist {    
     // This task is essentially an aggregate of the other packaging/distribution tasks
-    List aggregates = ['distZip', 'packageLars', 'packageBluemixLars']
+    List aggregates = ['testZipContents', 'packageBluemixLars']
     aggregates.each { taskname -> 
         dependsOn taskname
         outputs.files(tasks[taskname].getOutputs().getFiles())
     }
+
 }
 
-
-// Searches a server.xml file for feature definitions, turns them
-// into a single string for sticking in the manifest.
-String getRequireFeatureValue(File serverXML) {
-    String contents = serverXML.text
-    String features = ""
-    // The mapping from the short name in the server.xml to the feature's package name
-    // isn't well defined. Appending 'com.ibm.websphere.appserver' is correct for all
-    // the features currently used, although it is a bit fragile.
-    (contents =~ /<feature>([^<]+)</).each() { fullMatch, name -> 
-        features += "com.ibm.websphere.appserver." + name + "," 
-        }
-    return features;     
-} 
-
-task createPackageUsrDir (type: Copy) {
-    description 'Create the /usr directory for a server to be packaged'    
-    into 'build/usr'
-    with usrDirSpec(serverName)
-}
 
 File getMongodExecutable() {
     File mongod = new File(property('mongodExecutable'))
