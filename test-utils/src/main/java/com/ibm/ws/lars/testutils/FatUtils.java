@@ -147,7 +147,7 @@ public class FatUtils {
      * We never explicitly close the client and rely on the connection being closed when the JVM
      * exits.
      */
-    public static synchronized DB getMongoDB throws UnknownHostException() {
+    public static synchronized DB getMongoDB() throws UnknownHostException {
         if (fatDB == null) {
             MongoClient mongoClient;
             mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
