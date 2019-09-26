@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.net.UnknownHostException;
 
 import com.ibm.ws.lars.testutils.fixtures.LarsRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.MassiveRepositoryFixture;
