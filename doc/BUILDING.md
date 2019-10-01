@@ -3,11 +3,11 @@
 Make sure you have the following prerequisites installed: (older or
 newer versions may work but this is what we've tested with)
 
-* [gradle v2.0](http://gradle.org/downloads) 
-* [mongoDB v2.6](https://www.mongodb.org/downloads#previous)
-* [WAS Liberty Profile 19.0.0.6](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-wlp-kernel)
+* [gradle v5.6.2](http://gradle.org/downloads) 
+* [mongoDB v3.11+](https://www.mongodb.com/download-center/community)
+* [WAS Liberty Profile 19.0.0.9](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-wlp-kernel)
   * Your Liberty runtime must contain the following features several features, which can be installed using `installUtility` as follows: `bin/installUtility install cdi-1.0 servlet-3.0 passwordUtilities-1.0 jaxrs-1.1`
-* A Java 7 JDK
+* A Java JDK (we tested with Java 8)
 
 Either clone the repository or download and extract a snapshot
 
