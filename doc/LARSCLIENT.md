@@ -1,9 +1,7 @@
 # Using larsClient
 
 `larsClient` allows you to add assets to LARS, to list assets and to
-delete assets. Like Liberty itself, `larsClient` requires Java. You
-must either set JAVA_HOME to point to a Java 7 runtime environment or
-you must add a Java 7 executable to your PATH.
+delete assets. Like Liberty itself, `larsClient` requires Java.
 
 For full details of command line parameters, run
 
