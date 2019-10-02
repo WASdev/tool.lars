@@ -6,7 +6,7 @@ newer versions may work but this is what we've tested with)
 * [gradle v5.6.2](http://gradle.org/downloads) 
 * [mongoDB v3.11+](https://www.mongodb.com/download-center/community)
 * [WAS Liberty Profile 19.0.0.9](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-wlp-kernel)
-  * Your Liberty runtime must contain the following features several features, which can be installed using `installUtility` as follows: `bin/installUtility install cdi-1.0 servlet-3.0 passwordUtilities-1.0 jaxrs-1.1`
+  * Your Liberty runtime must contain the following features which can be installed using `installUtility` as follows: `bin/installUtility install cdi-1.0 servlet-3.0 passwordUtilities-1.0 jaxrs-1.1`
 * A Java JDK (we tested with Java 8)
 
 Either clone the repository or download and extract a snapshot
