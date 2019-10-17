@@ -129,6 +129,7 @@ public class MongoProducer {
                     break;
                 default:
                     wc = WriteConcern.ACKNOWLEDGED;
+                    logger.info("No WriteConcern named " + requestedWriteConcern + " found. Using default WriteConcern of ACKNOWLEDGED.");
             }
             opts = new MongoClientOptions.Builder().writeConcern(wc).build();
             logger.info("createMongo: using write concern " + requestedWriteConcern);
