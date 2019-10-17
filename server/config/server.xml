@@ -53,7 +53,7 @@ limitations under the License.
          same MongoDB driver classes.
       -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
-        <file name="${shared.resource.dir}/libs/mongo-java-driver-3.11.0.jar"/>
+        <fileset dir="${shared.resource.dir}/libs" includes="*.jar" />
     </library>
 
     <!-- Uncomment this to override the base URL (may be useful if lars is behind a reverse proxy -->
