@@ -412,8 +412,7 @@ void startMongod() {
         '--pidfilepath', file('build/mongo/mongo.pid').getAbsolutePath(),
         '--logpath', file('build/mongo/mongo.log').getAbsolutePath(),
         '--dbpath', file('build/mongo/data').getAbsolutePath(),
-        '--bind_ip', 'localhost',
-        '--smallfiles'
+        '--bind_ip', 'localhost'
     )
     builder.inheritIO()
     Process p = builder.start()
