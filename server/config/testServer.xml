@@ -43,9 +43,15 @@ limitations under the License.
     <!-- This library must be used by the WAR app in order for both the app and the MongoDB feature to see the
          same MongoDB driver classes.
       -->
-    <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
+    <!--library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
         <file name="${shared.resource.dir}/libs/mongo-java-driver-3.11.0.jar"/>
+    </library-->
+
+    <!-- Begin fix-->
+    <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
+        <fileset dir="${shared.resource.dir}/libs" includes="*.jar" />
     </library>
+    <!-- End fix-->
     
     <webAppSecurity singleSignonEnabled="false"/>
 
