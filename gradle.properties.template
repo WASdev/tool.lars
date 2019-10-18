@@ -1,7 +1,8 @@
 # The classes in the client-lib, client-lib-tests and test-utils projects
-# are compiled with the source and target values set to 1.7. If java7Home is set,
+# are compiled with the source and target values set to 1.8. If java7Home is set,
 # then the bootclasspath will also be set appropriately, and the client-lib-tests will
-# be executed with the specified Java7 JRE.
-# Setting java7Home is recommended if possible.  
-# java7Home=/path/to/a/java7/JRE
-
+# be executed with the specified Java8 JRE.
+# Setting java8Home is recommended if possible.  
+# java8Home=/path/to/a/java8/JRE
+# libertyRoot=/path/to/wlp
+# mongodExecutable=/path/to/mongod

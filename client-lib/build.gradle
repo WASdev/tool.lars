@@ -32,20 +32,20 @@ task srcJar(type: Jar) {
 assemble.dependsOn srcJar
  
 rootProject.afterEvaluate {
-    if (rootProject.hasProperty("java7BootClasspath")) {
+    if (rootProject.hasProperty("java8BootClasspath")) {
         tasks.each {
             if (it instanceof JavaCompile) {
-                it.options.bootClasspath = rootProject.java7BootClasspath
+                it.options.bootClasspath = rootProject.java8BootClasspath
             }
         }
         tasks.each {
             if (it instanceof Test) {
-                it.executable = rootProject.java7Executable
+                it.executable = rootProject.java8Executable
             }
         }
     }
 }
-eclipse.classpath.containers=['org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7']
+eclipse.classpath.containers=['org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8']
 
 
 
