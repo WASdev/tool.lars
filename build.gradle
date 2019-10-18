@@ -36,8 +36,8 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
     
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    targetCompatibility = JavaVersion.VERSION_1_7    
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8    
     tasks.withType(JavaCompile) {
          options.compilerArgs << '-Xlint:unchecked'
          options.deprecation = true
@@ -221,7 +221,7 @@ task globalTestReport(type: TestReport) {
         if (haveAnyTestsFailed) {
             URI reportUri = new File(destinationDir, "index.html").toURI();
             reportUri = new URI(reportUri.scheme, "", reportUri.path, null);
-            throw new Exception("Tests have failed. For more information, see the test report: ${reportUri}")
+            throw new Exception("Tests have failed. For more information, see the test report: ${reportUri}. The testServer logs are available at /server/build/usr/servers/testServer/logs.")
         }
     }
 }
