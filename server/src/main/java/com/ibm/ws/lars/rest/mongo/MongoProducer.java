@@ -91,9 +91,48 @@ public class MongoProducer {
     public MongoClient createMongo() {
         MongoClientOptions opts;
         if(requestedWriteConcern != null) {
-            WriteConcern wc = new WriteConcern(requestedWriteConcern);
+            WriteConcern wc;
+            switch(requestedWriteConcern)
+            {
+                case "ACKNOWLEDGED":
+                    wc = WriteConcern.ACKNOWLEDGED;
+                    break;
+                case "FSYNC_SAFE":
+                    wc = WriteConcern.ACKNOWLEDGED;
+                    break;
+                case "FSYNCED":
+                    wc = WriteConcern.ACKNOWLEDGED;
+                    break;
+                case "JOURNAL_SAFE":
+                    wc = WriteConcern.JOURNAL_SAFE;
+                    break;
+                case "JOURNALED":
+                    wc = WriteConcern.JOURNALED;
+                    break;
+                case "MAJORITY":
+                    wc = WriteConcern.MAJORITY;
+                    break;
+                case "NORMAL":
+                    wc = WriteConcern.NORMAL;
+                    break;
+                case "REPLICA_ACKNOWLEDGED":
+                    wc = WriteConcern.REPLICA_ACKNOWLEDGED;
+                    break;
+                case "REPLICAS_SAFE":
+                    wc = WriteConcern.REPLICAS_SAFE;
+                    break;
+                case "SAFE":
+                    wc = WriteConcern.SAFE;
+                    break;
+                case "UNACKNOWLEDGED":
+                    wc = WriteConcern.UNACKNOWLEDGED;
+                    break;
+                default:
+                    wc = WriteConcern.ACKNOWLEDGED;
+                    logger.warning("No WriteConcern named " + requestedWriteConcern + " found. Using default WriteConcern of ACKNOWLEDGED.");
+            }
             opts = new MongoClientOptions.Builder().writeConcern(wc).build();
-            logger.info("createMongo: using write concern "+opts.getWriteConcern().getWString());
+            logger.info("createMongo: using write concern " + requestedWriteConcern);
         } else {
             opts = new MongoClientOptions.Builder().build();
             logger.info("createMongo: using default write concern");

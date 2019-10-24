@@ -19,22 +19,22 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-public class Java7Test {
+public class Java8Test {
 
     /**
-     * This test checks that the tests are running on a Java 7 VM. This will only be true if
-     * a Java 7 VM is available. Effectively the test is checking that the gradle build scripts are
-     * invoking the java 7 vm correctly. Gradle will set SHOULD_USE_JAVA_7 if it knows about
-     * a Java 7 VM. If the property is true, then this test can check that the VM running the tests is
-     * a Java 7 one.
+     * This test checks that the tests are running on a Java 8 VM. This will only be true if
+     * a Java 8 VM is available. Effectively the test is checking that the gradle build scripts are
+     * invoking the java 8 vm correctly. Gradle will set SHOULD_USE_JAVA_8 if it knows about
+     * a Java 8 VM. If the property is true, then this test can check that the VM running the tests is
+     * a Java 8 one.
      */
     @Test
-    public void testRunningWithJava7() {
-        if (Boolean.getBoolean("SHOULD_USE_JAVA_7")) {
+    public void testRunningWithJava8() {
+        if (Boolean.getBoolean("SHOULD_USE_JAVA_8")) {
             String version = System.getProperty("java.version");
             if (version != null) {
-                if (!version.startsWith("1.7")) {
-                    fail("The test should run with java 7 but it is " + version);
+                if (!version.startsWith("1.8")) {
+                    fail("The test should run with java 8 but it is " + version);
                 }
             }
         }
