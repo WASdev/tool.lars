@@ -3,7 +3,7 @@ LARS is a Java EE application running on top of Liberty and can be
 configured like any other Liberty application. When LARS is installed,
 it creates a new Liberty server called `larsServer`.
 
-Unzip `larsServer.zip` into the `wlp/usr/` directory of an existing Liberty 19.0.0.9 (or newer) runtime.
+Unzip `larsServer.zip` into the `WLP_USER_DIR` (usually `wlp/usr/`) directory of an existing Liberty 19.0.0.9 (or newer) runtime.
 
 Install LARS's pre-requisite features, using
 `installUtility` after extracting the zip:

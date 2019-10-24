@@ -10,7 +10,7 @@ Unzip `larsClient.zip` and then run `larsClient` to upload an asset. You can add
 
 Enter your password when prompted. You should see a message saying that the feature has been uploaded. You can also add multiple assets by specifying the name of a directory that directly contains those assets. Note that larsClient does not search subdirectories for assets when you do this.
 
-`bin/larsClient upload --url=http://localhost:9080/ma/v1 --username=admin --password /home/liberty/javaee7Bundle/features/8.5.5.6/`
+`bin/larsClient upload --url=http://localhost:9080/ma/v1 --username=admin --password /home/liberty/wlp-featureRepo-19.0.0.9/features/19.0.0.9/`
 
 ### Listing assets
 

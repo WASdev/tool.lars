@@ -44,7 +44,7 @@ limitations under the License.
          same MongoDB driver classes.
       -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
-        <fileset dir="${shared.resource.dir}/libs" includes="*.jar" />
+        <fileset dir="${shared.resource.dir}/libs" includes="mongo-java-driver*.jar" />
     </library>
     
     <webAppSecurity singleSignonEnabled="false"/>
