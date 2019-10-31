@@ -2,10 +2,10 @@
 
 Ensure you have the following prerequisites:
 * [Gradle v4.10.2](https://gradle.org/releases/)
-* [MongoDB v3.11+](https://www.mongodb.com/download-center/community)
+* [MongoDB server](https://www.mongodb.com/download-center/community) compatible with [Java Driver v3.11](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#java-driver-compatibility)
 * [WAS Liberty Profile 19.0.0.9](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-wlp-kernel)
 * Your Liberty runtime must contain the following features which can be installed using `installUtility` as follows: `bin/installUtility install cdi-1.0 servlet-3.0 passwordUtilities-1.0 jaxrs-1.1`
-* A Java JDK (we tested with Java 8)
+* A Java 8 JDK
 
 Either download `larsServer.zip` from the [Liberty Repository](https://developer.ibm.com/wasdev/downloads/#asset/tools-Liberty_Asset_Repository_Service) and configure `server/gradle.properties` as mentioned in the second step below or build `larsServer.zip` yourself by doing the following:
 
