@@ -1,7 +1,16 @@
-# Installing, configuring and running LARS
+# Downloading, installing, configuring and running LARS
+
 LARS is a Java EE application running on top of Liberty and can be
 configured like any other Liberty application. When LARS is installed,
 it creates a new Liberty server called `larsServer`.
+
+## Download or Build larsServer.zip
+
+Either download `larsServer.zip` from the [Liberty Repository](https://developer.ibm.com/wasdev/downloads/#asset/tools-Liberty_Asset_Repository_Service) or build it yourself following the instructions in [Building LARS](BUILDING.md)
+
+Download and install the [Prerequisites](PREREQS.md)
+
+## Install LARS into liberty
 
 Unzip `larsServer.zip` into the `WLP_USER_DIR` (usually `wlp/usr/`) directory of an existing Liberty 19.0.0.9 (or newer) runtime.
 
@@ -9,7 +18,9 @@ Install LARS's pre-requisite features, using
 `installUtility` after extracting the zip:
 `bin/installUtility install larsServer`
 
-To configure LARS, edit the files `wlp/usr/servers/larsServer/server.xml` and `wlp/usr/servers/larsServer/bootstrap.properties`.
+## Configure LARS
+
+Edit the files `wlp/usr/servers/larsServer/server.xml` and `wlp/usr/servers/larsServer/bootstrap.properties`.
 
 For a basic LARS server, you will need to configure the following:
 
