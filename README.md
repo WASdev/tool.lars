@@ -9,6 +9,6 @@ Repository, and then use your Liberty server's installUtility command
 to install the hosted features into your server.
 
 ## Contents
-- [Downloading and building LARS](https://github.com/WASdev/tool.lars/blob/dev_bd_java8/doc/BUILDING.md)
-- [Installing, configuring and running LARS](https://github.com/WASdev/tool.lars/blob/dev_bd_java8/doc/INSTALL.md)
-- [Using larsClient](https://github.com/WASdev/tool.lars/blob/dev_bd_java8/doc/LARSCLIENT.md)
+- [Downloading and building LARS](https://github.com/WASdev/tool.lars/blob/master/doc/BUILDING.md)
+- [Installing, configuring and running LARS](https://github.com/WASdev/tool.lars/blob/master/doc/INSTALL.md)
+- [Using larsClient](https://github.com/WASdev/tool.lars/blob/master/doc/LARSCLIENT.md)
