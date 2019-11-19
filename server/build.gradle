@@ -51,13 +51,11 @@ def requiredSpecJars = [
     'com.ibm.*.javaee.annotation.1.1_*.jar']
 
 def requiredIbmJars = [
-    'com.ibm.*.passwordUtil_*.jar']
+    'com.ibm.*.passwordUtil_*.jar',
+    'com.ibm.*.ssl_*.jar']
 
 def requiredThirdPartyJars = [
     'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar']
-
-def requiredLibs = [
-    'com.ibm.ws.ssl*.jar']
 
 ext {
     serverName = archivesBaseName
@@ -89,7 +87,6 @@ dependencies {
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/spec", include: requiredSpecJars)
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/ibm", include: requiredIbmJars)
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/third-party", include: requiredThirdPartyJars)
-    providedCompile fileTree(dir: "${libertyRoot}/lib", include: requiredLibs)
     providedCompile group:'com.google.code.findbugs', name:'annotations', version: '3.0.+'
 
     testCompile group:'junit', name:'junit', version:junit_version
