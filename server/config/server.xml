@@ -49,13 +49,17 @@ limitations under the License.
     <!-- To access this server from a remote client add a host attribute to the following element, e.g. host="*" -->
     <httpEndpoint httpPort="9080" httpsPort="9443" id="defaultHttpEndpoint"/>
 
-    <!-- This library must be used by the WAR app in order for both the app and the MongoDB feature to see the
-         same MongoDB driver classes.
-      -->
+    <!-- This library must be used by the WAR app in order to see the MongoDB driver classes. -->
     <library id="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party">
         <fileset dir="${shared.resource.dir}/libs" includes="mongo-java-driver*.jar" />
     </library>
 
+    <!-- Uncomment this to specify a custom trust store if SSL is required for connecting to MongoDB -->
+    <!--
+    <ssl id="mongoSSLConfig" trustStoreRef="mongoTrustStore" keyStoreRef="mongoTrustStore" />
+    <keyStore id="mongoTrustStore" password="somePassword location="mongoStore.p12" type="PKCS12" />
+    -->
+    
     <!-- Uncomment this to override the base URL (may be useful if lars is behind a reverse proxy -->
     <!-- <jndiEntry id="lars/URLBase" jndiName="lars/URLBase" value="http://my.external.domain/repo/" /> -->
 
@@ -76,4 +80,5 @@ limitations under the License.
         </application-bnd>
         -->
     </webApplication>
+
 </server>

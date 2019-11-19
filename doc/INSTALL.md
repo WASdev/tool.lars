@@ -52,8 +52,8 @@ authorization for applications on Liberty, see [Configuring authorization for ap
 
 ### MongoDB configuration
 
-If your MongoDB instance uses authentication or if other parameters, such as the MongoDB port, 
-are non-default then you may need to customize the properties in `bootstrap.properties`.
+If your MongoDB instance uses authentication or SSL, or if other parameters such as the MongoDB port
+are non-default then you will need to customize the properties in `bootstrap.properties`.
 
 ## Starting the server
 
