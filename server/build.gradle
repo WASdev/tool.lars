@@ -51,7 +51,8 @@ def requiredSpecJars = [
     'com.ibm.*.javaee.annotation.1.1_*.jar']
 
 def requiredIbmJars = [
-    'com.ibm.*.passwordUtil_*.jar']
+    'com.ibm.*.passwordUtil_*.jar',
+    'com.ibm.*.ssl_*.jar']
 
 def requiredThirdPartyJars = [
     'com.ibm.websphere.appserver.thirdparty.jaxrs_*.jar']
