@@ -77,19 +77,6 @@ limitations under the License.
         </application-bnd>
     </webApplication>
     
-    <!-- Deploy the bluemix war to a different context root so that the https redirect can be tested -->
-    <webApplication id="lars.bluemix" location="larsBluemix.war" name="lars.bluemix" contextRoot="/bluemix">
-        <classloader commonLibraryRef="mongo-lib" apiTypeVisibility="spec,ibm-api,api,third-party"/>
-        <application-bnd>
-        <security-role name="User">
-            <special-subject type="EVERYONE"/>
-        </security-role>
-        <security-role name="Administrator">
-            <group name="Administrators"/>
-        </security-role>
-        </application-bnd>
-    </webApplication>
-    
     @LIBERTY_TRACE_SPEC@
     
 </server>

@@ -49,9 +49,7 @@ public class FrontPageTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] { { Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP },
-                                             { Protocol.HTTPS, "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS },
-                                             { Protocol.HTTP, "http://localhost:" + FatUtils.LIBERTY_PORT_HTTP + "/bluemix" },
-                                             { Protocol.HTTPS, "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS + "/bluemix" } });
+                                             { Protocol.HTTPS, "https://localhost:" + FatUtils.LIBERTY_PORT_HTTPS } });
     }
 
     private final String baseUrl;

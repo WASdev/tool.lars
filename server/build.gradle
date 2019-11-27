@@ -61,7 +61,6 @@ ext {
     serverName = archivesBaseName
     testServerName = 'testServer'
     baseUrlServerName = 'baseUrlServer'
-    bluemixServerName = 'bluemixServer'
 }
 
 configurations {
@@ -126,14 +125,6 @@ clean {
         }
     }
 }
-
-task bluemixWar(type: War) {
-    description 'Assemble the war for the bluemix server, which has a custom web.xml'
-    baseName='larsBluemix'
-    exclude('WEB-INF/web.xml')
-    webXml = file('config/bluemixWeb.xml')   
-}
-assemble.dependsOn bluemixWar
 
 task fatWar(type: War) {
     dependsOn fatDeployedClasses
@@ -219,12 +210,6 @@ task createTestUsrDir (type: Copy) {
         rename 'testServer\\.props', 'bootstrap.properties'
         filter(ReplaceTokens, tokens:['MONGO_PORT':testMongoPort,
                                       'TEST_DB_NAME':testDbName])
-    }
-
-    // Add the bluemix war as a separate app, so that the https redirection
-    // in the web.xml can be tested    
-    from(bluemixWar) {
-        into "servers/${testServerName}/apps"
     }
     
     from(fatWar) {
@@ -367,29 +352,9 @@ task testZipContents {
     outputs.files(distZip.getOutputs().getFiles())
 }
 
-task packageBluemixLars(type: Zip) {
-
-    description 'Create a liberty packaged server zip of LARS ready for pushing to bluemix'
-
-    from(configurations.sharedLibs) {
-        into 'wlp/usr/shared/resources/libs'
-    }
-    
-    into("wlp/usr/servers/${bluemixServerName}") {
-        from(bluemixWar) {
-            into 'apps'
-        }
-        from "config/${bluemixServerName}.xml"
-        rename("${bluemixServerName}.xml", 'server.xml');
-        from "config/${bluemixServerName}.props"
-        rename("${bluemixServerName}.props", 'bootstrap.properties');
-    }
-    baseName bluemixServerName    
-}
-
-task dist {    
+task dist {   //todo a List will not be necessary with the now singular value below
     // This task is essentially an aggregate of the other packaging/distribution tasks
-    List aggregates = ['testZipContents', 'packageBluemixLars']
+    List aggregates = ['testZipContents']
     aggregates.each { taskname -> 
         dependsOn taskname
         outputs.files(tasks[taskname].getOutputs().getFiles())
