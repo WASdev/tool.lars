@@ -16,4 +16,4 @@ Either download `larsServer.zip` from the [Liberty Repository](https://developer
 * Inside your Liberty installation, from the `bin` directory, run `./installUtility install cdi-1.0 jndi-1.0 appSecurity-2.0 ssl-1.0 mongodb-2.0 jaxrs-1.1 servlet-3.0 passwordUtilities-1.0`
 * Look at `test-utils/src/main/resources/config.properties` and check you are happy with the specified test ports
 * Launch Gradle to build the code, run the tests and produce the distribution archives: `gradle build dist`
-* You should now have three files in the `build/distributions` directory: `larsServer.zip`, `larsClient.zip` and `bluemixServer.zip`
+* You should now have two files in the `build/distributions` directory: `larsServer.zip`and `larsClient.zip`

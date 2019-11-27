@@ -1,8 +1,0 @@
-lars.mongo.hostname0=${cloud.services.lars_mongo_svc.connection.host1}
-lars.mongo.port0=${cloud.services.lars_mongo_svc.connection.port1}
-lars.mongo.hostname1=${cloud.services.lars_mongo_svc.connection.host2}
-lars.mongo.port1=${cloud.services.lars_mongo_svc.connection.port2}
-lars.mongo.dbname=${cloud.services.lars_mongo_svc.connection.dbname}
-lars.mongo.user=${cloud.services.lars_mongo_svc.connection.user}
-lars.mongo.pass.encoded=${cloud.services.lars_mongo_svc.connection.password}
-lars.mongo.writeConcern=MAJORITY
