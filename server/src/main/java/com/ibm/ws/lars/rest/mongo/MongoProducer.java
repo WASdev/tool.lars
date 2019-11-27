@@ -15,6 +15,7 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.net.ssl.SSLContext;
 
 import com.ibm.websphere.crypto.PasswordUtil;
 import com.mongodb.MongoClient;
@@ -39,9 +40,12 @@ public class MongoProducer {
     private static final Logger logger = Logger.getLogger(MongoProducer.class.getCanonicalName());
 
     private String dbName = null;
+    private String authDbName = null;
     private String user = null;
     private String encodedPass = null;
     private String requestedWriteConcern = null;
+    private boolean sslEnabled = false;
+    private String sslConfig = null;
     private ArrayList<ServerAddress> servers = new ArrayList<ServerAddress>(2);
 
     @PostConstruct
@@ -54,9 +58,21 @@ public class MongoProducer {
         // user and password (optional - if not set, use unauthenticated access)
         user = sysprops.getProperty("lars.mongo.user");
         encodedPass = sysprops.getProperty("lars.mongo.pass.encoded");
+        authDbName = sysprops.getProperty("lars.mongo.authdb");
+        if(authDbName == null) {
+            authDbName = dbName;
+        }
 
         // writeConcern (optional - if not set use the default "ACKNOWLEDGED")
         requestedWriteConcern = sysprops.getProperty("lars.mongo.writeConcern");
+
+        // sslEnabled (optional - if not set, assume false)
+        if("true".equalsIgnoreCase(sysprops.getProperty("lars.mongo.sslEnabled","false"))) {
+            sslEnabled = true;
+        }
+
+        // sslConfig (optional, only used if ssl is enabled)
+        sslConfig = sysprops.getProperty("lars.mongo.sslConfig");
 
         // look for all lars.mongo.hostname* properties, in alphabetical order
         Enumeration keysEnum = sysprops.keys();
@@ -89,7 +105,9 @@ public class MongoProducer {
 
     @Produces
     public MongoClient createMongo() {
-        MongoClientOptions opts;
+        MongoClientOptions.Builder builder = MongoClientOptions.builder();
+
+        // set the WriteConcern, if specified
         if(requestedWriteConcern != null) {
             WriteConcern wc;
             switch(requestedWriteConcern)
@@ -131,26 +149,48 @@ public class MongoProducer {
                     wc = WriteConcern.ACKNOWLEDGED;
                     logger.warning("No WriteConcern named " + requestedWriteConcern + " found. Using default WriteConcern of ACKNOWLEDGED.");
             }
-            opts = new MongoClientOptions.Builder().writeConcern(wc).build();
+            builder = builder.writeConcern(wc);
             logger.info("createMongo: using write concern " + requestedWriteConcern);
         } else {
-            opts = new MongoClientOptions.Builder().build();
             logger.info("createMongo: using default write concern");
         }
 
-        if(encodedPass == null) {
-            logger.info("createMongo: connecting to database "+dbName+" using unauthenticated access");
+        // Configure SSL
+        if(sslEnabled) {
+            try {
+                SSLContext sslContext;
+                if(sslConfig == null) {
+                    sslContext = SSLContext.getDefault();
+                } else {
+                    sslContext = com.ibm.websphere.ssl.JSSEHelper.getInstance().getSSLContext(sslConfig, Collections.emptyMap(), null);
+                }
+                logger.info("createMongo: SSL enabled");
+                builder = builder.sslEnabled(sslEnabled).sslContext(sslContext);
+            } catch(com.ibm.websphere.ssl.SSLException ex) {
+                logger.severe("createMongo: Failed to initialize SSL: "+ex.getMessage());
+                return null;
+            } catch(java.security.NoSuchAlgorithmException ex) {
+                logger.severe("createMongo: Failed to initialize SSL: "+ex.getMessage());
+                return null;
+            }
+        }
+        MongoClientOptions opts = builder.build();
+
+        // Configure credentials, and connect
+        if(encodedPass == null) {            
+            logger.info("createMongo: connecting using unauthenticated access");
             return new MongoClient(servers, opts);
         } else {
             String password = PasswordUtil.passwordDecode(encodedPass);
-            MongoCredential creds = MongoCredential.createCredential(user, dbName, password.toCharArray());
-            logger.info("createMongo: connecting to database "+dbName+" as user "+user);
+            MongoCredential creds = MongoCredential.createCredential(user, authDbName, password.toCharArray());
+            logger.info("createMongo: connecting using user "+user+" and authentication database "+authDbName);
             return new MongoClient(servers, creds, opts);
         }
     }
 
     @Produces
     public DB createDB(MongoClient client) {
+        logger.info("createMongo: connecting to database "+dbName);
         return client.getDB(dbName);
     }
 
