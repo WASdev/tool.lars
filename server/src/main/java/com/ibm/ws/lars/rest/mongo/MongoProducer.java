@@ -10,30 +10,28 @@
 *******************************************************************************/
 package com.ibm.ws.lars.rest.mongo;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.net.ssl.SSLContext;
 
 import com.ibm.websphere.crypto.PasswordUtil;
+import com.mongodb.AuthenticationMechanism;
+import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
-import com.mongodb.DB;
-
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.Vector;
-import java.util.Iterator;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 @ApplicationScoped
 public class MongoProducer {
@@ -43,6 +41,7 @@ public class MongoProducer {
     private String authDbName = null;
     private String user = null;
     private String encodedPass = null;
+    private String requestedAuthMechanism = null;
     private String requestedWriteConcern = null;
     private boolean sslEnabled = false;
     private String sslConfig = null;
@@ -62,6 +61,9 @@ public class MongoProducer {
         if(authDbName == null) {
             authDbName = dbName;
         }
+
+        // authentication mechanism (optional - if not set use the default depending on server version)
+        requestedAuthMechanism = sysprops.getProperty("lars.mongo.authMechanism");
 
         // writeConcern (optional - if not set use the default "ACKNOWLEDGED")
         requestedWriteConcern = sysprops.getProperty("lars.mongo.writeConcern");
@@ -99,10 +101,9 @@ public class MongoProducer {
             servers.add(sa);
             logger.info("createMongo: no mongodb servers specified, defaulting to localhost:27017");
         }
-
-
     }
 
+    @SuppressWarnings("deprecation")
     @Produces
     public MongoClient createMongo() {
         MongoClientOptions.Builder builder = MongoClientOptions.builder();
@@ -123,6 +124,7 @@ public class MongoProducer {
                     break;
                 case "JOURNAL_SAFE":
                     wc = WriteConcern.JOURNAL_SAFE;
+                    logger.warning("WriteConcern " + requestedWriteConcern + " is deprecated");
                     break;
                 case "JOURNALED":
                     wc = WriteConcern.JOURNALED;
@@ -132,15 +134,19 @@ public class MongoProducer {
                     break;
                 case "NORMAL":
                     wc = WriteConcern.NORMAL;
+                    logger.warning("WriteConcern " + requestedWriteConcern + " is deprecated");
                     break;
                 case "REPLICA_ACKNOWLEDGED":
                     wc = WriteConcern.REPLICA_ACKNOWLEDGED;
+                    logger.warning("WriteConcern " + requestedWriteConcern + " is deprecated");
                     break;
                 case "REPLICAS_SAFE":
                     wc = WriteConcern.REPLICAS_SAFE;
+                    logger.warning("WriteConcern " + requestedWriteConcern + " is deprecated");
                     break;
                 case "SAFE":
                     wc = WriteConcern.SAFE;
+                    logger.warning("WriteConcern " + requestedWriteConcern + " is deprecated");
                     break;
                 case "UNACKNOWLEDGED":
                     wc = WriteConcern.UNACKNOWLEDGED;
@@ -153,6 +159,67 @@ public class MongoProducer {
             logger.info("createMongo: using write concern " + requestedWriteConcern);
         } else {
             logger.info("createMongo: using default write concern");
+        }
+
+        // Configure credentials
+        MongoCredential creds = null;
+        if (user != null) {
+            char[] password;
+            if (encodedPass == null) {
+                password = null;
+            } else {
+                password = PasswordUtil.passwordDecode(encodedPass).toCharArray();
+            }
+
+            // Set the  authenticationMechanism, if requested, else default
+            if(requestedAuthMechanism == null) {
+                creds = MongoCredential.createCredential(user, authDbName, password);
+            } else {
+                switch (requestedAuthMechanism) {
+                    case "SCRAM_SHA_256":
+                    case "SCRAM-SHA-256":
+                        // default on MongoDB 4.x
+                        creds = MongoCredential.createScramSha256Credential(user, authDbName, password);
+                        break;
+                    case "SCRAM_SHA_1":
+                    case "SCRAM-SHA-1":
+                        // default on MongoDB 3.x
+                        creds = MongoCredential.createScramSha1Credential(user, authDbName, password);
+                        break;
+                    case "MONGODB-CR":
+                    case "MONGODB_CR":
+                        // default on MongoDB 2.x, deprecated on 3.x, removed on 4.x
+                        creds = MongoCredential.createMongoCRCredential(user, authDbName, password);
+                        logger.warning("Authentication Mechanism " + creds.getMechanism() + " is deprecated.");
+                        break;
+                    case "X.509":
+                    case "MONGODB_X509":
+                    case "MONGODB-X509":
+                        creds = MongoCredential.createMongoX509Credential(user);
+                        if (!sslEnabled) {
+                            logger.warning("Authentication Mechanism " + requestedAuthMechanism + " requires SSL.  Enabling SSL");
+                            sslEnabled = true;
+                        }
+                        break;
+
+                    case "GSSAPI":
+                        // MongoDB Enterprise only.  Significant amounts of extra configuration are required for this to work.
+                        creds = MongoCredential.createGSSAPICredential(user);
+                        break;
+
+                    case "LDAP":
+                    case "PLAIN":
+                        // MongoDB Enterprise only
+                        creds = MongoCredential.createPlainCredential(user, "$external", password);
+                        break;
+
+                    default:
+                        logger.warning("AuthenticationMechanism " + requestedAuthMechanism + " is not supported, so authentication may fail.");
+                        AuthenticationMechanism authMech = AuthenticationMechanism.fromMechanismName(requestedAuthMechanism);
+                        creds = MongoCredential.createCredential(user, authDbName, password).withMechanism(authMech);
+                        break;
+                }
+            }
         }
 
         // Configure SSL
@@ -174,16 +241,14 @@ public class MongoProducer {
                 return null;
             }
         }
-        MongoClientOptions opts = builder.build();
 
-        // Configure credentials, and connect
-        if(encodedPass == null) {            
+        // connect
+        MongoClientOptions opts = builder.build();
+        if(creds == null) {
             logger.info("createMongo: connecting using unauthenticated access");
             return new MongoClient(servers, opts);
         } else {
-            String password = PasswordUtil.passwordDecode(encodedPass);
-            MongoCredential creds = MongoCredential.createCredential(user, authDbName, password.toCharArray());
-            logger.info("createMongo: connecting using user "+user+" and authentication database "+authDbName);
+            logger.info("createMongo: connecting as user " + creds.getUserName() + " using " + creds.getMechanism() + " from " + creds.getSource());
             return new MongoClient(servers, creds, opts);
         }
     }
