@@ -18,13 +18,12 @@ package com.ibm.ws.lars.testutils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.net.UnknownHostException;
 
 import com.ibm.ws.lars.testutils.fixtures.LarsRepositoryFixture;
-import com.ibm.ws.lars.testutils.fixtures.MassiveRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
@@ -107,31 +106,7 @@ public class FatUtils {
 
         objectList.add(new Object[] { FAT_REPO });
 
-        MassiveRepositoryFixture massiveRepo = getMassiveFixture();
-        if (massiveRepo != null) {
-            objectList.add(new Object[] { massiveRepo });
-        }
-
         return objectList.toArray(new Object[objectList.size()][]);
-    }
-
-    public static MassiveRepositoryFixture getMassiveFixture() {
-        String massiveServerString = System.getProperty("massiveServer");
-        if (massiveServerString == null || massiveServerString.equals("")) {
-            return null;
-        }
-
-        String[] parts = massiveServerString.split(",", -1);
-        if (parts.length != 4) {
-            throw new RuntimeException("Invalid massiveServer property set");
-        }
-        String repositoryUrlString = parts[0].trim();
-        String apiKey = parts[1].trim();
-        String adminId = parts[2].trim();
-        String adminPassword = parts[3].trim();
-
-        MassiveRepositoryFixture fixture = MassiveRepositoryFixture.createFixture(repositoryUrlString, apiKey, adminId, adminPassword);
-        return fixture;
     }
 
     /**
