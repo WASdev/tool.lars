@@ -27,9 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.enterprise.context.ApplicationScoped;
-
 import javax.inject.Inject;
 
 import org.bson.types.ObjectId;
@@ -83,8 +81,7 @@ public class PersistenceBean implements Persistor {
 
     private static final String ATTACHMENTS_COLLECTION = "attachments";
 
-    private static final List<String> searchIndexFields =
-        Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
+    private static final List<String> searchIndexFields = Arrays.asList(new String[] { "name", "description", "shortDescription", "tags" });
 
     /** The _id field of a MongoDB object */
     private static final String ID = "_id";

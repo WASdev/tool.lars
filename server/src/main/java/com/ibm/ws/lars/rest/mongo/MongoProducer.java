@@ -45,7 +45,7 @@ public class MongoProducer {
     private String requestedWriteConcern = null;
     private boolean sslEnabled = false;
     private String sslConfig = null;
-    private ArrayList<ServerAddress> servers = new ArrayList<ServerAddress>(2);
+    private final ArrayList<ServerAddress> servers = new ArrayList<ServerAddress>(2);
 
     @PostConstruct
     private void readConfig() {
@@ -58,7 +58,7 @@ public class MongoProducer {
         user = sysprops.getProperty("lars.mongo.user");
         encodedPass = sysprops.getProperty("lars.mongo.pass.encoded");
         authDbName = sysprops.getProperty("lars.mongo.authdb");
-        if(authDbName == null) {
+        if (authDbName == null) {
             authDbName = dbName;
         }
 
@@ -69,7 +69,7 @@ public class MongoProducer {
         requestedWriteConcern = sysprops.getProperty("lars.mongo.writeConcern");
 
         // sslEnabled (optional - if not set, assume false)
-        if("true".equalsIgnoreCase(sysprops.getProperty("lars.mongo.sslEnabled","false"))) {
+        if ("true".equalsIgnoreCase(sysprops.getProperty("lars.mongo.sslEnabled", "false"))) {
             sslEnabled = true;
         }
 
@@ -77,26 +77,26 @@ public class MongoProducer {
         sslConfig = sysprops.getProperty("lars.mongo.sslConfig");
 
         // look for all lars.mongo.hostname* properties, in alphabetical order
-        Enumeration keysEnum = sysprops.keys();
+        Enumeration<Object> keysEnum = sysprops.keys();
         Vector<String> keyList = new Vector<String>();
-        while(keysEnum.hasMoreElements()){
-            keyList.add((String)keysEnum.nextElement());
+        while (keysEnum.hasMoreElements()) {
+            keyList.add((String) keysEnum.nextElement());
         }
         Collections.sort(keyList);
         Iterator<String> iterator = keyList.iterator();
         while (iterator.hasNext()) {
             String prop = iterator.next();
-            if(prop.startsWith("lars.mongo.hostname")) {
-                String hostname = sysprops.getProperty(prop,"localhost");
-                int port = Integer.parseInt(sysprops.getProperty(prop.replace("hostname","port"),"27017"));
+            if (prop.startsWith("lars.mongo.hostname")) {
+                String hostname = sysprops.getProperty(prop, "localhost");
+                int port = Integer.parseInt(sysprops.getProperty(prop.replace("hostname", "port"), "27017"));
                 ServerAddress sa = new ServerAddress(hostname, port);
                 servers.add(sa);
-                logger.info("createMongo: found mongodb server setting "+hostname+":"+port+" from property "+prop);
+                logger.info("createMongo: found mongodb server setting " + hostname + ":" + port + " from property " + prop);
             }
         }
 
         // add default server if none defined
-        if(servers.isEmpty()) {
+        if (servers.isEmpty()) {
             ServerAddress sa = new ServerAddress("localhost", 27017);
             servers.add(sa);
             logger.info("createMongo: no mongodb servers specified, defaulting to localhost:27017");
@@ -109,10 +109,9 @@ public class MongoProducer {
         MongoClientOptions.Builder builder = MongoClientOptions.builder();
 
         // set the WriteConcern, if specified
-        if(requestedWriteConcern != null) {
+        if (requestedWriteConcern != null) {
             WriteConcern wc;
-            switch(requestedWriteConcern)
-            {
+            switch (requestedWriteConcern) {
                 case "ACKNOWLEDGED":
                     wc = WriteConcern.ACKNOWLEDGED;
                     break;
@@ -172,7 +171,7 @@ public class MongoProducer {
             }
 
             // Set the  authenticationMechanism, if requested, else default
-            if(requestedAuthMechanism == null) {
+            if (requestedAuthMechanism == null) {
                 creds = MongoCredential.createCredential(user, authDbName, password);
             } else {
                 switch (requestedAuthMechanism) {
@@ -223,28 +222,28 @@ public class MongoProducer {
         }
 
         // Configure SSL
-        if(sslEnabled) {
+        if (sslEnabled) {
             try {
                 SSLContext sslContext;
-                if(sslConfig == null) {
+                if (sslConfig == null) {
                     sslContext = SSLContext.getDefault();
                 } else {
-                    sslContext = com.ibm.websphere.ssl.JSSEHelper.getInstance().getSSLContext(sslConfig, Collections.emptyMap(), null);
+                    sslContext = com.ibm.websphere.ssl.JSSEHelper.getInstance().getSSLContext(sslConfig, Collections.<String, Object> emptyMap(), null);
                 }
                 logger.info("createMongo: SSL enabled");
                 builder = builder.sslEnabled(sslEnabled).sslContext(sslContext);
-            } catch(com.ibm.websphere.ssl.SSLException ex) {
-                logger.severe("createMongo: Failed to initialize SSL: "+ex.getMessage());
+            } catch (com.ibm.websphere.ssl.SSLException ex) {
+                logger.severe("createMongo: Failed to initialize SSL: " + ex.getMessage());
                 return null;
-            } catch(java.security.NoSuchAlgorithmException ex) {
-                logger.severe("createMongo: Failed to initialize SSL: "+ex.getMessage());
+            } catch (java.security.NoSuchAlgorithmException ex) {
+                logger.severe("createMongo: Failed to initialize SSL: " + ex.getMessage());
                 return null;
             }
         }
 
         // connect
         MongoClientOptions opts = builder.build();
-        if(creds == null) {
+        if (creds == null) {
             logger.info("createMongo: connecting using unauthenticated access");
             return new MongoClient(servers, opts);
         } else {
@@ -255,7 +254,7 @@ public class MongoProducer {
 
     @Produces
     public DB createDB(MongoClient client) {
-        logger.info("createMongo: connecting to database "+dbName);
+        logger.info("createMongo: connecting to database " + dbName);
         return client.getDB(dbName);
     }
 
