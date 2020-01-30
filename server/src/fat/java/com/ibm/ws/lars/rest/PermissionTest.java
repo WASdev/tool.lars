@@ -19,7 +19,7 @@ import static com.ibm.ws.lars.rest.RepositoryContext.RC_REJECT;
 import static com.ibm.ws.lars.rest.matchers.ServerAssetByIdMatcher.assetsWithIds;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

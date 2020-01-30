@@ -30,6 +30,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import mockit.Injectable;
 import org.bson.types.ObjectId;
 
 import com.ibm.ws.lars.rest.AssetFilter;
@@ -87,6 +88,7 @@ public class PersistenceBean implements Persistor {
     private static final String ID = "_id";
 
     @Inject
+    @Injectable
     private com.mongodb.DB db;
 
     private GridFS gridFS;

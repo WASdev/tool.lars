@@ -433,6 +433,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("deprecation")
     public void addRequireFeature(String requiredFeatureSymbolicName) {
         copyRequireFeatureToRequireFeatureWithTolerates();
         // Add to the old field without tolerates info
@@ -534,6 +535,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("deprecation")
     public void setRequireFeature(Collection<String> feats) {
         // No need to copy (like we do in addRequireFeatureWithTolerates)
         // as we are overwriting anyway
@@ -580,6 +582,7 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
 
     /** {@inheritDoc} */
     @Override
+    @SuppressWarnings("deprecation")
     public Collection<String> getRequireFeature() {
         return _asset.getWlpInformation().getRequireFeature();
     }

@@ -103,6 +103,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
      * com.ibm.ws.massive.resources.UploadStrategy)
      */
     @Override
+    @SuppressWarnings("deprecation")
     public EsaResourceWritable uploadFile(File esa, UploadStrategy strategy, String contentUrl) throws RepositoryException {
 
         ArtifactMetadata artifactMetadata = explodeArtifact(esa);
