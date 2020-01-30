@@ -77,13 +77,13 @@ public class RepositoryUtilsTest {
      */
     @Test
     public void testInvalidRepositoryNotAvailable() {
-        RestRepositoryConnection invalidLoginInfo = new RestRepositoryConnection("I", "don't", "exist", "http://dont252qmadjf842sgs7842d.exist.com");
+        RestRepositoryConnection invalidLoginInfo = new RestRepositoryConnection("I", "don't", "exist", "http://dont252qmadjf842sgs7842d.hu43634existsaosd.com");
         assertFalse("An invalid test repository should not be available", invalidLoginInfo.isRepositoryAvailable());
     }
 
     @Test
     public void testInvalidRepositoryThrowsException() throws IOException, RequestFailureException {
-        RestRepositoryConnection invalidLoginInfo = new RestRepositoryConnection("I", "don't", "exist", "http://dont252qmadjf842sgs7842d.exist.com");
+        RestRepositoryConnection invalidLoginInfo = new RestRepositoryConnection("I", "don't", "exist", "http://dont252qmadjf842sgs7842d.hu43634existsaosd.com");
         try {
             invalidLoginInfo.checkRepositoryStatus();
             fail("Should not have been able to reach here, repository status should have thrown an exception");
