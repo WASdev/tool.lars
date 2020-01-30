@@ -46,8 +46,7 @@ import com.mongodb.DBObject;
  * where those tests don't require replicating any database logic. Tests that do require database
  * logic are written as FAT tests in {@link PersistenceBeanTest}.
  */
-public class
-PersistenceBeanBasicSearchTest {
+public class PersistenceBeanBasicSearchTest {
 
     @Mocked
     com.mongodb.DB db;
