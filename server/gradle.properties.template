@@ -3,7 +3,7 @@
 # Update this to point to a liberty server install
 # This is needed to find the dependencies to build the code and to run the tests
 # (for Windows must include the disk volume, eg: C:/liberty/...)
-libertyRoot=/Users/billydawson/Documents/Test-Bay/2019/wlp
+libertyRoot=/liberty/install/directory/wlp
 
 # Update this to point to the mongod or mongod.exe executable
 # This is needed to run the fat tests

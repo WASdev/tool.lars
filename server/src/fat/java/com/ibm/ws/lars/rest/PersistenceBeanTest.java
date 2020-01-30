@@ -56,7 +56,6 @@ import com.ibm.ws.lars.testutils.BasicChecks;
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
-import com.mongodb.WriteConcern;
 
 import mockit.Mocked;
 
@@ -64,7 +63,6 @@ public class PersistenceBeanTest {
 
     // TODO Should the db name be configurable?
     private static final String DB_NAME = "testdb";
-    //private static final WriteConcern WRITE_CONCERN = WriteConcern.JOURNAL_SAFE;
 
     private MongoClient mongoClient;
     private PersistenceBean persistenceBean;

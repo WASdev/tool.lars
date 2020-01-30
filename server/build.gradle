@@ -93,7 +93,6 @@ dependencies {
     testCompile group:'org.hamcrest', name:'hamcrest-library', version:hamcrest_version
     testCompile group:'org.apache.httpcomponents', name:'httpclient', version:httpclient_version
     testCompile group:'org.apache.httpcomponents', name:'httpmime', version:httpmime_version
-    //testCompile group:'org.jmockit', name:'jmockit', version:jmockit_version
     testCompile project(':test-utils')
     
     // The unit tests need some Liberty classes at runtime, but they should

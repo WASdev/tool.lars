@@ -25,7 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import mockit.*;
+import mockit.Expectations;
+import mockit.Injectable;
+import mockit.Mocked;
 
 import org.junit.Test;
 
@@ -38,15 +40,14 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
-import javax.inject.Inject;
-
 /**
  * This is a set of basic unit tests for the search logic in
  * {@link PersistenceBean#retrieveAllAssets(Collection, String, PaginationOptions, SortOptions)} ,
  * where those tests don't require replicating any database logic. Tests that do require database
  * logic are written as FAT tests in {@link PersistenceBeanTest}.
  */
-public class PersistenceBeanBasicSearchTest {
+public class
+PersistenceBeanBasicSearchTest {
 
     @Mocked
     com.mongodb.DB db;
