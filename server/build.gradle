@@ -81,8 +81,7 @@ dependencies {
     compile group:'com.fasterxml.jackson.core', name:'jackson-core', version:jackson_version
     compile group:'com.fasterxml.jackson.core', name:'jackson-databind', version:jackson_version
     compile group:'com.fasterxml.jackson.core', name:'jackson-annotations', version:jackson_version
-    compile group:'org.jmockit', name:'jmockit', version:jmockit_version
-    
+
     sharedLibs group:'org.mongodb', name:'mongo-java-driver', version:mongodb_java_version
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/spec", include: requiredSpecJars)
     providedCompile fileTree(dir: "${libertyRoot}/dev/api/ibm", include: requiredIbmJars)
@@ -93,6 +92,7 @@ dependencies {
     testCompile group:'org.hamcrest', name:'hamcrest-library', version:hamcrest_version
     testCompile group:'org.apache.httpcomponents', name:'httpclient', version:httpclient_version
     testCompile group:'org.apache.httpcomponents', name:'httpmime', version:httpmime_version
+    testCompile group:'org.jmockit', name:'jmockit', version:jmockit_version
     testCompile project(':test-utils')
     
     // The unit tests need some Liberty classes at runtime, but they should
