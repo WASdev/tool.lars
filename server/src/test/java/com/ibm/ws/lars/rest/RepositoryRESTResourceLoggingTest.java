@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
@@ -23,7 +24,6 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import mockit.Deencapsulation;
 import mockit.Expectations;
 import mockit.Mocked;
 
@@ -45,7 +45,16 @@ public class RepositoryRESTResourceLoggingTest {
         RepositoryRESTResource tested = new RepositoryRESTResource();
         // The asset service should be injected by jax-rs, so I think it
         // needs to be set explicitly here, don't think jmockit can do this automagically
-        Deencapsulation.setField(tested, "assetService", assetService);
+        try {
+            Field field = tested.getClass().getDeclaredField("assetService");
+            field.setAccessible(true);
+            field.set(tested, assetService);
+            field.setAccessible(false);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException ia) {
+            throw new RuntimeException(ia);
+        }
         return tested;
     }
 

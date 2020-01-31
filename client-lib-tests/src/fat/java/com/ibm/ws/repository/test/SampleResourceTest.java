@@ -22,7 +22,7 @@ import static com.ibm.ws.repository.common.enums.State.PUBLISHED;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

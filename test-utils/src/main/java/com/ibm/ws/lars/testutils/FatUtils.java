@@ -27,6 +27,7 @@ import com.ibm.ws.lars.testutils.fixtures.LarsRepositoryFixture;
 import com.ibm.ws.lars.testutils.fixtures.RepositoryFixture;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.WriteConcern;
 
 public class FatUtils {
@@ -119,12 +120,9 @@ public class FatUtils {
      */
     public static synchronized DB getMongoDB() throws UnknownHostException {
         if (fatDB == null) {
-            MongoClient mongoClient;
-            mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
-            mongoClient.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+            MongoClient mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT, new MongoClientOptions.Builder().build());
             fatDB = mongoClient.getDB(FatUtils.TEST_DB_NAME);
         }
-
         return fatDB;
     }
 }

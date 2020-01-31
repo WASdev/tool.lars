@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import com.mongodb.MongoClientOptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +56,6 @@ import com.ibm.ws.lars.testutils.BasicChecks;
 import com.ibm.ws.lars.testutils.FatUtils;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
-import com.mongodb.WriteConcern;
 
 import mockit.Mocked;
 
@@ -63,7 +63,6 @@ public class PersistenceBeanTest {
 
     // TODO Should the db name be configurable?
     private static final String DB_NAME = "testdb";
-    private static final WriteConcern WRITE_CONCERN = WriteConcern.JOURNAL_SAFE;
 
     private MongoClient mongoClient;
     private PersistenceBean persistenceBean;
@@ -86,8 +85,7 @@ public class PersistenceBeanTest {
         //
         // Also we currently don't bother with Mongo security but clearly we
         // might like to think about that at some point
-        mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT);
-        mongoClient.setWriteConcern(WRITE_CONCERN);
+        mongoClient = new MongoClient("localhost:" + FatUtils.DB_PORT, new MongoClientOptions.Builder().build());
 
         db = mongoClient.getDB(DB_NAME);
 

@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.ibm.ws.lars.rest;
 
+import java.lang.reflect.Field;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,7 +53,16 @@ public class PersistenceBeanLoggingTest {
      */
     private PersistenceBean createTestBean() {
         PersistenceBean bean = new PersistenceBean();
-        Deencapsulation.setField(bean, "db", db);
+        try {
+            Field field = bean.getClass().getDeclaredField("db");
+            field.setAccessible(true);
+            field.set(bean, db);
+            field.setAccessible(false);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException ia) {
+            throw new RuntimeException(ia);
+        }
         return bean;
     }
 

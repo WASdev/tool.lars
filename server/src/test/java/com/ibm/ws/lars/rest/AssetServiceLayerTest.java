@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -32,7 +33,6 @@ import javax.ws.rs.core.UriInfo;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import com.ibm.ws.lars.rest.exceptions.AssetPersistenceException;
 import com.ibm.ws.lars.rest.exceptions.InvalidIdException;
@@ -50,9 +50,6 @@ import com.ibm.ws.lars.testutils.BasicChecks;
  *
  */
 public class AssetServiceLayerTest {
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     private static final String TEST_USERNAME = "testUser";
     private Asset simpleObject;
@@ -85,10 +82,10 @@ public class AssetServiceLayerTest {
 
     @Test
     public void badStateTransitionTest() throws InvalidJsonAssetException, NonExistentArtefactException, RepositoryResourceLifecycleException {
-        thrown.expect(RepositoryResourceLifecycleException.class);
-        thrown.expectMessage("Invalid action approve performed on the asset with state draft");
         Asset simpleAsset = service.createAsset(simpleObject, TEST_USERNAME);
-        service.updateAssetState(Asset.StateAction.APPROVE, simpleAsset.get_id());
+        assertThrows("Invalid action approve performed on the asset with state draft",
+                RepositoryResourceLifecycleException.class,
+                () -> service.updateAssetState(Asset.StateAction.APPROVE, simpleAsset.get_id()));
     }
 
     @Test
@@ -170,13 +167,13 @@ public class AssetServiceLayerTest {
      */
     @Test
     public void testAddAttachmentNoContentNoUrl() throws InvalidJsonAssetException, AssetPersistenceException, NonExistentArtefactException {
-        thrown.expect(InvalidJsonAssetException.class);
-        thrown.expectMessage("The URL of the supplied attachment was null");
         String attachmentJSON = "{\"foo\":\"bar\"}";
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
         Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
-        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
+        assertThrows("The URL of the supplied attachment was null",
+                InvalidJsonAssetException.class,
+                () -> service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo));
     }
 
     /**
@@ -185,13 +182,13 @@ public class AssetServiceLayerTest {
      */
     @Test
     public void testAddAttachmentNoContentNoLinkType() throws InvalidJsonAssetException, AssetPersistenceException, NonExistentArtefactException {
-        thrown.expect(InvalidJsonAssetException.class);
-        thrown.expectMessage("The link type for the attachment was not set.");
         String attachmentJSON = "{\"url\":\"http://example.com\"}";
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
         Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
-        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
+        assertThrows("The link type for the attachment was not set.",
+                InvalidJsonAssetException.class,
+                () -> service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo));
     }
 
     /**
@@ -200,14 +197,14 @@ public class AssetServiceLayerTest {
      */
     @Test
     public void testAddAttachmentNoContentBadLinkType() throws InvalidJsonAssetException, AssetPersistenceException, NonExistentArtefactException {
-        thrown.expect(InvalidJsonAssetException.class);
-        thrown.expectMessage("The link type for the attachment was set to an invalid value: Foobar");
         String attachmentJSON = "{\"url\":\"http://example.com\"}";
         Asset asset = Asset.deserializeAssetFromJson("{\"name\":\"Mr Asset\"}");
         Asset returnedAsset = service.createAsset(asset, TEST_USERNAME);
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
         attachment.setLinkType("Foobar");
-        service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo);
+        assertThrows("The link type for the attachment was set to an invalid value: Foobar",
+                InvalidJsonAssetException.class,
+                () -> service.createAttachmentNoContent(returnedAsset.get_id(), "Mr Attachment", attachment, dummyUriInfo));
     }
 
     /**
@@ -274,16 +271,15 @@ public class AssetServiceLayerTest {
      */
     @Test
     public void testAddAttachmentWithContentAndUrl() throws Exception {
-
-        thrown.expect(InvalidJsonAssetException.class);
-        thrown.expectMessage("An attachment should not have the URL set if it is created with content");
-
         Asset assetToCreate = new Asset(simpleObject);
         Asset returnedAsset = service.createAsset(assetToCreate, TEST_USERNAME);
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
         attachmentToCreate.setUrl("foobar");
-        service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
-                                            new ByteArrayInputStream(attachmentContent), dummyUriInfo);
+
+        assertThrows("An attachment should not have the URL set if it is created with content",
+                InvalidJsonAssetException.class,
+                () -> service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
+                                            new ByteArrayInputStream(attachmentContent), dummyUriInfo));
     }
 
     /**
@@ -292,16 +288,14 @@ public class AssetServiceLayerTest {
      */
     @Test
     public void testAddAttachmentWithContentAndLinkType() throws Exception {
-
-        thrown.expect(InvalidJsonAssetException.class);
-        thrown.expectMessage("The link type must not be set for an attachment with content");
-
         Asset assetToCreate = new Asset(simpleObject);
         Asset returnedAsset = service.createAsset(assetToCreate, TEST_USERNAME);
         Attachment attachmentToCreate = new Attachment(attachmentWithContent);
         attachmentToCreate.setLinkType("foobar");
-        service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
-                                            new ByteArrayInputStream(attachmentContent), dummyUriInfo);
+        assertThrows("The link type must not be set for an attachment with content",
+                InvalidJsonAssetException.class,
+                () -> service.createAttachmentWithContent(returnedAsset.get_id(), "AttachmentWithContent.txt", attachmentToCreate, "text/plain",
+                                            new ByteArrayInputStream(attachmentContent), dummyUriInfo));
     }
 
     /**
@@ -314,11 +308,11 @@ public class AssetServiceLayerTest {
      */
     @Test
     public void testAddAttachmentInvalidAssetId() throws InvalidJsonAssetException, NonExistentArtefactException, AssetPersistenceException {
-        thrown.expect(NonExistentArtefactException.class);
-        thrown.expectMessage("The parent asset for this attachment (id=FFFFFFFFFFFFFFFF) does not exist in the repository.");
         String attachmentJSON = "{\"url\":\"http://example.com\", \"linkType\":\"direct\"}";
         Attachment attachment = Attachment.jsonToAttachment(attachmentJSON);
-        service.createAttachmentNoContent("FFFFFFFFFFFFFFFF", "Mr Attachment", attachment, dummyUriInfo);
+        assertThrows("The parent asset for this attachment (id=FFFFFFFFFFFFFFFF) does not exist in the repository.",
+                NonExistentArtefactException.class,
+                () -> service.createAttachmentNoContent("FFFFFFFFFFFFFFFF", "Mr Attachment", attachment, dummyUriInfo));
     }
 
     /**

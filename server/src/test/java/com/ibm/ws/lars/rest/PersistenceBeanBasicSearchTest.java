@@ -17,6 +17,7 @@ package com.ibm.ws.lars.rest;
 
 import static org.junit.Assert.assertEquals;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import mockit.Deencapsulation;
 import mockit.Expectations;
 import mockit.Injectable;
 import mockit.Mocked;
@@ -60,7 +60,17 @@ public class PersistenceBeanBasicSearchTest {
      */
     private PersistenceBean createTestBean() {
         PersistenceBean bean = new PersistenceBean();
-        Deencapsulation.setField(bean, "db", db);
+        try {
+            Field field = bean.getClass().getDeclaredField("db");
+            field.setAccessible(true);
+            field.set(bean, db);
+            field.setAccessible(false);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException ia) {
+            throw new RuntimeException(ia);
+        }
+
         return bean;
     }
 
