@@ -119,6 +119,7 @@ public abstract class MassiveUploader {
         DEVELOPERS("DEVELOPERS"),
         EXPRESS("EXPRESS"),
         ND("ND"),
+        BLUEMIX("BLUEMIX"),
         zOS("zOS");
 
         private String _productEdition;
