@@ -266,7 +266,7 @@ public class AppliesToProcessorTest {
         AppliesToFilterInfo atfi = atfis.get(0);
         assertEquals("filter info should be for fish", "com.ibm.fish", atfi.getProductId());
         assertNotNull("filter info should have edition info", atfi.getEditions());
-        assertEquals("filter info should be for six editions", 6, atfi.getEditions().size());
+        assertEquals("filter info should be for seven editions", 7, atfi.getEditions().size());
 
         //"Liberty Core", "Base", "Express", "Developers", "ND", "z/OS"
         assertTrue("filter info should contain all editions", atfi.getEditions().contains("Liberty Core"));
@@ -337,7 +337,7 @@ public class AppliesToProcessorTest {
         assertEquals("Expected one filter info to be returned", 1, atfis.size());
         AppliesToFilterInfo atfi = atfis.get(0);
         assertNotNull("filter info should have edition info", atfi.getEditions());
-        assertEquals("filter info should have one edition", 5, atfi.getEditions().size());
+        assertEquals("filter info should have six editions", 6, atfi.getEditions().size());
         assertTrue("filter info should contain all editions", atfi.getEditions().contains("Base"));
         assertTrue("filter info should contain all editions", atfi.getEditions().contains("Express"));
         assertTrue("filter info should contain all editions", atfi.getEditions().contains("Developers"));
