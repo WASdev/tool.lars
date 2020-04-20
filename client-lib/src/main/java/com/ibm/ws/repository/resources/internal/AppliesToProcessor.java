@@ -46,13 +46,14 @@ public class AppliesToProcessor {
     private static final String ND = "ND";
     private static final String ZOS = "z/OS";
     private static final String CORE = "Liberty Core";
-    private static final String BETA = "Beta";
+    private static final String BLUEMIX = "Bluemix";
+    private static final String BETA = "Beta"
 
     /**
      * Open liberty features with an edition of OPEN in the appliesTo can be
      * installed on everything except CORE.
      */
-    private final static List<String> nonCoreEditions = Arrays.asList(BASE, EXPRESS, DEVELOPERS, ND, ZOS);
+    private final static List<String> nonCoreEditions = Arrays.asList(BASE, EXPRESS, DEVELOPERS, ND, ZOS, BLUEMIX);
     private final static List<String> allEditions;
     static {
         ArrayList<String> temp = new ArrayList<String>();
