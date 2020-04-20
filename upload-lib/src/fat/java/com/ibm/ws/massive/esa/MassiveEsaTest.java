@@ -442,8 +442,8 @@ public class MassiveEsaTest {
         assertNotNull("Applies to should have encoded editions list ",
                       atfi.getEditions());
         assertEquals(
-                     "Applies to should have encoded editions list with default 6 elements ",
-                     6, atfi.getEditions().size());
+                     "Applies to should have encoded editions list with default 7 elements ",
+                     7, atfi.getEditions().size());
         assertTrue(
                    "Applies to should have encoded default editions got: "
                            + atfi.getEditions(),
