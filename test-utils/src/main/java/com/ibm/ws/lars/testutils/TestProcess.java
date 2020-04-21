@@ -97,8 +97,12 @@ public class TestProcess {
             }
         }
         
-        // Although the process itself may have finished the threads that read the process may not have done yet
-        latch.await();
+        try {
+            // Although the process itself may have finished the threads that read the process may not have done yet
+            latch.await();
+        } catch (InteruptedException ex) {
+            // Just catch it and drop out
+        }
 
         if (outReader.getException() != null) {
             throw outReader.getException();
