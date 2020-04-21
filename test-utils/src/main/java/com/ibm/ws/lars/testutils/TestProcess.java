@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.util.concurrent.CountDownLatch;
 import java.util.List;
 
 /**
@@ -80,10 +81,12 @@ public class TestProcess {
             osw.flush();
         }
 
-        ProcessStreamReader outReader = new ProcessStreamReader(process.getInputStream(), outputBuilder);
+        CountDownLatch latch = new CountDownLatch (2);
+        
+        ProcessStreamReader outReader = new ProcessStreamReader(process.getInputStream(), outputBuilder, latch);
         new Thread(outReader).start();
 
-        ProcessStreamReader errReader = new ProcessStreamReader(process.getErrorStream(), errorBuilder);
+        ProcessStreamReader errReader = new ProcessStreamReader(process.getErrorStream(), errorBuilder, latch);
         new Thread(errReader).start();
 
         while (true) {
@@ -92,6 +95,13 @@ public class TestProcess {
                 break;
             } catch (InterruptedException e) {
             }
+        }
+        
+        try {
+            // Although the process itself may have finished the threads that read the process may not have done yet
+            latch.await();
+        } catch (InterruptedException e) {
+            // Just catch it and drop out
         }
 
         if (outReader.getException() != null) {
@@ -168,10 +178,12 @@ public class TestProcess {
         private final Reader in;
         private final StringBuilder out;
         private IOException ex;
+        private CountDownLatch latch;
 
-        public ProcessStreamReader(InputStream in, StringBuilder out) {
+        public ProcessStreamReader(InputStream in, StringBuilder out, CountDownLatch latch) {
             this.in = new BufferedReader(new InputStreamReader(in));
             this.out = out;
+            this.latch = latch;
             ex = null;
         }
 
@@ -186,6 +198,8 @@ public class TestProcess {
                 }
             } catch (IOException e) {
                 this.ex = e;
+            } finally {
+                latch.countDown();
             }
         }
 
