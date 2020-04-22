@@ -32,5 +32,12 @@
         <Class name="com.ibm.ws.repository.strategies.writeable.AddThenDeleteStrategy" />
         <Method name="uploadAsset" />
     </Match>
+    
+    <!-- Findbugs is reporting a public field is not set when it has been set in superclass -->
+    <Match>
+        <Bug pattern="UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD" />
+        <Class name="com.ibm.ws.repository.transport.client.AbstractFileClient" />
+    </Match>
+    
 
 </FindBugsFilter>

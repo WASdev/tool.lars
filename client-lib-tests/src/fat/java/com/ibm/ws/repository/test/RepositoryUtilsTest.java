@@ -82,12 +82,14 @@ public class RepositoryUtilsTest {
     }
 
     @Test
-    public void testInvalidRepositoryThrowsException() throws IOException, RequestFailureException {
+    public void testInvalidRepositoryThrowsException() {
         RestRepositoryConnection invalidLoginInfo = new RestRepositoryConnection("I", "don't", "exist", "http://dont252qmadjf842sgs7842d.hu43634existsaosd.com");
         try {
             invalidLoginInfo.checkRepositoryStatus();
             fail("Should not have been able to reach here, repository status should have thrown an exception");
         } catch (IOException io) {
+            // expected
+        } catch (RequestFailureException rfe) {
             // expected
         }
     }
