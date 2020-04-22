@@ -19,13 +19,13 @@ package com.ibm.ws.massive.esa;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.getAsset;
 import static com.ibm.ws.lars.testutils.ReflectionTricks.reflectiveCallNoPrimitives;
 import static com.ibm.ws.repository.strategies.writeable.UploadStrategy.DEFAULT_STRATEGY;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
@@ -141,17 +141,14 @@ public class MassiveEsaTest {
 
     @Test
     public void testRealFeature() throws Throwable {
-        File blueprintESA = new File(esaDir,
-                "com.ibm.websphere.appserver.blueprint-1.0.esa");
-        File blueprintMetadata = new File(esaDir,
-                "com.ibm.websphere.appserver.blueprint-1.0.esa.metadata.zip");
+        File blueprintESA = new File(esaDir, "com.ibm.websphere.appserver.blueprint-1.0.esa");
+        File blueprintMetadata = new File(esaDir, "com.ibm.websphere.appserver.blueprint-1.0.esa.metadata.zip");
 
         Map<String, Long> esaSizes = getZipFileSizes(blueprintESA);
         Map<String, Long> metadataSizes = getZipFileSizes(blueprintMetadata);
 
         EsaResource blueprintFeature = uploadAsset(blueprintESA);
-        AttachmentResource li = blueprintFeature
-                .getLicenseInformation(Locale.ENGLISH);
+        AttachmentResource li = blueprintFeature.getLicenseInformation(Locale.ENGLISH);
         assertEquals("LI should be null!", null, li);
 
         AttachmentResourceImpl la = (AttachmentResourceImpl) blueprintFeature.getLicenseAgreement(Locale.ENGLISH);
@@ -207,8 +204,7 @@ public class MassiveEsaTest {
         LicenseType lt = featureInMassive.getLicenseType();
         assertEquals("Wrong license type", LicenseType.ILAN, lt);
 
-        AttachmentResource license = featureInMassive
-                .getLicense(Locale.ENGLISH);
+        AttachmentResource license = featureInMassive.getLicense(Locale.ENGLISH);
         assertEquals("Missing license", Locale.ENGLISH, license.getLocale());
         assertEquals("Wrong attachment size", 91, license.getSize());
 
@@ -301,7 +297,7 @@ public class MassiveEsaTest {
             EsaResourceImpl res = (EsaResourceImpl) e;
             assertTrue("Unexpected resource found in hits " + res.getName(),
                        res.equivalentWithoutAttachments(resource8552) || res.equivalentWithoutAttachments(noVersionResource)
-                               || res.equivalentWithoutAttachments(versionRangeResource));
+                                                                             || res.equivalentWithoutAttachments(versionRangeResource));
         }
 
         def = new SimpleProductDefinition("com.ibm.websphere.appserver", null, "Archive", null, "BASE");
@@ -311,7 +307,8 @@ public class MassiveEsaTest {
             EsaResourceImpl res = (EsaResourceImpl) e;
             assertTrue("Unexpected resource found in hits " + e.getName(),
                        res.equivalentWithoutAttachments(resource8552) || res.equivalentWithoutAttachments(betaResource) ||
-                               res.equivalentWithoutAttachments(noVersionResource) || res.equivalentWithoutAttachments(versionRangeResource));
+                                                                           res.equivalentWithoutAttachments(noVersionResource)
+                                                                           || res.equivalentWithoutAttachments(versionRangeResource));
         }
 
         def = new SimpleProductDefinition("com.ibm.websphere.appserver", "2014.4.0.0", "Archive", null, "BASE");
@@ -372,8 +369,7 @@ public class MassiveEsaTest {
         LicenseType lt = featureInMassive.getLicenseType();
         assertEquals("Wrong license type", LicenseType.ILAN, lt);
 
-        AttachmentResource license = featureInMassive
-                .getLicense(Locale.ENGLISH);
+        AttachmentResource license = featureInMassive.getLicense(Locale.ENGLISH);
         assertNotNull("We should have found the license", license);
         assertEquals("Missing license", Locale.ENGLISH, license.getLocale());
         assertEquals("Wrong attachment size", 91, license.getSize());
@@ -387,15 +383,13 @@ public class MassiveEsaTest {
 
     @Test
     public void testLIAndLAandAppliesTo() throws Throwable {
-        File esaFile = new File(esaDir,
-                "com.ibm.websphere.appserver.json-1.0.esa");
+        File esaFile = new File(esaDir, "com.ibm.websphere.appserver.json-1.0.esa");
         uploadAsset(esaFile);
 
         EsaResource featureInMassive = null;
         Collection<EsaResource> allEsas = new RepositoryConnectionList(repoConnection).getAllFeatures();
         for (EsaResource esa : allEsas) {
-            if ("com.ibm.websphere.appserver.json-1.0".equals(esa
-                    .getProvideFeature())) {
+            if ("com.ibm.websphere.appserver.json-1.0".equals(esa.getProvideFeature())) {
                 featureInMassive = esa;
                 break;
             }
@@ -415,8 +409,7 @@ public class MassiveEsaTest {
                    test.contains("appliesToFilterInfo"));
         Asset a = DataModelSerializer.deserializeObject(
                                                         new ByteArrayInputStream(baos.toByteArray()), Asset.class);
-        Collection<AppliesToFilterInfo> atfis = a.getWlpInformation()
-                .getAppliesToFilterInfo();
+        Collection<AppliesToFilterInfo> atfis = a.getWlpInformation().getAppliesToFilterInfo();
         assertTrue("Applies to should have encoded to a single atfi",
                    atfis.size() == 1);
         AppliesToFilterInfo atfi = atfis.iterator().next();
@@ -427,10 +420,8 @@ public class MassiveEsaTest {
                       atfi.getMaxVersion());
         assertNotNull("Applies to should have encoded min version ",
                       atfi.getMinVersion());
-        assertTrue("Applies to should have encoded max version inclusive", atfi
-                .getMaxVersion().getInclusive());
-        assertTrue("Applies to should have encoded min version inclusive", atfi
-                .getMinVersion().getInclusive());
+        assertTrue("Applies to should have encoded max version inclusive", atfi.getMaxVersion().getInclusive());
+        assertTrue("Applies to should have encoded min version inclusive", atfi.getMinVersion().getInclusive());
         assertEquals("Applies to should have encoded min version label",
                      "8.5.5", atfi.getMinVersion().getLabel());
         assertEquals("Applies to should have encoded max version label",
@@ -442,11 +433,11 @@ public class MassiveEsaTest {
         assertNotNull("Applies to should have encoded editions list ",
                       atfi.getEditions());
         assertEquals(
-                     "Applies to should have encoded editions list with default 6 elements ",
-                     6, atfi.getEditions().size());
+                     "Applies to should have encoded editions list with default 7 elements ",
+                     7, atfi.getEditions().size());
         assertTrue(
                    "Applies to should have encoded default editions got: "
-                           + atfi.getEditions(),
+                   + atfi.getEditions(),
                    atfi.getEditions().containsAll(
                                                   Arrays.asList("Liberty Core", "Base", "Express",
                                                                 "Developers", "ND", "z/OS")));
@@ -481,8 +472,7 @@ public class MassiveEsaTest {
                      1, featureInMassive.getAttachments().size());
         assertEquals(
                      "The attachment name should be the ESA name and set to the symbolic name of the feature",
-                     "com.ibm.ws.test.simple.hidden.esa", featureInMassive
-                             .getAttachments().iterator().next().getName());
+                     "com.ibm.ws.test.simple.hidden.esa", featureInMassive.getAttachments().iterator().next().getName());
         assertNull(
                    "The ibm provision capability should not be set if it isn't set in the feature manifests",
                    featureInMassive.getProvisionCapability());
@@ -537,8 +527,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test adding a feature where the longDescription is stored in the properties file rather than
-     * in a separate file in the metadata zip.
+     * Test adding a feature where the longDescription is stored in the properties file rather than in a
+     * separate file in the metadata zip.
      */
     @Test
     public void testDescriptionInProperties() throws Throwable {
@@ -595,19 +585,16 @@ public class MassiveEsaTest {
         expectedQuery.add("wlpInformation.requireFeature=com.ibm.websphere.appserver.contextService-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.2&type=com.ibm.websphere.Feature");
 
         int linkNumber = 0;
-        for (Link temp : links)
-        {
+        for (Link temp : links) {
             linkNumber++;
             System.out.println(temp);
 
-            if (linkNumber == 1)
-            {
+            if (linkNumber == 1) {
                 assertEquals("Enables label", ENABLES, temp.getLabel());
                 assertEquals("Enables link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enables query matches", expectedEnablesQuery, temp.getQuery());
 
-            }
-            else if (linkNumber == 2) {
+            } else if (linkNumber == 2) {
                 assertEquals("Enabled By label", ENABLED_BY, temp.getLabel());
                 assertEquals("Enabled By link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enabled By query matches", expectedQuery, temp.getQuery());
@@ -629,20 +616,17 @@ public class MassiveEsaTest {
         expectedQuery.add("wlpInformation.requireFeature=com.ibm.websphere.appserver.contextService-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.2&type=com.ibm.websphere.Feature");
 
         int linkNumber = 0;
-        for (Link temp : links)
-        {
+        for (Link temp : links) {
             linkNumber++;
             System.out.println("Link " + linkNumber);
             System.out.println(temp);
 
-            if (linkNumber == 1)
-            {
+            if (linkNumber == 1) {
                 assertEquals("Enables label", ENABLES, temp.getLabel());
                 assertEquals("Enables link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enables query matches", null, temp.getQuery());
 
-            }
-            else if (linkNumber == 2) {
+            } else if (linkNumber == 2) {
                 assertEquals("Enabled By label", ENABLED_BY, temp.getLabel());
                 assertEquals("Enabled By link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enabled By query matches", expectedQuery, temp.getQuery());
@@ -651,8 +635,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Tests enabling information is loaded. One enables with no query, and one enabled by link with
-     * no version
+     * Tests enabling information is loaded. One enables with no query, and one enabled by link with no
+     * version
      *
      * @throws Throwable
      */
@@ -664,18 +648,15 @@ public class MassiveEsaTest {
         Collection<String> expectedQuery = new ArrayList<String>();
         expectedQuery.add("wlpInformation.requireFeature=com.ibm.websphere.appserver.contextService-1.0&type=com.ibm.websphere.Feature");
         int linkNumber = 0;
-        for (Link temp : links)
-        {
+        for (Link temp : links) {
             linkNumber++;
 
-            if (linkNumber == 1)
-            {
+            if (linkNumber == 1) {
                 assertEquals("Enables label", ENABLES, temp.getLabel());
                 assertEquals("Enables link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enables query matches", null, temp.getQuery());
 
-            }
-            else if (linkNumber == 2) {
+            } else if (linkNumber == 2) {
                 assertEquals("Enabled By label", ENABLED_BY, temp.getLabel());
                 assertEquals("Enabled By link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enabled By query matches", expectedQuery, temp.getQuery());
@@ -701,13 +682,11 @@ public class MassiveEsaTest {
         expectedQuery.add("wlpInformation.requireFeature=com.ibm.websphere.appserver.contextService-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.2&type=com.ibm.websphere.Feature");
 
         int linkNumber = 0;
-        for (Link temp : links)
-        {
+        for (Link temp : links) {
             linkNumber++;
             System.out.println(temp);
 
-            if (linkNumber == 1)
-            {
+            if (linkNumber == 1) {
                 assertEquals("Enables label", ENABLES, temp.getLabel());
                 assertEquals("Enables link label property matches", "name", temp.getLinkLabelProperty());
 
@@ -715,8 +694,7 @@ public class MassiveEsaTest {
                 // the order cannot be guaranteed.
                 HashSet<String> hs = new HashSet<String>(temp.getQuery());
                 assertEquals("Enables query matches", expectedEnablesQuery, hs);
-            }
-            else if (linkNumber == 2) {
+            } else if (linkNumber == 2) {
                 assertEquals("Enabled By label", ENABLED_BY, temp.getLabel());
                 assertEquals("Enabled By link label property matches", "name", temp.getLinkLabelProperty());
                 assertEquals("Enabled By query matches", expectedQuery, temp.getQuery());
@@ -840,8 +818,7 @@ public class MassiveEsaTest {
 
     // Counts the number of icon files within an attachment list, and checks
     // they exist
-    private int countIcons(Collection<AttachmentResource> attachmentList)
-            throws Throwable {
+    private int countIcons(Collection<AttachmentResource> attachmentList) throws Throwable {
         int iconCount = 0;
         for (AttachmentResource attachment : attachmentList) {
             if (attachment.getType() == AttachmentType.THUMBNAIL) {
@@ -930,8 +907,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test to make sure something with the IBM-Provision-Capability header set will be read in and
-     * that it is not auto installable by default
+     * Test to make sure something with the IBM-Provision-Capability header set will be read in and that
+     * it is not auto installable by default
      *
      * @throws Throwable
      */
@@ -949,8 +926,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test to make sure something with the IBM-Provision-Capability header set that is a manual
-     * install will set the display policy to visible even if it is private
+     * Test to make sure something with the IBM-Provision-Capability header set that is a manual install
+     * will set the display policy to visible even if it is private
      *
      * @throws Throwable
      */
@@ -970,8 +947,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test to make sure something with the IBM-Provision-Capability header set will be read in and
-     * the IBM-Install-Policy set to when-satisfied makes it auto installable
+     * Test to make sure something with the IBM-Provision-Capability header set will be read in and the
+     * IBM-Install-Policy set to when-satisfied makes it auto installable
      *
      * @throws Throwable
      */
@@ -990,8 +967,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test to make sure something with the IBM-Provision-Capability header set will be read in and
-     * the IBM-Install-Policy set to manual makes it not auto installable
+     * Test to make sure something with the IBM-Provision-Capability header set will be read in and the
+     * IBM-Install-Policy set to manual makes it not auto installable
      *
      * @throws Throwable
      */
@@ -1038,9 +1015,9 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Some artifacts may have to be uploaded with a 'license' of the form, "This download contains
-     * the following files: {x, y, z} and is shipped to you under the terms of the Liberty license
-     * into which you are installing this feature."
+     * Some artifacts may have to be uploaded with a 'license' of the form, "This download contains the
+     * following files: {x, y, z} and is shipped to you under the terms of the Liberty license into
+     * which you are installing this feature."
      *
      * Currently such licenses must be uploaded with LicenseType.UNSPECIFIED.
      */
@@ -1144,8 +1121,8 @@ public class MassiveEsaTest {
                          " (optional)",
                          "name",
                          Arrays.asList(new String[] {
-                                                     "wlpInformation.shortName=ldapRegistry-3.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.3&type=com.ibm.websphere.Feature",
-                                                     "wlpInformation.shortName=servlet-3.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.3&type=com.ibm.websphere.Feature" }),
+                                                      "wlpInformation.shortName=ldapRegistry-3.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.3&type=com.ibm.websphere.Feature",
+                                                      "wlpInformation.shortName=servlet-3.0&wlpInformation.appliesToFilterInfo.minVersion.value=8.5.5.3&type=com.ibm.websphere.Feature" }),
                          links.get(4));
         assertThat("supersededBy", resource.getSupersededBy(), containsInAnyOrder("appSecurity-2.0"));
         assertThat("supersededByOption", resource.getSupersededByOptional(), containsInAnyOrder("ldapRegistry-3.0", "servlet-3.0"));
@@ -1205,8 +1182,8 @@ public class MassiveEsaTest {
                          null,
                          "name",
                          Arrays.asList(new String[] {
-                                                     "wlpInformation.shortName=jpa-2.0&wlpInformation.appliesToFilterInfo.minVersion.value=2014.9.0.0&type=com.ibm.websphere.Feature",
-                                                     "wlpInformation.shortName=blueprint-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=2014.9.0.0&type=com.ibm.websphere.Feature" }),
+                                                      "wlpInformation.shortName=jpa-2.0&wlpInformation.appliesToFilterInfo.minVersion.value=2014.9.0.0&type=com.ibm.websphere.Feature",
+                                                      "wlpInformation.shortName=blueprint-1.0&wlpInformation.appliesToFilterInfo.minVersion.value=2014.9.0.0&type=com.ibm.websphere.Feature" }),
                          links.get(3));
 
         assertLinkEquals(SUPERSEDED_BY,
@@ -1316,8 +1293,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test MassiveEsa code that determines whether a feature is a beta feature and should therefore
-     * be hidden.
+     * Test MassiveEsa code that determines whether a feature is a beta feature and should therefore be
+     * hidden.
      */
     @Test
     public void testIsBeta() {
@@ -1338,8 +1315,7 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Install a Beta feature and ensure that it's webDisplayPolicy and displayPolicy are set to
-     * HIDDEN
+     * Install a Beta feature and ensure that it's webDisplayPolicy and displayPolicy are set to HIDDEN
      *
      * @throws RepositoryException
      * @throws InvocationTargetException
@@ -1381,8 +1357,8 @@ public class MassiveEsaTest {
     }
 
     /**
-     * Test that the extend package is uploaded correctly, specifically that short name and
-     * description are set in response to defect 145768.
+     * Test that the extend package is uploaded correctly, specifically that short name and description
+     * are set in response to defect 145768.
      *
      * @throws Throwable
      */
@@ -1396,7 +1372,9 @@ public class MassiveEsaTest {
 
     @Test
     /**
-     * Based on a small set of features make searches to see whether the correct results match each query
+     * Based on a small set of features make searches to see whether the correct results match each
+     * query
+     * 
      * @throws Throwable
      */
     public void testSimpleFinds() throws Throwable {
