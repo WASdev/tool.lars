@@ -20,7 +20,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.zip.ZipException;
 
@@ -61,8 +63,7 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
      * @param apiKey The API key to use to connect to Massive
      * @throws RepositoryException
      */
-    public MassiveEsa(RepositoryConnection repoConnection)
-        throws RepositoryException {
+    public MassiveEsa(RepositoryConnection repoConnection) throws RepositoryException {
         super(repoConnection);
     }
 
@@ -70,8 +71,8 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
      * This method will add a collection of ESAs into MaaSive
      *
      * @param esas The ESAs to add
-     * @return the new {@link EsaResource}s added to massive (will not included any resources that
-     *         were modified as a result of this operation)
+     * @return the new {@link EsaResource}s added to massive (will not included any resources that were
+     *         modified as a result of this operation)
      * @throws ZipException
      * @throws RepositoryResourceCreationException
      * @throws RepositoryResourceUpdateException
@@ -111,15 +112,14 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         // Read the meta data from the esa
         EsaManifest feature;
         try {
-            feature = EsaManifest
-                    .constructInstance(esa);
+            feature = EsaManifest.constructInstance(esa);
         } catch (IOException e) {
             throw new RepositoryArchiveIOException(e.getMessage(), esa, e);
         }
 
         /*
-         * First see if we already have this feature in MaaSive, note this means we can only have
-         * one version of the asset in MaaSive at a time
+         * First see if we already have this feature in MaaSive, note this means we can only have one
+         * version of the asset in MaaSive at a time
          */
         EsaResourceWritable resource = WritableResourceFactory.createEsa(repoConnection);
         String symbolicName = feature.getSymbolicName();
@@ -133,9 +133,8 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         final String name;
 
         /*
-         * We want to be able to override the name in the built ESA with a value supplied in the
-         * metadata so use this in preference of what is in the ESA so that we can correct any typos
-         * post-GM
+         * We want to be able to override the name in the built ESA with a value supplied in the metadata so
+         * use this in preference of what is in the ESA so that we can correct any typos post-GM
          */
         if (metadataName != null && !metadataName.isEmpty()) {
             name = metadataName;
@@ -175,9 +174,9 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         resource.setVisibility(visibility);
 
         /*
-         * Two things affect the display policy - the visibility and the install policy. If a
-         * private auto feature is set to manual install we need to make it visible so people know
-         * that it exists and can be installed
+         * Two things affect the display policy - the visibility and the install policy. If a private auto
+         * feature is set to manual install we need to make it visible so people know that it exists and can
+         * be installed
          */
         DisplayPolicy displayPolicy;
         DisplayPolicy webDisplayPolicy;
@@ -233,9 +232,16 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         resource.setShortName(shortName);
 
         // Calculate which features this relies on
-        for (String requiredFeature : feature.getRequiredFeatures()) {
-            resource.addRequireFeature(requiredFeature);
+        Map<String, List<String>> requiredFeaturesWithTolerates = feature.getRequiredFeatureWithTolerates();
+        for (Map.Entry<String, List<String>> entry : requiredFeaturesWithTolerates.entrySet()) {
+            resource.addRequireFeatureWithTolerates(entry.getKey(), entry.getValue());
         }
+
+        // Old version which does not collect and store tolerates info
+        // Calculate which features this relies on
+//        for (String requiredFeature : feature.getRequiredFeatures()) {
+//            resource.addRequireFeature(requiredFeature);
+//        }
 
         // feature.supersededBy is a comma-separated list of shortNames. Add
         // each of the elements to either supersededBy or supersededByOptional.
@@ -281,6 +287,8 @@ public class MassiveEsa extends MassiveUploader implements RepositoryUploader<Es
         } catch (RepositoryException re) {
             throw re;
         }
+
+        resource.dump(System.out);
         return resource;
     }
 
