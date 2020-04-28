@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -1231,6 +1232,38 @@ public class MassiveEsaTest {
 
     }
 
+    @Test
+    public void testTolerates() throws RepositoryException {
+        /**
+         * For reference this is a copy of the subsytem content for this asset Subsystem-Content:
+         * com.ibm.websphere.appserver.javax.servlet-3.0; ibm.tolerates:="3.1,4.0"; apiJar=false;
+         * type="osgi.subsystem.feature", com.ibm.websphere.appserver.classloading-1.0;
+         * type="osgi.subsystem.feature", com.ibm.websphere.appserver.ltpa-1.0;
+         * type="osgi.subsystem.feature", com.ibm.ws.security.authentication; version="[1.0.0,1.0.200)",
+         * com.ibm.ws.security.credentials.wscred; version="[1.0.0,1.0.200)", com.ibm.websphere.security;
+         * version="[1.1.0,1.1.200)", com.ibm.ws.security.jaas.common; version="[1.0.0,1.0.200)",
+         * com.ibm.ws.security.authentication.builtin; version="[1.0.0,1.0.200)",
+         * com.ibm.ws.security.mp.jwt.proxy; version="[1.0.0,1.0.200)"
+         */
+        File toleratesEsa = new File(esaDir, "com.ibm.websphere.appserver.builtInAuthentication-1.0.esa");
+        EsaResourceImpl resource = (EsaResourceImpl) uploadAsset(toleratesEsa);
+        Map<String, Collection<String>> toleratesInfo = resource.getRequireFeatureWithTolerates();
+        for (Entry<String, Collection<String>> entry : toleratesInfo.entrySet()) {
+            switch (entry.getKey()) {
+                // The servlet feature prefers 3.0 but will tolerate 3.1 and 4.0
+                case "com.ibm.websphere.appserver.javax.servlet-3.0":
+                    assertEquals("There should be 2 tolerates entries for servlet dependancy", 2, entry.getValue().size());
+                    for (String s : entry.getValue()) {
+                        assertTrue("Tolerates should be either 3.1 or 4.0", (s.equals("3.1") || s.equals("4.0")));
+                    }
+                    break;
+                default:
+                    // No other features have tolerates info in them
+                    assertTrue("The tolerates entries for " + entry.getKey() + " should be empty but wasn't", entry.getValue().isEmpty());
+            }
+        }
+    }
+
     private void assertLinkEquals(String expectedLabel,
                                   String expectedLinkLabelPrefix,
                                   String expectedLinkLabelSuffix,
@@ -1374,7 +1407,7 @@ public class MassiveEsaTest {
     /**
      * Based on a small set of features make searches to see whether the correct results match each
      * query
-     * 
+     *
      * @throws Throwable
      */
     public void testSimpleFinds() throws Throwable {

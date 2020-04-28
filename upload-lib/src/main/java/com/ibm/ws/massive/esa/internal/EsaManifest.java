@@ -25,12 +25,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -55,8 +57,7 @@ public class EsaManifest {
      * @throws ZipException
      * @throws IOException
      */
-    public static EsaManifest constructInstance(File esa)
-            throws ZipException, IOException {
+    public static EsaManifest constructInstance(File esa) throws ZipException, IOException {
         // Find the manifest - case isn't guaranteed so do a search
         ZipFile zip = new ZipFile(esa);
         Enumeration<? extends ZipEntry> zipEntries = zip.entries();
@@ -67,8 +68,7 @@ public class EsaManifest {
                 subsystemEntry = nextEntry;
             }
         }
-        return new EsaManifest(
-                zip.getInputStream(subsystemEntry), zip);
+        return new EsaManifest(zip.getInputStream(subsystemEntry), zip);
     }
 
     private final ZipFile esa;
@@ -105,11 +105,11 @@ public class EsaManifest {
         }
 
         ZipEntry[] entries = new ZipEntry[] {
-                                             this.esa.getEntry(localizationLocation + "_"
-                                                               + locale.toString() + ".properties"),
-                                             this.esa.getEntry(localizationLocation + "_"
-                                                               + locale.getLanguage() + ".properties"),
-                                             this.esa.getEntry(localizationLocation + ".properties") };
+                                              this.esa.getEntry(localizationLocation + "_"
+                                                                + locale.toString() + ".properties"),
+                                              this.esa.getEntry(localizationLocation + "_"
+                                                                + locale.getLanguage() + ".properties"),
+                                              this.esa.getEntry(localizationLocation + ".properties") };
 
         for (ZipEntry entry : entries) {
             if (entry != null) {
@@ -240,6 +240,45 @@ public class EsaManifest {
             Map<String, String> attributes = contentEntry.getValue();
             if ("osgi.subsystem.feature".equals(attributes.get("type"))) {
                 result.add(symbolicName);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Parse the subsystem manifest to find the required features and any tolerates info they may have.
+     * 
+     * @return
+     */
+    public Map<String, List<String>> getRequiredFeatureWithTolerates() {
+        Hashtable<String, List<String>> result = new Hashtable<String, List<String>>();
+
+        // Find the Subsystem-Content section which contains the required features
+        Map<String, Map<String, String>> featureContentMap = ManifestHeaderProcessor.parseImportString(getHeader("Subsystem-Content"));
+
+        // Check every feature
+        for (Entry<String, Map<String, String>> contentEntry : featureContentMap.entrySet()) {
+
+            String symbolicName = contentEntry.getKey();
+            Map<String, String> attributes = contentEntry.getValue();
+
+            // Check if we are looking at a feature
+            if ("osgi.subsystem.feature".equals(attributes.get("type"))) {
+
+                // Now check if we have a tolerates
+                String tolerates = attributes.get("ibm.tolerates:");
+                List<String> toleratedVersions = new ArrayList<String>();
+                // We do have tolerates so parse out the comma separated string into a List of strings
+                if (tolerates != null) {
+                    StringTokenizer tokenizer = new StringTokenizer(tolerates, ",");
+                    while (tokenizer.hasMoreTokens()) {
+                        toleratedVersions.add(tokenizer.nextToken());
+                    }
+                }
+
+                // Store the required features along with it tolerates info (which could be an empty list if no tolerates was found)
+                result.put(symbolicName, toleratedVersions);
             }
         }
 
