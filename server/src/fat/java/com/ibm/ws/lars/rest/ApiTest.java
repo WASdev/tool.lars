@@ -1281,7 +1281,7 @@ public class ApiTest {
     @Test
     public void testServletSend404() throws ClientProtocolException, IOException {
         String response = repository.doGet("/provoke-error-servlet?type=404", 404);
-        assertThat(response, containsString("Test Error"));
+        assertJsonErrorResponse(404, "Not found", response);
     }
 
     /**
