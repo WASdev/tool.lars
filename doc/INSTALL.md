@@ -6,7 +6,7 @@ it creates a new Liberty server called `larsServer`.
 
 ## Download or Build larsServer.zip
 
-Either download `larsServer.zip` from [GitHub](https://github.com/WASdev/tool.lars/releases) or build it yourself following the instructions in [Building LARS](BUILDING.md)
+Either download `larsServer.zip` from [IBM](http://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/wasdev/downloads/wlp/LARS/larsServer.zip) or build it yourself following the instructions in [Building LARS](BUILDING.md)
 
 Download and install the [Prerequisites](PREREQS.md)
 
