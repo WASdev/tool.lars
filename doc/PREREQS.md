@@ -1,7 +1,7 @@
 ## In order to run LARS you need the following prerequisites
 
 * [MongoDB server](https://www.mongodb.com/download-center/community) compatible with [Java Driver v3.12](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#java-driver-compatibility)
-* [WAS Liberty Profile 19.0.0.9](https://developer.ibm.com/wasdev/downloads/#asset/runtimes-wlp-kernel) or newer
+* [WAS Liberty Profile 19.0.0.9 or newer](https://www.ibm.com/support/pages/node/6250961)
 * A Java 8 JDK
 
 ## To build LARS you will additionally require
