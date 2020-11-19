@@ -2,6 +2,8 @@
 
 `larsClient` allows you to add assets to LARS, to list assets and to delete assets. Like Liberty itself, `larsClient` requires Java. For full details of command line parameters, run `bin/larsClient help`.
 
+Either download `larsCient.zip` from [IBM](http://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/wasdev/downloads/wlp/LARS/larsClient.zip) or build it yourself following the instructions in [Building LARS](BUILDING.md)
+
 ### Adding assets
 
 Unzip `larsClient.zip` and then run `larsClient` to upload an asset. You can add an asset by specifying the file containing that asset:
