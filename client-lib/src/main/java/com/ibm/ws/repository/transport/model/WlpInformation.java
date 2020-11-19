@@ -72,6 +72,8 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
     private String packagedJava;
     private Collection<RequireFeatureWithTolerates> requireFeatureWithTolerates;
     private String mavenCoordinates;
+    private String singleton;
+    private String ibmInstallTo;
 
     public String getFeaturedWeight() {
         return featuredWeight;
@@ -726,6 +728,22 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
             return false;
         }
 
+        if (ibmInstallTo == null) {
+            if (other.ibmInstallTo != null) {
+                return false;
+            }
+        } else if (!ibmInstallTo.equals(other.ibmInstallTo)) {
+            return false;
+        }
+
+        if (singleton == null) {
+            if (other.singleton != null) {
+                return false;
+            }
+        } else if (!singleton.equals(other.singleton)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -751,6 +769,22 @@ public class WlpInformation extends AbstractJSON implements VersionableContent, 
             return Collections.singleton("visibility");
         }
         return Collections.emptySet();
+    }
+
+    public String getSingleton() {
+        return singleton;
+    }
+
+    public void setSingleton(String singleton) {
+        this.singleton = singleton;
+    }
+
+    public String getIbmInstallTo() {
+        return ibmInstallTo;
+    }
+
+    public void setIbmInstallTo(String ibmInstallTo) {
+        this.ibmInstallTo = ibmInstallTo;
     }
 
 }

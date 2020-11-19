@@ -1259,7 +1259,7 @@ public class MassiveEsaTest {
                     break;
                 default:
                     // No other features have tolerates info in them
-                    assertTrue("The tolerates entries for " + entry.getKey() + " should be empty but wasn't", entry.getValue().isEmpty());
+                    assertTrue("The tolerates entries for " + entry.getKey() + " should be null but wasn't", entry.getValue() == null);
             }
         }
     }

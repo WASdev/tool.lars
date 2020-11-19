@@ -1887,12 +1887,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             try {
                 try {
                     fos = AccessController.doPrivileged(
-                                    new PrivilegedExceptionAction<FileOutputStream>() {
-                                        @Override
-                                        public FileOutputStream run() throws FileNotFoundException {
-                                            return new FileOutputStream(fileToWriteTo);
-                                        }
-                                    });
+                                                        new PrivilegedExceptionAction<FileOutputStream>() {
+                                                            @Override
+                                                            public FileOutputStream run() throws FileNotFoundException {
+                                                                return new FileOutputStream(fileToWriteTo);
+                                                            }
+                                                        });
                 } catch (PrivilegedActionException e) {
                     // Creating a FileInputStream can only return a FileNotFoundException
                     throw (FileNotFoundException) e.getCause();
@@ -1935,12 +1935,12 @@ public abstract class RepositoryResourceImpl implements RepositoryResourceWritab
             InputStream is = null;
             try {
                 is = AccessController.doPrivileged(
-                                new PrivilegedExceptionAction<FileInputStream>() {
-                                    @Override
-                                    public FileInputStream run() throws FileNotFoundException {
-                                        return new FileInputStream(_file);
-                                    }
-                                });
+                                                   new PrivilegedExceptionAction<FileInputStream>() {
+                                                       @Override
+                                                       public FileInputStream run() throws FileNotFoundException {
+                                                           return new FileInputStream(_file);
+                                                       }
+                                                   });
                 return RepositoryResourceImpl.getCRC(is);
             } catch (PrivilegedActionException e) {
                 // Creating a FileInputStream can only return a FileNotFoundException or NPE
