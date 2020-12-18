@@ -182,6 +182,17 @@ public class EsaManifest {
         return getHeader("IBM-Provision-Capability") != null;
     }
 
+    public boolean isSingleton() {
+        parseSymbolicName();
+        boolean retVal = false;
+        String singleton = symbolicNameAttrs.get("singleton:");
+        if (singleton != null) {
+            retVal = Boolean.parseBoolean(singleton);
+        }
+
+        return retVal;
+    }
+
     /**
      * @return
      */
@@ -248,7 +259,7 @@ public class EsaManifest {
 
     /**
      * Parse the subsystem manifest to find the required features and any tolerates info they may have.
-     * 
+     *
      * @return
      */
     public Map<String, List<String>> getRequiredFeatureWithTolerates() {

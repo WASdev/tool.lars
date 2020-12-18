@@ -237,28 +237,27 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
             return;
         }
 
-        String requiresJava8 = "Java SE 8";
-        String requiresJava7or8 = "Java SE 7, Java SE 8";
-        String requiresJava6or7or8 = "Java SE 6, Java SE 7, Java SE 8";
+        String minJava11 = "Java SE 11, Java SE 15";
+        String minJava8 = "Java SE 8, Java SE 11, Java SE 15";
 
         // The min version should have been validated when the ESA was constructed
         // so checking for the version string should be safe
-        if (minVersion.equals("1.6.0")) {
-            reqs.setVersionDisplayString(requiresJava6or7or8);
+        if (minVersion.equals("1.6.0") || minVersion.equals("1.7.0") || minVersion.equals("1.8.0")) {
+            reqs.setVersionDisplayString(minJava8);
             return;
         }
-        if (minVersion.equals("1.7.0")) {
-            reqs.setVersionDisplayString(requiresJava7or8);
-            return;
-        }
-        if (minVersion.equals("1.8.0")) {
-            reqs.setVersionDisplayString(requiresJava8);
+        if (minVersion.startsWith("9.") ||
+            minVersion.startsWith("10.") ||
+            minVersion.startsWith("11.")) {
+            // If a feature requires a min of Java 9/10/11, state Java 11 is required because
+            // Liberty does not officially support Java 9 or 10
+            reqs.setVersionDisplayString(minJava11);
             return;
         }
 
         // The min version string has been generated/validated incorrectly
         // Can't recover from this, it is a bug in EsaUploader
-        throw new AssertionError();
+        throw new AssertionError("Unrecognized java version: " + minVersion);
 
     }
 
@@ -396,6 +395,12 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
         setVisibility(esaRes.getVisibility());
         setShortName(esaRes.getShortName());
         setVanityURL(esaRes.getVanityURL());
+        setIBMInstallTo(esaRes.getIBMInstallTo());
+        setSingleton(esaRes.getSingleton());
+        JavaSEVersionRequirements reqs = esaRes.getJavaSEVersionRequirements();
+        if (reqs != null) {
+            setJavaSEVersionRequirements(reqs.getMinVersion(), reqs.getMaxVersion(), reqs.getRawRequirements());
+        }
     }
 
     @Override
@@ -776,4 +781,33 @@ public class EsaResourceImpl extends RepositoryResourceImpl implements EsaResour
         return _asset.getWlpInformation().getJavaSEVersionRequirements();
     }
 
+    /** {@inheritDoc} */
+
+    @Override
+    public String getSingleton() {
+        return _asset.getWlpInformation().getSingleton();
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return Boolean.valueOf(getSingleton());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setSingleton(String singleton) {
+        _asset.getWlpInformation().setSingleton(singleton);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String getIBMInstallTo() {
+        return _asset.getWlpInformation().getIbmInstallTo();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setIBMInstallTo(String ibmInstallTo) {
+        _asset.getWlpInformation().setIbmInstallTo(ibmInstallTo);
+    }
 }
