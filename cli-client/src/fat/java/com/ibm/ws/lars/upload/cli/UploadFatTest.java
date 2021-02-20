@@ -225,4 +225,31 @@ public class UploadFatTest {
         assertEquals("Incorrect resource count", 0, connectionList.getAllResources().size());
         assertEquals("Incorrect feature count", 0, connectionList.getAllFeatures().size());
     }
+
+    @Test
+    public void testOptionsBeforeAction() throws Exception {
+        RestRepositoryConnection repoConnection = (RestRepositoryConnection) repoServer.getAdminConnection();
+        RepositoryConnectionList connectionList = new RepositoryConnectionList(repoConnection);
+        String esaPath = "resources/com.ibm.websphere.appserver.adminCenter-1.0.esa";
+        File esaFile = new File(esaPath);
+
+        TestProcess tp = new TestProcess(Arrays.asList(FatUtils.SCRIPT,
+                                                       "--url=" + FatUtils.SERVER_URL,
+                                                       "upload",
+                                                       "--username=" + repoConnection.getUserId(),
+                                                       "--password=" + repoConnection.getPassword(),
+                                                       esaPath));
+        tp.run();
+
+        tp.assertReturnCode(0);
+        assertEquals("Incorrect resource count", 1, connectionList.getAllResources().size());
+        assertEquals("Incorrect feature count", 1, connectionList.getAllFeatures().size());
+
+        EsaResourceWritable resource = (EsaResourceWritable) connectionList.getAllFeatures().iterator().next();
+        assertEquals("Incorrect state", State.PUBLISHED, resource.getState());
+        assertEquals("Incorrect license type", LicenseType.UNSPECIFIED, resource.getLicenseType());
+        assertEquals("Incorrect size", esaFile.length(), resource.getMainAttachmentSize());
+
+        tp.assertOutputContains("done");
+    }
 }
