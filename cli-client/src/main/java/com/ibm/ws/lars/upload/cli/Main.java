@@ -180,7 +180,18 @@ public class Main {
             throw new ClientException("No options were given", 1, HelpDisplay.SHOW_HELP);
         }
 
+        // Allows options to be passed before actions. Considers the action that comes first.
         String actionString = args[0];
+        int skipAction = 0;
+        for (int i = 0; i < args.length; i++) {
+            String tempActionString = args[i].startsWith("--") ? args[i].substring(2) : args[i];
+            if (Action.getByArgument(tempActionString) != null) {
+                skipAction = i;
+                actionString = args[i];
+                this.action = Action.getByArgument(args[i]);
+                break;
+            }
+        }
 
         // If we're not invoked from a script, the action should start with "--"
         if (getInvokedName() == null) {
@@ -198,7 +209,10 @@ public class Main {
         this.options = new HashMap<Option, String>();
 
         boolean keepProcessingOptions = true;
-        for (int i = 1; i < args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
+            if (skipAction == i) {
+                continue;
+            }
             String arg = args[i];
 
             if (keepProcessingOptions && arg.equals("--")) {
