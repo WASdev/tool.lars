@@ -17,15 +17,29 @@
 	</login-config>
 	
 	<security-constraint>
-		<web-resource-collection>
-			<web-resource-name>Lars</web-resource-name>
-			<url-pattern>/*</url-pattern>
-		</web-resource-collection>
-		<auth-constraint>
-			<role-name>User</role-name>
-			<role-name>Administrator</role-name>
-		</auth-constraint>
-	</security-constraint>
+                <web-resource-collection>
+                        <web-resource-name>Lars</web-resource-name>
+                        <url-pattern>/*</url-pattern>
+                        <http-method>GET</http-method>
+                </web-resource-collection>
+                <auth-constraint>
+                        <role-name>User</role-name>
+                </auth-constraint>
+        </security-constraint>
+
+        <security-constraint>
+                <web-resource-collection>
+                        <web-resource-name>Lars</web-resource-name>
+                        <url-pattern>/*</url-pattern>
+                        <http-method>GET</http-method>
+                        <http-method>POST</http-method>
+                        <http-method>PUT</http-method>
+                        <http-method>DELETE</http-method>
+                </web-resource-collection>
+                <auth-constraint>
+                        <role-name>Administrator</role-name>
+                </auth-constraint>
+        </security-constraint>	
 	
 	<error-page>
 		<error-code>500</error-code>
