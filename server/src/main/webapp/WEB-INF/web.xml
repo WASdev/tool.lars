@@ -21,6 +21,8 @@
                         <web-resource-name>Lars</web-resource-name>
                         <url-pattern>/*</url-pattern>
                         <http-method>GET</http-method>
+                        <http-method>HEAD</http-method>
+                        <http-method>OPTIONS</http-method>
                 </web-resource-collection>
                 <auth-constraint>
                         <role-name>User</role-name>
@@ -32,6 +34,8 @@
                         <web-resource-name>Lars</web-resource-name>
                         <url-pattern>/*</url-pattern>
                         <http-method>GET</http-method>
+                        <http-method>HEAD</http-method>
+                        <http-method>OPTIONS</http-method>
                         <http-method>POST</http-method>
                         <http-method>PUT</http-method>
                         <http-method>DELETE</http-method>
@@ -40,7 +44,27 @@
                         <role-name>Administrator</role-name>
                 </auth-constraint>
         </security-constraint>	
-	
+        <!-- Deny every HTTP method LARS does not use, including TRACE. An empty auth-constraint
+             means no role can access them. http-method-omission (Servlet 3.0) matches all methods
+             except those named, so the User and Administrator constraints above remain the only
+             rules for GET, HEAD, OPTIONS, POST, PUT and DELETE. A collection with no
+             http-method elements must not be used here: it matches every method and would deny
+             those as well.
+             If a method is added to the constraints above, add it here too. -->
+        <security-constraint>
+                <web-resource-collection>
+                        <web-resource-name>Lars unused methods</web-resource-name>
+                        <url-pattern>/*</url-pattern>
+                        <http-method-omission>GET</http-method-omission>
+                        <http-method-omission>HEAD</http-method-omission>
+                        <http-method-omission>OPTIONS</http-method-omission>
+                        <http-method-omission>POST</http-method-omission>
+                        <http-method-omission>PUT</http-method-omission>
+                        <http-method-omission>DELETE</http-method-omission>
+                </web-resource-collection>
+                <auth-constraint/>
+        </security-constraint>
+
 	<error-page>
 		<error-code>500</error-code>
 		<location>/error</location>
